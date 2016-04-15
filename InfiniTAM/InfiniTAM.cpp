@@ -8,7 +8,7 @@
 #include "Engine/OpenNIEngine.h"
 #include "Engine/Kinect2Engine.h"
 #include "Engine/LibUVCEngine.h"
-#include "Engine/RealSenseEngine.h"
+#include "Engine/RealSenseEngineSDK.h"
 
 using namespace InfiniTAM::Engine;
 
@@ -21,6 +21,7 @@ using namespace InfiniTAM::Engine;
 static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSourceEngine* & imuSource, const char *arg1, const char *arg2, const char *arg3, const char *arg4)
 {
 	const char *calibFile = arg1;
+
 	const char *filename1 = arg2;
 	const char *filename2 = arg3;
 	const char *filename_imu = arg4;
@@ -65,7 +66,7 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 	if (imageSource == NULL)
 	{
 		printf("trying RealSense device\n");
-		imageSource = new RealSenseEngine(calibFile);
+		imageSource = new RealsenseEngine(calibFile);
 		if (imageSource->getDepthImageSize().x == 0)
 		{
 			delete imageSource;
@@ -93,6 +94,7 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 }
 
 int main(int argc, char** argv)
+
 try
 {
 	const char *arg1 = "";
@@ -104,9 +106,13 @@ try
 	do {
 		if (argv[arg] != NULL) arg1 = argv[arg]; else break;
 		++arg;
-		if (argv[arg] != NULL) arg2 = argv[arg]; else break;
+		if (argv[arg] != NULL) 
+			arg2 = "./Files/Teddy/Frames/%04i.ppm"; 
+		else break;
 		++arg;
-		if (argv[arg] != NULL) arg3 = argv[arg]; else break;
+		if (argv[arg] != NULL) 
+			arg3 = "./Files/Teddy/Frames/%04i.pgm"; 
+		else break;
 		++arg;
 		if (argv[arg] != NULL) arg4 = argv[arg]; else break;
 	} while (false);
