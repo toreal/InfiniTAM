@@ -53,6 +53,7 @@ namespace InfiniTAM
 
 			ITMUChar4Image *inputRGBImage; ITMShortImage *inputRawDepthImage;
 			ITMIMUMeasurement *inputIMUMeasurement;
+			MeshFusion * mfdata;
 
 			bool freeviewActive;
 			bool intergrationActive;

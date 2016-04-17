@@ -17,7 +17,8 @@ namespace InfiniTAM
 			virtual ~ImageSourceEngine() {}
 
 			virtual bool hasMoreImages(void) = 0;
-			virtual void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth) = 0;
+			virtual void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth) {};
+			virtual void getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth, MeshFusion * data) { };
 			virtual Vector2i getDepthImageSize(void) = 0;
 			virtual Vector2i getRGBImageSize(void) = 0;
 		};
@@ -28,7 +29,8 @@ namespace InfiniTAM
 			static const int BUF_SIZE = 2048;
 			char rgbImageMask[BUF_SIZE];
 			char depthImageMask[BUF_SIZE];
-
+			char segImageMask[BUF_SIZE];
+			char pointMask[BUF_SIZE];
 			ITMUChar4Image *cached_rgb;
 			ITMShortImage *cached_depth;
 
@@ -41,7 +43,7 @@ namespace InfiniTAM
 			~ImageFileReader();
 
 			bool hasMoreImages(void);
-			void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth);
+			void getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth, MeshFusion *data );
 			Vector2i getDepthImageSize(void);
 			Vector2i getRGBImageSize(void);
 		};
@@ -58,6 +60,7 @@ namespace InfiniTAM
 
 			bool hasMoreImages(void) { return true; }
 			void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth) { }
+			
 			Vector2i getDepthImageSize(void) { return imgSize; }
 			Vector2i getRGBImageSize(void) { return imgSize; }
 		};

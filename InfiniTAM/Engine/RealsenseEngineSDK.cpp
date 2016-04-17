@@ -14,6 +14,9 @@ public:
 
 	PXCSenseManager *pp;
 	PXCCaptureManager *cm;
+	
+	PXCBlobData* blobData;
+	PXCBlobConfiguration* blobConfiguration;
 	pxcStatus sts;
 };
 
@@ -34,17 +37,18 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	/* Sets file recording or playback */
 	 data->cm= data->pp->QueryCaptureManager();
 	data->cm->SetFileName(cmdl.m_recordedFile, cmdl.m_bRecord);
-	if (cmdl.m_sdname) data->cm->FilterByDeviceInfo(cmdl.m_sdname, 0, 0);
+	if (cmdl.m_sdname) 
+		data->cm->FilterByDeviceInfo(cmdl.m_sdname, 0, 0);
 
 
 
 	///* Apply command line arguments */
-	if (cmdl.m_csize.size()>0) {
+	/*if (cmdl.m_csize.size()>0) {
 		data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, cmdl.m_csize.front().first.width, cmdl.m_csize.front().first.height, (pxcF32)cmdl.m_csize.front().second);
 	}
 	if (cmdl.m_dsize.size()>0) {
 		data->pp->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, cmdl.m_dsize.front().first.width, cmdl.m_dsize.front().first.height, (pxcF32)cmdl.m_dsize.front().second);
-	}
+	}*/
 	//if (cmdl.m_isize.size() > 0) {
 	//	pp->EnableStream(PXCCapture::STREAM_TYPE_IR, cmdl.m_isize.front().first.width, cmdl.m_isize.front().first.height, (pxcF32)cmdl.m_isize.front().second);
 	//}
@@ -55,20 +59,37 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	//	pp->EnableStream(PXCCapture::STREAM_TYPE_LEFT, cmdl.m_lsize.front().first.width, cmdl.m_lsize.front().first.height, (pxcF32)cmdl.m_lsize.front().second);
 	//}
 
-	PXCVideoModule::DataDesc desc = {};
+	//PXCVideoModule::DataDesc desc = {};
 
-	if (cmdl.m_csize.size() == 0 && cmdl.m_dsize.size() == 0 && cmdl.m_isize.size() == 0 && cmdl.m_rsize.size() == 0 && cmdl.m_lsize.size() == 0) {
+	/*if (cmdl.m_csize.size() == 0 && cmdl.m_dsize.size() == 0 && cmdl.m_isize.size() == 0 && cmdl.m_rsize.size() == 0 && cmdl.m_lsize.size() == 0) {
 		
 		if (data->cm->QueryCapture()) {
 			data->cm->QueryCapture()->QueryDeviceInfo(0, &desc.deviceInfo);
 		}
 		else {
 			desc.deviceInfo.streams = PXCCapture::STREAM_TYPE_COLOR | PXCCapture::STREAM_TYPE_DEPTH;
+		
 		}
 		data->pp->EnableStreams(&desc);
-	}
-
+	}*/
+	//data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 480, 30);
+	//data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 480, 30);
+	data->pp->EnableBlob(0);
 	
+	PXCBlobModule *blobModule = data->pp->QueryBlob();
+	data-> blobData = blobModule->CreateOutput();
+	data->blobConfiguration = blobModule->CreateActiveConfiguration();
+
+	data->pp->EnableStream(PXCCapture::StreamType::STREAM_TYPE_COLOR, 640, 480, 30);
+	// Enable blob color mapping
+	data->blobConfiguration->EnableColorMapping(true);
+	data->blobConfiguration->EnableContourExtraction(true);
+	data->blobConfiguration->EnableSegmentationImage(true);
+
+	data->blobConfiguration->ApplyChanges();
+
+	data->pp->EnableStream(PXCCapture::StreamType::STREAM_TYPE_DEPTH, 640, 480, 30);
+
 	/* Initializes the pipeline */
 	data->sts = data->pp->Init();
 	if (data->sts<PXC_STATUS_NO_ERROR) {
@@ -79,6 +100,7 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 		//return sts;
 	}
 
+	data->blobConfiguration->Update();
 	/* Reset all properties */
 	PXCCapture::Device *device = data->pp->QueryCaptureManager()->QueryDevice();
 	device->ResetProperties(PXCCapture::STREAM_TYPE_ANY);
@@ -141,8 +163,10 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 RealsenseEngine::~RealsenseEngine()
 {
 }
-void RealsenseEngine::getImages(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage)
+void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, MeshFusion * mfdata)
 {
+
+	
 
 	data->sts = data->pp->AcquireFrame(false);
 
@@ -217,7 +241,86 @@ void RealsenseEngine::getImages(ITMUChar4Image *rgbImage, ITMShortImage *rawDept
 				sample->depth->ReleaseAccess(&ddata);
 
 
+				PXCCapture::Sample * bs = data->pp->QueryBlobSample();
 
+				if (bs)
+				{
+					data->blobConfiguration->Update();
+					data->blobData->Update();
+					int n = data->blobData->QueryNumberOfBlobs();
+
+					if (n > 0)
+					{
+						//data->blobData->QueryBlob()
+						PXCBlobData::IBlob* blob=NULL;
+						PXCBlobData::SegmentationImageType segmentationType = PXCBlobData::SegmentationImageType::SEGMENTATION_IMAGE_COLOR;
+						PXCBlobData::AccessOrderType accessOrder = PXCBlobData::ACCESS_ORDER_LARGE_TO_SMALL;
+						 data->blobData->QueryBlob(0, segmentationType, accessOrder, blob);
+						 PXCBlobData::IContour * contour;
+						 if (blob != NULL)
+						 {
+
+							 pxcI32 nc=blob->QueryNumberOfContours();
+
+							 if (nc > 0)
+							 {
+								 blob->QueryContour(0, contour);
+
+								 pxcI32 np = contour->QuerySize();
+								 
+								 if (np > 0  && np < mfdata->MAXNODE)
+								 {
+									 PXCPointI32 * plist = new PXCPointI32[np];
+									 mfdata->npoint = np;
+									 //mfdata->pointlist = new Vector2i[np];
+										 contour->QueryPoints(np, plist);
+										 for (int i = 0; i < np; i++)
+										 {
+											 mfdata->pointlist[i].x = plist[i].x;
+											 mfdata->pointlist[i].y = plist[i].y;
+
+										 }
+
+
+								 }
+								 else
+									 mfdata->npoint = 0;
+								 PXCImage* segimg=NULL;
+
+
+								 blob->QuerySegmentationImage(segimg);
+								 if (segimg != NULL)
+								 {
+									 Vector4u *rgb = mfdata->segImage->GetData(MEMORYDEVICE_CPU);
+									 PXCImage::ImageData rgbdata;
+									 PXCImage::ImageInfo rgbinfo = segimg->QueryInfo();
+
+
+									 pxcStatus sts = segimg->AcquireAccess(PXCImage::ACCESS_READ, PXCImage::PIXEL_FORMAT_RGB24, &rgbdata);
+									 if (sts >= PXC_STATUS_NO_ERROR)
+									 {
+										 pxcBYTE* baseAddr = rgbdata.planes[0];
+										 //				int stride = rgbdata.pitches[0] / sizeof(pxc);
+										 for (int i = 0; i < rgbImage->noDims.x * rgbImage->noDims.y; i++) {
+											 Vector4u newPix; char *oldPix = &(((char*)(baseAddr))[i * 3]);
+											 newPix.x = oldPix[0]; newPix.y = oldPix[1]; newPix.z = oldPix[2]; newPix.w = 255;
+											 rgb[i] = newPix;
+										 }
+
+
+									 }
+
+									 segimg->ReleaseAccess(&rgbdata);
+
+								 }
+							 }
+						 }
+
+
+					}
+
+
+				}
 
 
 		/*	if (sample->depth && !renderd.RenderFrame(sample->depth)) break;
@@ -241,13 +344,41 @@ bool RealsenseEngine::hasMoreImages(void)
 }
 Vector2i RealsenseEngine::getDepthImageSize(void)
 {
-	PXCSizeI32 s=data->cm->QueryImageSize(PXCCapture::STREAM_TYPE_DEPTH);
-	return Vector2i(s.width, s.height);
+	try {
+		if (data->sts<PXC_STATUS_NO_ERROR)
+			return Vector2i(0, 0);
+
+		PXCSizeI32 s = data->cm->QueryImageSize(PXCCapture::STREAM_TYPE_DEPTH);
+		if (&s != NULL && s.width >= 0 && s.height >= 0)
+			return Vector2i(s.width, s.height);
+		else
+			return Vector2i(0, 0);
+
+	}
+	catch (std::exception &em)
+	{
+		return Vector2i(0, 0);
+	}
+
+	
+	
 }
 Vector2i RealsenseEngine::getRGBImageSize(void)
 {
+	try {
+		if (data->sts<PXC_STATUS_NO_ERROR)
+			return Vector2i(0, 0);
+
 	PXCSizeI32 s = data->cm->QueryImageSize(PXCCapture::STREAM_TYPE_COLOR);
-	return Vector2i(s.width, s.height);
+	if (&s != NULL && s.width >= 0 && s.height >= 0)
+		return Vector2i(s.width, s.height);
+	else
+		return Vector2i(0, 0);
+	}
+	catch (std::exception &em)
+	{
+	return Vector2i(0, 0);
+	}
 }
 
 

@@ -72,6 +72,8 @@ namespace ITMLib
 			ITMRenderState *renderState_live;
 			ITMRenderState *renderState_freeview;
 
+			MeshFusion * mfdata;
+
 		public:
 			enum GetImageType
 			{

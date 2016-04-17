@@ -28,7 +28,7 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 
 	printf("using calibration file: %s\n", calibFile);
 
-	if (filename2 != NULL)
+	if (filename1 != NULL)
 	{
 		printf("using rgb images: %s\nusing depth images: %s\n", filename1, filename2);
 		if (filename_imu == NULL)
@@ -67,7 +67,7 @@ static void CreateDefaultImageSource(ImageSourceEngine* & imageSource, IMUSource
 	{
 		printf("trying RealSense device\n");
 		imageSource = new RealsenseEngine(calibFile);
-		if (imageSource->getDepthImageSize().x == 0)
+		if (imageSource!= NULL &&   imageSource->getDepthImageSize().x == 0)
 		{
 			delete imageSource;
 			imageSource = NULL;
@@ -107,7 +107,7 @@ try
 		if (argv[arg] != NULL) arg1 = argv[arg]; else break;
 		++arg;
 		if (argv[arg] != NULL) 
-			arg2 = "./Files/Teddy/Frames/%04i.ppm"; 
+			arg2 = argv[arg];
 		else break;
 		++arg;
 		if (argv[arg] != NULL) 
@@ -124,7 +124,7 @@ try
 		       "                  or two arguments specifying rgb and depth file masks\n"
 		       "\n"
 		       "examples:\n"
-		       "  %s ./Files/Teddy/calib.txt ./Files/Teddy/Frames/%%04i.ppm ./Files/Teddy/Frames/%%04i.pgm\n"
+		       "  %s ./Files/Teddy/calib.txt ./Files/Teddy/Frames/  \n"
 		       "  %s ./Files/Teddy/calib.txt\n\n", argv[0], argv[0], argv[0]);
 	}
 

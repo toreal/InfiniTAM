@@ -16,8 +16,21 @@ ImageSourceEngine::ImageSourceEngine(const char *calibFilename)
 ImageFileReader::ImageFileReader(const char *calibFilename, const char *rgbImageMask, const char *depthImageMask)
 	: ImageSourceEngine(calibFilename)
 {
-	strncpy(this->rgbImageMask, rgbImageMask, BUF_SIZE);
-	strncpy(this->depthImageMask, depthImageMask, BUF_SIZE);
+	//strncpy(this->rgbImageMask, rgbImageMask, BUF_SIZE);
+	//strncpy(this->depthImageMask, depthImageMask, BUF_SIZE);
+	memset(this->rgbImageMask, 0x00, BUF_SIZE);
+	sprintf(this->rgbImageMask, "%s%%04i.ppm", rgbImageMask);
+
+	memset(this->depthImageMask, 0x00, BUF_SIZE);
+	sprintf(this->depthImageMask, "%s%%04i.pgm", rgbImageMask);
+
+	memset(this->segImageMask, 0x00, BUF_SIZE);
+	sprintf(this->segImageMask, "%sM%%04i.pgm", rgbImageMask);
+
+	memset(this->pointMask, 0x00, BUF_SIZE);
+	sprintf(this->pointMask, "%s%%04i.txt", rgbImageMask);
+
+
 
 	currentFrameNo = 0;
 	cachedFrameNo = -1;
@@ -64,7 +77,7 @@ bool ImageFileReader::hasMoreImages(void)
 	return ((cached_rgb!=NULL)&&(cached_depth!=NULL));
 }
 
-void ImageFileReader::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth)
+void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,MeshFusion *mfdata)
 {
 	bool bUsedCache = false;
 	if (cached_rgb != NULL) {
@@ -88,6 +101,30 @@ void ImageFileReader::getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth)
 
 		sprintf(str, depthImageMask, currentFrameNo);
 		if (!ReadImageFromFile(rawDepth, str)) printf("error reading file '%s'\n", str);
+
+
+		sprintf(str, segImageMask, currentFrameNo);
+		if (!ReadImageFromFile(mfdata->segImage, str)) printf("error reading file '%s'\n", str);
+
+
+		sprintf(str, pointMask, currentFrameNo);
+
+		try
+		{
+			int np,x,y;
+			FILE *fp = fopen(str, "r");
+			fscanf(fp, "%i", np);
+			for (int i = 0; i < np; i++)
+			{
+				fscanf(fp, "%i %i", x,y);
+			}
+			fclose(fp);
+		}
+		catch (std::exception em)
+		{
+			printf("error reading file '%s'\n", str);
+		}
+
 	}
 
 	++currentFrameNo;

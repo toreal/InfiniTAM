@@ -19,6 +19,7 @@
 
 #include "../Utils/FileUtils.h"
 
+
 using namespace InfiniTAM::Engine;
 UIEngine* UIEngine::instance;
 
@@ -394,7 +395,8 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 	inputRGBImage = new ITMUChar4Image(imageSource->getRGBImageSize(), true, allocateGPU);
 	inputRawDepthImage = new ITMShortImage(imageSource->getDepthImageSize(), true, allocateGPU);
 	inputIMUMeasurement = new ITMIMUMeasurement();
-
+	mfdata = new MeshFusion();
+	mfdata->segImage = new ITMUChar4Image(imageSource->getRGBImageSize(), true, allocateGPU);
 	saveImage = new ITMUChar4Image(imageSource->getDepthImageSize(), true, false);
 
 	outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
@@ -442,7 +444,7 @@ void UIEngine::GetScreenshot(ITMUChar4Image *dest) const
 void UIEngine::ProcessFrame()
 {
 	if (!imageSource->hasMoreImages()) return;
-	imageSource->getImages(inputRGBImage, inputRawDepthImage);
+	imageSource->getImagesMF(inputRGBImage, inputRawDepthImage,mfdata);
 
 	if (imuSource != NULL) {
 		if (!imuSource->hasMoreMeasurements()) return;
@@ -456,10 +458,37 @@ void UIEngine::ProcessFrame()
 		sprintf(str, "%s/%04d.pgm", outFolder, currentFrameNo);
 		SaveImageToFile(inputRawDepthImage, str);
 
+		
+		
 		if (inputRGBImage->noDims != Vector2i(0,0)) {
 			sprintf(str, "%s/%04d.ppm", outFolder, currentFrameNo);
 			SaveImageToFile(inputRGBImage, str);
 		}
+
+		
+		if (mfdata->npoint > 0)
+		{
+			sprintf(str, "%s/M%04d.pgm", outFolder, currentFrameNo);
+			SaveImageToFile(mfdata->segImage, str);
+
+			sprintf(str, "%s/%04d.txt", outFolder, currentFrameNo);
+			FILE * fp = fopen(str, "w+");
+			
+			fprintf(fp, "%d\n", mfdata->npoint);
+			for (int i = 0; i < mfdata->npoint; i++)
+			{
+				fprintf(fp, "%d %d\n", mfdata->pointlist[i].x, mfdata->pointlist[i].y);
+
+			}
+
+			fclose(fp);
+
+
+
+		}
+
+
+
 	}
 
 	sdkResetTimer(&timer_instant);
@@ -492,6 +521,7 @@ void UIEngine::Shutdown()
 	delete inputRGBImage;
 	delete inputRawDepthImage;
 	delete inputIMUMeasurement;
+	delete mfdata;
 
 	delete[] outFolder;
 	delete saveImage;

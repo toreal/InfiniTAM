@@ -66,6 +66,7 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
 
 	fusionActive = true;
 	mainProcessingActive = true;
+	mfdata = new MeshFusion();
 }
 
 ITMMainEngine::~ITMMainEngine()
@@ -92,6 +93,9 @@ ITMMainEngine::~ITMMainEngine()
 	if (meshingEngine != NULL) delete meshingEngine;
 
 	if (mesh != NULL) delete mesh;
+
+
+	if (mfdata != NULL) delete mfdata;
 }
 
 ITMMesh* ITMMainEngine::UpdateMesh(void)

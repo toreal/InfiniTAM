@@ -25,7 +25,7 @@ namespace InfiniTAM
 			~RealsenseEngine();
 
 			bool hasMoreImages(void);
-			void getImages(ITMUChar4Image *rgb, ITMShortImage *rawDepth);
+			void getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth, MeshFusion * data);
 			Vector2i getDepthImageSize(void);
 			Vector2i getRGBImageSize(void);
 		};
