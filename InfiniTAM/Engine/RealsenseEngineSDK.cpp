@@ -1,4 +1,9 @@
+
 #include "RealsenseEngineSDK.h"
+
+#ifdef COMPILE_WITH_RealSenseSDK
+
+
 #include "pxcsensemanager.h"
 #include "pxcprojection.h"
 #include "pxccalibration.h"
@@ -380,5 +385,33 @@ Vector2i RealsenseEngine::getRGBImageSize(void)
 	return Vector2i(0, 0);
 	}
 }
+#else
+
+using namespace InfiniTAM::Engine;
+
+RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requested_imageSize_rgb, Vector2i requested_imageSize_d)
+	: ImageSourceEngine(calibFilename)
+{
+	printf("compiled without RealSense Windows support\n");
+}
+RealsenseEngine::~RealsenseEngine()
+{}
+void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, MeshFusion * data)
+{
+	return;
+}
+bool RealsenseEngine::hasMoreImages(void)
+{
+	return false;
+}
+Vector2i RealsenseEngine::getDepthImageSize(void)
+{
+	return Vector2i(0, 0);
+}
+Vector2i RealsenseEngine::getRGBImageSize(void)
+{
+	return Vector2i(0, 0);
+}
 
 
+#endif

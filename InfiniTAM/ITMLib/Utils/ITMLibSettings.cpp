@@ -46,7 +46,7 @@ ITMLibSettings::ITMLibSettings(void)
 	//trackerType = TRACKER_WICP;
 
 	/// model the sensor noise as  the weight for weighted ICP
-	modelSensorNoise = false;
+	modelSensorNoise = true;// false;
 	if (trackerType == TRACKER_WICP) modelSensorNoise = true;
 	
 

@@ -286,6 +286,47 @@ void SaveImageToFile(const ITMUChar4Image* image, const char* fileName, bool fli
 	fclose(f);
 }
 
+
+
+void SaveImageToFile(const ORUtils::Image<Vector4f>* image, const char* fileName, bool flipVertical)
+{
+	FILE *f = fopen(fileName, "wb");
+	if (!pnm_writeheader(f, image->noDims.x, image->noDims.y, RGB_8u)) {
+		fclose(f); return;
+	}
+
+	unsigned char *data = new unsigned char[image->noDims.x*image->noDims.y * 3];
+
+	Vector2i noDims = image->noDims;
+
+	if (flipVertical)
+	{
+		for (int y = 0; y < noDims.y; y++) for (int x = 0; x < noDims.x; x++)
+		{
+			int locId_src, locId_dst;
+			locId_src = x + y * noDims.x;
+			locId_dst = x + (noDims.y - y - 1) * noDims.x;
+
+			data[locId_dst * 3 + 0] = image->GetData(MEMORYDEVICE_CPU)[locId_src].x;
+			data[locId_dst * 3 + 1] = image->GetData(MEMORYDEVICE_CPU)[locId_src].y;
+			data[locId_dst * 3 + 2] = image->GetData(MEMORYDEVICE_CPU)[locId_src].z;
+		}
+	}
+	else
+	{
+		for (int i = 0; i < noDims.x * noDims.y; ++i) {
+			data[i * 3 + 0] = ((image->GetData(MEMORYDEVICE_CPU)[i].x + 1) / 2) *255;
+			data[i * 3 + 1] = ((image->GetData(MEMORYDEVICE_CPU)[i].y + 1) / 2) * 255;
+			data[i * 3 + 2] = ((image->GetData(MEMORYDEVICE_CPU)[i].z + 1) / 2) * 255;
+		}
+	}
+
+	pnm_writedata(f, image->noDims.x, image->noDims.y, RGB_8u, data);
+	delete[] data;
+	fclose(f);
+}
+
+
 void SaveImageToFile(const ITMShortImage* image, const char* fileName)
 {
 	short *data = (short*)malloc(sizeof(short) * image->dataSize);

@@ -1,6 +1,7 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of InfiniTAM
 
 #include "ITMMainEngine.h"
+#include "../../Utils/FileUtils.h"
 
 using namespace ITMLib::Engine;
 
@@ -118,6 +119,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	else viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, imuMeasurement);
 
 	if (!mainProcessingActive) return;
+
+	SaveImageToFile(view->depthNormal, "normal.ppm");
 
 	// tracking
 	trackingController->Track(trackingState, view);

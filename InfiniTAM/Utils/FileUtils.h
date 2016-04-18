@@ -7,6 +7,7 @@
 #include "../ITMLib/Utils/ITMLibDefines.h"
 
 void SaveImageToFile(const ITMUChar4Image* image, const char* fileName, bool flipVertical = false);
+void SaveImageToFile(const ORUtils::Image<Vector4f>* image, const char* fileName, bool flipVertical = false);
 void SaveImageToFile(const ITMShortImage* image, const char* fileName);
 void SaveImageToFile(const ITMFloatImage* image, const char* fileName);
 bool ReadImageFromFile(ITMUChar4Image* image, const char* fileName);
