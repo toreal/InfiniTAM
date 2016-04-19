@@ -38,7 +38,7 @@ namespace ITMLib
 			};
 
 
-			void sortpoint();
+			void sortpoint(ITMUChar4Image * draw);
 
 		};
 	}

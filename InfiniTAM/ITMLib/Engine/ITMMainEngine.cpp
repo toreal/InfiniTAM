@@ -122,7 +122,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	SaveImageToFile(view->depthNormal, "normal.ppm");
 	SaveImageToFile(view->curvature, "curvature.ppm");
-	mfdata->sortpoint();
+	mfdata->sortpoint(view->rgb);
 
 	// tracking
 	trackingController->Track(trackingState, view);
