@@ -11,6 +11,56 @@ using namespace ORUtils;
 ITMViewBuilder_CPU::ITMViewBuilder_CPU(const ITMRGBDCalib *calib):ITMViewBuilder(calib) { }
 ITMViewBuilder_CPU::~ITMViewBuilder_CPU(void) { }
 
+
+void EstCurvature(ITMFloat4Image * depth_in, ITMFloatImage * curvature)
+{
+	Vector2i imgDims = depth_in->noDims;
+
+	const Vector4f *depthData_in = depth_in->GetData(MEMORYDEVICE_CPU);
+
+	float *curvature_out = curvature->GetData(MEMORYDEVICE_CPU);
+	
+	float maxv = -1;
+	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
+	{
+		int idx = x  + y * imgDims.x;
+		Vector4f p1 = depthData_in[x+1 + y * imgDims.x];
+		Vector4f p2 = depthData_in[x-1 + y * imgDims.x];
+		Vector4f p3 = depthData_in[x + (y+1) * imgDims.x];
+		Vector4f p4 = depthData_in[x + (y-1) * imgDims.x];
+
+		if (p1.w < 0 || p2.w < 0 || p3.w < 0 || p4.w < 0)
+		{
+			curvature_out[idx] = 0;
+			continue;
+		}
+		float  thetax = acos(dot(p1,p2)-1);
+		float  thetay = acos(dot(p3, p4)-1);
+
+		curvature_out[idx] = abs(thetax) + abs(thetay);
+
+		if (curvature_out[idx] > maxv)
+		{
+			 maxv = curvature_out[idx];
+		}
+
+	}
+	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
+	{
+		int idx = x + y * imgDims.x;
+		if ((curvature_out[idx] / maxv) > 0.5)
+		{
+			curvature_out[idx] = ((curvature_out[idx]/maxv)+1)/2;
+		}
+		else
+			curvature_out[idx] = curvature_out[idx] / (2*maxv);
+
+	}
+
+	
+
+}
+
 void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, bool useBilateralFilter, bool modelSensorNoise)
 { 
 	if (*view_ptr == NULL)
@@ -25,6 +75,7 @@ void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage
 		{
 			(*view_ptr)->depthNormal = new ITMFloat4Image(rawDepthImage->noDims, true, false);
 			(*view_ptr)->depthUncertainty = new ITMFloatImage(rawDepthImage->noDims, true, false);
+			(*view_ptr)->curvature = new ITMFloatImage(rawDepthImage->noDims, true, false);
 		}
 
 
@@ -60,8 +111,12 @@ void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage
 	if (modelSensorNoise)
 	{
 		this->ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, view->depth, view->calib->intrinsics_d.projectionParamsSimple.all);
+		EstCurvature(view->depthNormal, view->curvature);
 	}
 }
+
+
+
 
 void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage, ITMFloatImage *depthImage)
 {

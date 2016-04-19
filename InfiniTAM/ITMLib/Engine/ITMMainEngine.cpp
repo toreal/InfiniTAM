@@ -67,7 +67,7 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
 
 	fusionActive = true;
 	mainProcessingActive = true;
-	mfdata = new MeshFusion();
+//	mfdata = new MeshFusion();
 }
 
 ITMMainEngine::~ITMMainEngine()
@@ -96,7 +96,7 @@ ITMMainEngine::~ITMMainEngine()
 	if (mesh != NULL) delete mesh;
 
 
-	if (mfdata != NULL) delete mfdata;
+	//if (mfdata != NULL) delete mfdata;
 }
 
 ITMMesh* ITMMainEngine::UpdateMesh(void)
@@ -121,6 +121,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	if (!mainProcessingActive) return;
 
 	SaveImageToFile(view->depthNormal, "normal.ppm");
+	SaveImageToFile(view->curvature, "curvature.ppm");
+	mfdata->sortpoint();
 
 	// tracking
 	trackingController->Track(trackingState, view);

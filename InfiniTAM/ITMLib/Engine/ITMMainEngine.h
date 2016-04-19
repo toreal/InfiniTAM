@@ -72,9 +72,10 @@ namespace ITMLib
 			ITMRenderState *renderState_live;
 			ITMRenderState *renderState_freeview;
 
-			MeshFusion * mfdata;
+			
 
 		public:
+			MeshFusion * mfdata;
 			enum GetImageType
 			{
 				InfiniTAM_IMAGE_ORIGINAL_RGB,

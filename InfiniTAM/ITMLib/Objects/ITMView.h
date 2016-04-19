@@ -33,6 +33,9 @@ namespace ITMLib
 			/// allocated when needed
 			ITMFloatImage *depthUncertainty;
 
+			ITMFloatImage *curvature;
+
+
 			ITMView(const ITMRGBDCalib *calibration, Vector2i imgSize_rgb, Vector2i imgSize_d, bool useGPU)
 			{
 				this->calib = new ITMRGBDCalib(*calibration);
@@ -40,6 +43,7 @@ namespace ITMLib
 				this->depth = new ITMFloatImage(imgSize_d, true, useGPU);
 				this->depthNormal = NULL;
 				this->depthUncertainty = NULL;
+				this->curvature = NULL;
 			}
 
 			virtual ~ITMView(void)
@@ -51,6 +55,7 @@ namespace ITMLib
 
 				if (depthNormal != NULL) delete depthNormal;
 				if (depthUncertainty != NULL) delete depthUncertainty;
+				if (curvature != NULL) delete curvature;
 			}
 
 			// Suppress the default copy constructor and assignment operator

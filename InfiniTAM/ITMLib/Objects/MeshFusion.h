@@ -23,6 +23,9 @@ namespace ITMLib
 			Vector2i *      pointlist;
 			int             npoint;
 
+			Vector2i *      sellist;
+			int             selp;
+
 			MeshFusion() {
 				segImage = NULL;
 				pointlist = new Vector2i[MAXNODE];
@@ -35,6 +38,7 @@ namespace ITMLib
 			};
 
 
+			void sortpoint();
 
 		};
 	}
