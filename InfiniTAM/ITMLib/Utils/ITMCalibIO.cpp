@@ -72,7 +72,7 @@ bool ITMLib::Objects::readDisparityCalib(std::istream & src, ITMDisparityCalib &
 
 	if ((a == 0.0f) && (b == 0.0f)) {
 		type = ITMDisparityCalib::TRAFO_AFFINE;
-		a = 1.0f/1000.0f; b = 0.0f;
+		a = 1.0f; b = 0.0f;
 	}
 
 	dest.SetFrom(a, b, type);

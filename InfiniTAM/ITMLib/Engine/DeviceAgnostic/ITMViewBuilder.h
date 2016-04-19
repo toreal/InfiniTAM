@@ -81,10 +81,10 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 	}
 
 	// unprojected
-	xp1_y.x = xp1_y.z * ((x + 1.0f) - intrinparam.z) * intrinparam.x; xp1_y.y = xp1_y.z * (y - intrinparam.w) * intrinparam.y;
-	xm1_y.x = xm1_y.z * ((x - 1.0f) - intrinparam.z) * intrinparam.x; xm1_y.y = xm1_y.z * (y - intrinparam.w) * intrinparam.y;
-	x_yp1.x = x_yp1.z * (x - intrinparam.z) * intrinparam.x; x_yp1.y = x_yp1.z * ((y + 1.0f) - intrinparam.w) * intrinparam.y;
-	x_ym1.x = x_ym1.z * (x - intrinparam.z) * intrinparam.x; x_ym1.y = x_ym1.z * ((y - 1.0f) - intrinparam.w) * intrinparam.y;
+	xp1_y.x = xp1_y.z * ((x + 1.0f) - intrinparam.z) / intrinparam.x; xp1_y.y = xp1_y.z * (y - intrinparam.w) / intrinparam.y;
+	xm1_y.x = xm1_y.z * ((x - 1.0f) - intrinparam.z) / intrinparam.x; xm1_y.y = xm1_y.z * (y - intrinparam.w) / intrinparam.y;
+	x_yp1.x = x_yp1.z * (x - intrinparam.z) / intrinparam.x; x_yp1.y = x_yp1.z * ((y + 1.0f) - intrinparam.w) / intrinparam.y;
+	x_ym1.x = x_ym1.z * (x - intrinparam.z) / intrinparam.x; x_ym1.y = x_ym1.z * ((y - 1.0f) - intrinparam.w) / intrinparam.y;
 
 	// gradients x and y
 	diff_x = xp1_y - xm1_y, diff_y = x_yp1 - x_ym1;

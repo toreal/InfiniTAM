@@ -93,15 +93,20 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 		bUsedCache = true;
 	}
 
+	char str[2048];
 	if (!bUsedCache) {
-		char str[2048];
+
 
 		sprintf(str, rgbImageMask, currentFrameNo);
 		if (!ReadImageFromFile(rgb, str)) printf("error reading file '%s'\n", str);
 
 		sprintf(str, depthImageMask, currentFrameNo);
 		if (!ReadImageFromFile(rawDepth, str)) printf("error reading file '%s'\n", str);
+	}
 
+	try
+	{
+		mfdata->npoint = 0;
 
 		sprintf(str, segImageMask, currentFrameNo);
 		if (!ReadImageFromFile(mfdata->segImage, str)) printf("error reading file '%s'\n", str);
@@ -109,14 +114,18 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 
 		sprintf(str, pointMask, currentFrameNo);
 
-		try
-		{
 			int np,x,y;
 			FILE *fp = fopen(str, "r");
-			fscanf(fp, "%i", np);
-			for (int i = 0; i < np; i++)
+			fscanf(fp, "%d", &np);
+			if (np < mfdata->MAXNODE)
 			{
-				fscanf(fp, "%i %i", x,y);
+				mfdata->npoint = np;
+				for (int i = 0; i < np; i++)
+				{
+					fscanf(fp, "%d %d", &x, &y);
+					mfdata->pointlist[i].x = x;
+					mfdata->pointlist[i].y = y;
+				}
 			}
 			fclose(fp);
 		}
@@ -125,7 +134,7 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 			printf("error reading file '%s'\n", str);
 		}
 
-	}
+	
 
 	++currentFrameNo;
 }
