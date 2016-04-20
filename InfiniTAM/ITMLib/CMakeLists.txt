@@ -2,6 +2,10 @@
 # Specify the project files #
 #############################
 
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+include_directories(${GLUT_INCLUDE_DIR})
+
 ##
 SET(ITMLIB_TOPLEVEL_HEADERS
 ITMLib.h
@@ -117,7 +121,15 @@ Engine/DeviceSpecific/CUDA/ITMMeshingEngine_CUDA.h
 ##
 set(ITMLIB_OBJECTS_SOURCES
 Objects/ITMPose.cpp
+Objects/MeshFusion.cpp
+
 )
+
+set(ITMLIB_MESHFUSION_SOURCES
+MeshFusion/Tracker.cpp
+
+)
+
 
 set(ITMLIB_OBJECTS_HEADERS
 Objects/ITMDisparityCalib.h
@@ -168,6 +180,7 @@ ${ITMLIB_ENGINE_SOURCES}
 ${ITMLIB_ENGINE_HEADERS}
 ${ITMLIB_ENGINE_DEVICEAGNOSTIC_HEADERS}
 ${ITMLIB_OBJECTS_SOURCES}
+${ITMLIB_MESHFUSION_SOURCES}
 ${ITMLIB_OBJECTS_HEADERS}
 ${ITMLIB_UTILS_SOURCES}
 ${ITMLIB_UTILS_HEADERS}

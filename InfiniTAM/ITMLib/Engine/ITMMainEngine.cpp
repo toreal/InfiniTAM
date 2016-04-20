@@ -2,6 +2,7 @@
 
 #include "ITMMainEngine.h"
 #include "../../Utils/FileUtils.h"
+#include "../MeshFusion/Tracker.h"
 
 using namespace ITMLib::Engine;
 
@@ -122,7 +123,11 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	SaveImageToFile(view->depthNormal, "normal.ppm");
 	SaveImageToFile(view->curvature, "curvature.ppm");
-	mfdata->sortpoint(view->rgb);
+	
+
+
+//	mfdata->sortpoint(view->rgb);
+
 
 	// tracking
 	trackingController->Track(trackingState, view);

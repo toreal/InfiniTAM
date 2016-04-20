@@ -45,7 +45,7 @@ UIEngine.cpp
 UIEngine.h
 CLIEngine.cpp
 CLIEngine.h
-RealSenseEngine.cpp
+RealsenseEngineSDK.cpp
 RealSenseEngine.h
 )
 
