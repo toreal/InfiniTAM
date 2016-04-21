@@ -1,3 +1,7 @@
+
+
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLUT_INCLUDE_DIR})
 

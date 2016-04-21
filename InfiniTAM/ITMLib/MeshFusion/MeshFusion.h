@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #endif
 
+#include "opencv2/core/core.hpp"
+
+
+
 #include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
@@ -16,6 +20,15 @@ namespace ITMLib
 	{
 		class MeshFusion
 		{
+
+
+			std::vector< cv::Point2f > _corners, _pre_corners;
+			cv::Mat _image, _pre_image;
+			std::vector<uchar> _status;
+			std::vector<float> _err;
+
+
+
 		public:
 			const int MAXNODE = 10000;
 			//features list

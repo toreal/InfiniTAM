@@ -127,6 +127,11 @@ Objects/ITMPose.cpp
 set(ITMLIB_MESHFUSION_SOURCES
 MeshFusion/Tracker.cpp
 MeshFusion/MeshFusion.cpp
+
+)
+
+
+set(ITMLIB_MESHFUSION_HEADERS
 MeshFusion/MeshFusion.h
 
 )
@@ -208,6 +213,7 @@ SOURCE_GROUP(Engine\\DeviceSpecific\\CPU FILES ${ITMLIB_ENGINE_DEVICESPECIFIC_CP
 SOURCE_GROUP(Engine\\DeviceSpecific\\CUDA FILES ${ITMLIB_ENGINE_DEVICESPECIFIC_CUDA_SOURCES} ${ITMLIB_ENGINE_DEVICESPECIFIC_CUDA_HEADERS})
 SOURCE_GROUP(Objects FILES ${ITMLIB_OBJECTS_SOURCES} ${ITMLIB_OBJECTS_HEADERS})
 SOURCE_GROUP(Utils FILES ${ITMLIB_UTILS_SOURCES} ${ITMLIB_UTILS_HEADERS})
+SOURCE_GROUP(MeshFusion FILES ${ITMLIB_MESHFUSION_SOURCES} ${ITMLIB_MESHFUSION_HEADERS})
 
 ##############################################################
 # Specify the include directories, target and link libraries #

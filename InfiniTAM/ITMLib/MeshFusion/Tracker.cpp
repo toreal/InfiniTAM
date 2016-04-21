@@ -23,7 +23,6 @@
 #include "MeshFusion.h"
 
 #include <cstdlib>
-#include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/video/tracking.hpp"
@@ -31,12 +30,6 @@
 //using namespace std;
 using namespace ITMLib::Objects;
 using namespace cv;
-
-
-std::vector< cv::Point2f > _corners,_pre_corners;
-cv::Mat _image,_pre_image;
-std::vector<uchar> _status;
-std::vector<float> _err;
 
 #define SQR(x) ((x)*(x))
 
@@ -58,7 +51,7 @@ int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw)//
 	if (bfirst)
 	{
 		
-		_image = input.clone();
+	//	_image = input.clone();
 	}
 	else
 	{
