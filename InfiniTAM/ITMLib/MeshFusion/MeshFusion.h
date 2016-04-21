@@ -40,6 +40,10 @@ namespace ITMLib
 
 			void sortpoint(ITMUChar4Image * draw);
 
+			int MeshFusion_Tracking(ITMUChar4Image *);
+			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
+
+
 		};
 	}
 }

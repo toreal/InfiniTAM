@@ -126,7 +126,12 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	
 
 
-//	mfdata->sortpoint(view->rgb);
+	mfdata->sortpoint(view->rgb);
+
+	//M
+	assert(view->rgb != NULL);
+	if (view->rgb)
+		mfdata->MeshFusion_Tracking(view->rgb);
 
 
 	// tracking

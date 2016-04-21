@@ -79,7 +79,7 @@ void UIEngine::glutDisplayFunction()
 	}
 
 	//M Display Motion Vector Here
-	MeshFusion_DrawVector(winReg[2][0], winReg[2][1], winReg[2][2] - winReg[2][0], winReg[2][3] - winReg[2][1]);
+	uiEngine->mfdata->MeshFusion_DrawVector(winReg[2][0], winReg[2][1], winReg[2][2] - winReg[2][0], winReg[2][3] - winReg[2][1]);
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -501,10 +501,6 @@ void UIEngine::ProcessFrame()
 	sdkStartTimer(&timer_instant); sdkStartTimer(&timer_average);
 
 	mainEngine->mfdata = mfdata;
-	//M
-	assert(inputRGBImage != NULL);
-	if (inputRGBImage)
-		MeshFusion_Tracking(inputRGBImage->noDims.x, inputRGBImage->noDims.y, (void**)inputRGBImage->GetData(MEMORYDEVICE_CPU));
 
 
 	//actual processing on the mailEngine

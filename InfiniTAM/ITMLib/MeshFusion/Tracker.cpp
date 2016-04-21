@@ -20,7 +20,7 @@
 #endif
 #endif
 
-#include "Tracker.h"
+#include "MeshFusion.h"
 
 #include <cstdlib>
 #include "opencv2/core/core.hpp"
@@ -29,6 +29,7 @@
 #include "opencv2/video/tracking.hpp"
 
 //using namespace std;
+using namespace ITMLib::Objects;
 using namespace cv;
 
 
@@ -39,18 +40,40 @@ std::vector<float> _err;
 
 #define SQR(x) ((x)*(x))
 
-int MeshFusion_Tracking( int w, int h, void** img )
+bool bfirst = true;
+
+int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw)//
 {
+
+
+	int w = draw->noDims.x;
+	int h = draw->noDims.y;
+	Vector4u* img=(draw->GetData(MEMORYDEVICE_CPU));
+	
     cv::Mat input(h,w,CV_8UC4,img);
     
 //    cv::namedWindow( "input", CV_WINDOW_NORMAL );
 //    cv::imshow( "input", input );
     
-    _pre_image = _image.clone();
+	if (bfirst)
+	{
+		
+		_image = input.clone();
+	}
+	else
+	{
+		_pre_image = _image.clone();
+
+	}
+
+
     
-    if (_status.size()==0)
-        _pre_corners = _corners;
-    else
+	if (_status.size() == 0) {
+
+		_pre_corners = _corners;
+
+	}
+         else
     {
         _pre_corners.clear();
         for(int i=0,k=0;i<_corners.size();i++)
@@ -103,11 +126,17 @@ int MeshFusion_Tracking( int w, int h, void** img )
     // k – Free parameter of Harris detector
     double k = 0.04;
     
-    if (_corners.size()==0)
-        cv::goodFeaturesToTrack( _image, _corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector,k);
-    else
+    if (bfirst)
+	{
+
+		//_corners.resize(maxCorners);
+		bfirst = false;
+		cv::goodFeaturesToTrack(_image, _corners, maxCorners, qualityLevel, minDistance, noArray(), blockSize, useHarrisDetector, k);
+
+	}
+      else
     {
-        cv::goodFeaturesToTrack( _image, _corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
+        cv::goodFeaturesToTrack( _image, _corners, maxCorners, qualityLevel, minDistance, noArray(), blockSize, useHarrisDetector, k );
         int ci=0;
         while(_pre_corners.size()<(unsigned int)maxCorners && (int)_corners.size()>ci)
         {
@@ -140,7 +169,7 @@ int MeshFusion_Tracking( int w, int h, void** img )
     return EXIT_SUCCESS;   return 0;
 }
 
-void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight)
+void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight)
 {
     glColor3f(1.0f, 1.0f, 0.0f);
     

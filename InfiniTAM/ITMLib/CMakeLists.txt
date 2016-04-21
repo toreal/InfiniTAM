@@ -121,12 +121,13 @@ Engine/DeviceSpecific/CUDA/ITMMeshingEngine_CUDA.h
 ##
 set(ITMLIB_OBJECTS_SOURCES
 Objects/ITMPose.cpp
-Objects/MeshFusion.cpp
 
 )
 
 set(ITMLIB_MESHFUSION_SOURCES
 MeshFusion/Tracker.cpp
+MeshFusion/MeshFusion.cpp
+MeshFusion/MeshFusion.h
 
 )
 
