@@ -7,8 +7,6 @@
 
 #include "opencv2/core/core.hpp"
 
-
-
 #include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
@@ -31,7 +29,7 @@ namespace ITMLib
 
 		public:
 			const int MAXNODE = 10000;
-			//features list
+			//segmented image
 			ITMUChar4Image *segImage;
 			Vector2i *      pointlist;
 			int             npoint;
@@ -50,10 +48,10 @@ namespace ITMLib
 
 			};
 
-
+			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);
 
-			int MeshFusion_Tracking(ITMUChar4Image *);
+			int MeshFusion_Tracking(ITMUChar4Image * , ITMUChar4Image *);
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 
 

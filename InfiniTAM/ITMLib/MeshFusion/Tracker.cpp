@@ -35,15 +35,16 @@ using namespace cv;
 
 bool bfirst = true;
 
-int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw)//
+int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw, ITMUChar4Image * seg)//
 {
 
 
 	int w = draw->noDims.x;
 	int h = draw->noDims.y;
-	Vector4u* img=(draw->GetData(MEMORYDEVICE_CPU));
-	
+	Vector4u* img=draw->GetData(MEMORYDEVICE_CPU);
+	Vector4u* segimg = seg->GetData(MEMORYDEVICE_CPU);
     cv::Mat input(h,w,CV_8UC4,img);
+	cv::Mat seginput(h, w, CV_8UC4, segimg);
     
 //    cv::namedWindow( "input", CV_WINDOW_NORMAL );
 //    cv::imshow( "input", input );
@@ -79,7 +80,15 @@ int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw)//
         }
     }
     
+	// mask – The optional region of interest. If the image is not empty (then it
+	// needs to have the type CV_8UC1 and the same size as image ), it will specify
+	// the region in which the corners are detected
+	cv::Mat mask;
+
+
     cvtColor(input,_image,COLOR_BGR2GRAY);
+	cvtColor(seginput, mask, COLOR_BGR2GRAY);
+
 
     //_image2 = input.clone();
     //_image2.convertTo(_image,CV_8UC1,1);
@@ -104,10 +113,6 @@ int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw)//
     // minDistance – The minimum possible Euclidean distance between the returned corners
     double minDistance = 20.;
     
-    // mask – The optional region of interest. If the image is not empty (then it
-    // needs to have the type CV_8UC1 and the same size as image ), it will specify
-    // the region in which the corners are detected
-    cv::Mat mask;
     
     // blockSize – Size of the averaging block for computing derivative covariation
     // matrix over each pixel neighborhood, see cornerEigenValsAndVecs()
@@ -124,12 +129,12 @@ int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw)//
 
 		//_corners.resize(maxCorners);
 		bfirst = false;
-		cv::goodFeaturesToTrack(_image, _corners, maxCorners, qualityLevel, minDistance, noArray(), blockSize, useHarrisDetector, k);
+		cv::goodFeaturesToTrack(_image, _corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
 
 	}
       else
     {
-        cv::goodFeaturesToTrack( _image, _corners, maxCorners, qualityLevel, minDistance, noArray(), blockSize, useHarrisDetector, k );
+        cv::goodFeaturesToTrack( _image, _corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
         int ci=0;
         while(_pre_corners.size()<(unsigned int)maxCorners && (int)_corners.size()>ci)
         {

@@ -12,6 +12,7 @@
 using namespace ITMLib::Objects;
 using namespace std;
 
+
 void MeshFusion::sortpoint(ITMUChar4Image * draw)
 {
 	

@@ -144,7 +144,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	//M
 	assert(view->rgb != NULL);
 	if (view->rgb)
-		mfdata->MeshFusion_Tracking(view->rgb);
+		mfdata->MeshFusion_Tracking(view->rgb ,mfdata->segImage);
 
 
 	//// tracking
