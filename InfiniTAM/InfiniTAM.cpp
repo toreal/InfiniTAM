@@ -1,7 +1,7 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of InfiniTAM
 
 #include <cstdlib>
-
+#include <Fade_2D.h>
 #include "Engine/UIEngine.h"
 #include "Engine/ImageSourceEngine.h"
 
@@ -97,6 +97,10 @@ int main(int argc, char** argv)
 
 try
 {
+	GEOM_FADE2D::Fade_2D dt;
+	dt.printLicense();
+
+
 	const char *arg1 = "";
 	const char *arg2 = NULL;
 	const char *arg3 = NULL;

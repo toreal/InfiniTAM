@@ -74,6 +74,8 @@ ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib 
 	{
 
 		viewBuilder = new ITMViewBuilder_CPU(calib);
+		mesh = NULL;
+		if (createMeshingEngine) mesh = new ITMMesh(settings->deviceType == ITMLibSettings::DEVICE_CUDA ? MEMORYDEVICE_CUDA : MEMORYDEVICE_CPU);
 
 
 	}
@@ -122,8 +124,16 @@ ITMMesh* ITMMainEngine::UpdateMesh(void)
 void ITMMainEngine::SaveSceneToMesh(const char *objFileName)
 {
 	if (mesh == NULL) return;
-	meshingEngine->MeshScene(mesh, scene);
-	mesh->WriteSTL(objFileName);
+	if (bsence)
+	{
+		meshingEngine->MeshScene(mesh, scene);
+		mesh->WriteSTL(objFileName);
+	}
+	else
+	{
+		mesh->WriteSTL(objFileName);
+		mesh->WriteOBJ("m.obj");
+	}
 }
 
 void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
@@ -134,17 +144,22 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	if (!mainProcessingActive) return;
 
+	mfdata->mainView = view;
+
+
 	SaveImageToFile(view->depthNormal, "normal.ppm");
 	SaveImageToFile(view->curvature, "curvature.ppm");
 	
 
 
-	mfdata->sortpoint(view->rgb);
-
 	//M
 	assert(view->rgb != NULL);
 	if (view->rgb)
-		mfdata->MeshFusion_Tracking(view->rgb ,mfdata->segImage);
+		mfdata->MeshFusion_Tracking();
+
+	mfdata->sortpoint(view->rgb);
+	mfdata->constructMesh(  mesh );
+
 
 
 	//// tracking

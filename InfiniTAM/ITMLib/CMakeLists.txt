@@ -2,7 +2,7 @@
 # Specify the project files #
 #############################
 
-include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${OpenCV_INCLUDE_DIRS} ${FADE_INCLUDE_DIR} )
 
 include_directories(${GLUT_INCLUDE_DIR})
 

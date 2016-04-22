@@ -35,14 +35,14 @@ using namespace cv;
 
 bool bfirst = true;
 
-int MeshFusion::MeshFusion_Tracking(ITMUChar4Image * draw, ITMUChar4Image * seg)//
+int MeshFusion::MeshFusion_Tracking()//
 {
-
+	ITMUChar4Image * draw = mainView->rgb;
 
 	int w = draw->noDims.x;
 	int h = draw->noDims.y;
 	Vector4u* img=draw->GetData(MEMORYDEVICE_CPU);
-	Vector4u* segimg = seg->GetData(MEMORYDEVICE_CPU);
+	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
     cv::Mat input(h,w,CV_8UC4,img);
 	cv::Mat seginput(h, w, CV_8UC4, segimg);
     
@@ -206,4 +206,27 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
         }
     }
     glEnd();
+
+	if (mainView != NULL)
+	{
+		glBegin(GL_POINTS);
+		glColor3f(0, 1.0f, 0.0f);
+		float* dd = mainView->depth->GetData(MEMORYDEVICE_CPU);
+		int xlens = mainView->depth->noDims.x;
+		int ylens = mainView->depth->noDims.y;
+		for (int nx = 0; nx < xlens; nx++)
+			for (int ny = 0; ny < ylens; ny++)
+			{
+				float val = dd[nx + ny*xlens];
+
+				if (val > 0)
+				{
+					float x = nx*1.0 / _image.cols;
+					float y =1- ny*1.0 / _image.rows;
+					glVertex2f(fstartx + x*fwidth, fstarty + y*fheight);
+				}
+			}
+		glEnd();
+	}
+
 }

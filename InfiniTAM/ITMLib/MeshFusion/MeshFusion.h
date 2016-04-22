@@ -6,7 +6,8 @@
 #endif
 
 #include "opencv2/core/core.hpp"
-
+#include "../Objects/ITMMesh.h"
+#include "../Objects/ITMView.h"
 #include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
@@ -29,6 +30,7 @@ namespace ITMLib
 
 		public:
 			const int MAXNODE = 10000;
+			ITMView     *mainView=NULL;
 			//segmented image
 			ITMUChar4Image *segImage;
 			Vector2i *      pointlist;
@@ -40,18 +42,21 @@ namespace ITMLib
 			MeshFusion() {
 				segImage = NULL;
 				pointlist = new Vector2i[MAXNODE];
+				sellist = new Vector2i[MAXNODE];
 			};
 			~MeshFusion() {  
 				if (segImage != NULL)
 					delete segImage;
+				
 				delete pointlist;
-
+				delete sellist;
 			};
 
 			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);
+			void constructMesh(ITMMesh *);
 
-			int MeshFusion_Tracking(ITMUChar4Image * , ITMUChar4Image *);
+			int MeshFusion_Tracking( );
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 
 

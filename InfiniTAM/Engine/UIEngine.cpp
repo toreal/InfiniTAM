@@ -502,7 +502,6 @@ void UIEngine::ProcessFrame()
 
 	mainEngine->mfdata = mfdata;
 
-
 	//actual processing on the mailEngine
 	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
 	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
