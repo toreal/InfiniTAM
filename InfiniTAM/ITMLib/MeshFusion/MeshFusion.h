@@ -33,6 +33,7 @@ namespace ITMLib
 			ITMView     *mainView=NULL;
 			//segmented image
 			ITMUChar4Image *segImage;
+			ITMFloatImage * proDepth;
 			Vector2i *      pointlist;
 			int             npoint;
 
@@ -55,6 +56,7 @@ namespace ITMLib
 			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);
 			void constructMesh(ITMMesh *);
+			void buildProjDepth();
 
 			int MeshFusion_Tracking( );
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);

@@ -58,6 +58,35 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 	this->selp = i;
 
 }
+
+void MeshFusion::buildProjDepth()
+{
+
+	if (proDepth == NULL  )
+	proDepth=	new ITMFloatImage(mainView->depth->noDims, true, false);
+
+
+	float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
+	int lens = proDepth->noDims.x * proDepth->noDims.y;
+	memset(dp, 0x00, sizeof(float) *lens);
+
+	float* dd = mainView->depth->GetData(MEMORYDEVICE_CPU);
+	int xlens = mainView->depth->noDims.x;
+	int ylens = mainView->depth->noDims.y;
+	for (int nx = 0; nx < xlens; nx++)
+		for (int ny = 0; ny < ylens; ny++)
+		{
+			float val = dd[nx + ny*xlens];
+
+			if (val > 0)
+			{
+				float x = nx*1.0 / _image.cols;
+				float y = 1 - ny*1.0 / _image.rows;
+//				glVertex2f(fstartx + x*fwidth, fstarty + y*fheight);
+			}
+		}
+
+}
 	 
 
 void MeshFusion::constructMesh(ITMMesh * mesh )
