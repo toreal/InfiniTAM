@@ -150,7 +150,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	SaveImageToFile(view->depthNormal, "normal.ppm");
 	SaveImageToFile(view->curvature, "curvature.ppm");
 	
-
+	mfdata->buildProjDepth();
 
 	//M
 	assert(view->rgb != NULL);

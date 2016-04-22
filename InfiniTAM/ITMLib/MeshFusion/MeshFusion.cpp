@@ -65,6 +65,10 @@ void MeshFusion::buildProjDepth()
 	if (proDepth == NULL  )
 	proDepth=	new ITMFloatImage(mainView->depth->noDims, true, false);
 
+	Vector4f intrinD= mainView->calib->intrinsics_d.projectionParamsSimple.all;
+	Vector4f intrinRGB= mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+
+	Matrix4f d2rgb = mainView->calib->trafo_rgb_to_depth.calib_inv;
 
 	float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
 	int lens = proDepth->noDims.x * proDepth->noDims.y;
@@ -76,13 +80,25 @@ void MeshFusion::buildProjDepth()
 	for (int nx = 0; nx < xlens; nx++)
 		for (int ny = 0; ny < ylens; ny++)
 		{
-			float val = dd[nx + ny*xlens];
+			float pz = dd[nx + ny*xlens]*1000;
 
-			if (val > 0)
+			if (pz > 0)
 			{
-				float x = nx*1.0 / _image.cols;
-				float y = 1 - ny*1.0 / _image.rows;
-//				glVertex2f(fstartx + x*fwidth, fstarty + y*fheight);
+				Vector4f pp;
+				
+				pp.x = pz * (nx - intrinD.z) / intrinD.x; 
+				pp.y = pz * (ny - intrinD.w) / intrinD.y;
+				pp.z = pz;
+				pp.w = 1;
+
+				Vector4f prgb = d2rgb*pp;
+				prgb.homogeneousCoordinatesNormalize();
+
+				int ix = prgb.x * intrinRGB.x / prgb.z + intrinRGB.z;
+				int iy = prgb.y * intrinRGB.y / prgb.z + intrinRGB.w;
+				if ( ix >=0 && ix < xlens && iy >=0 && iy < ylens)
+				dp[ix + iy*xlens] = prgb.z;
+
 			}
 		}
 

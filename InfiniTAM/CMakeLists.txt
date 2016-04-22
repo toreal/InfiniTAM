@@ -49,7 +49,7 @@ IF(MSVC_IDE)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS )
   add_definitions(-DUSING_CMAKE=1)
 
-  LINK_DIRECTORIES(C:/openglLIB/lib ${FADE_LIB_DIR} )
+  LINK_DIRECTORIES(C:/james/openglLIB/lib ${FADE_LIB_DIR} )
 ELSE(MSVC_IDE)
   set(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
   set(CMAKE_CXX_FLAGS "-fPIC -O3 -march=native ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")

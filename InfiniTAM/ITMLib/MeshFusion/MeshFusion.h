@@ -33,7 +33,7 @@ namespace ITMLib
 			ITMView     *mainView=NULL;
 			//segmented image
 			ITMUChar4Image *segImage;
-			ITMFloatImage * proDepth;
+			ITMFloatImage * proDepth=NULL;
 			Vector2i *      pointlist;
 			int             npoint;
 
