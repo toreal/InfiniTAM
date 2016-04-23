@@ -8,10 +8,13 @@
 #include <iterator> 
 # include <iostream> 
 #include "../../ORUtils/psimpl.h"
+#include "../Engine/DeviceSpecific/CPU/ITMViewBuilder_CPU.h"
 //#include <math.h>
 #include <opencv\cvwimage.h>
 
 using namespace ITMLib::Objects;
+using namespace ITMLib::Engine;
+
 using namespace std;
 using namespace GEOM_FADE2D;
 
@@ -61,6 +64,7 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 
 void MeshFusion::buildProjDepth()
 {
+	ITMFloatImage * floatImage= new ITMFloatImage(mainView->depth->noDims, true, false);
 
 	if (proDepth == NULL  )
 	proDepth=	new ITMFloatImage(mainView->depth->noDims, true, false);
@@ -97,18 +101,75 @@ void MeshFusion::buildProjDepth()
 				int ix = prgb.x * intrinRGB.x / prgb.z + intrinRGB.z;
 				int iy = prgb.y * intrinRGB.y / prgb.z + intrinRGB.w;
 				if ( ix >=0 && ix < xlens && iy >=0 && iy < ylens)
-				dp[ix + iy*xlens] = prgb.z;
-
+				{  
+					if (dp[ix + iy*xlens] > 0 && ABS(dp[ix + iy*xlens] - prgb.z) > 10)
+						cout << dp[ix + iy*xlens] << "," << prgb.z << endl;
+					dp[ix + iy*xlens] = prgb.z;
+				}
 			}
 		}
+
+	//bool useBilateralFilter = true;
+	//
+	//	ITMViewBuilder*  vb = new  ITMViewBuilder_CPU( mainView->calib);
+	//if (useBilateralFilter)
+	//{
+	//	//5 steps of bilateral filtering
+	//	vb->DepthFiltering(floatImage, proDepth);
+	//	vb->DepthFiltering(proDepth, floatImage);
+	//	vb->DepthFiltering(floatImage, proDepth);
+	//	vb->DepthFiltering(proDepth, floatImage);
+	//	//vb->DepthFiltering(floatImage, view->depth);
+	//	
+	//}
+
+	//delete vb;
+
+
 
 }
 	 
 
+std::string toString(int i)
+{
+	std::ostringstream oss;
+	oss << i;
+	return oss.str();
+}
+
+
+float estivalue(const float * data, int index )
+{
+	const int lens = 640 * 480-1;
+	float ret = data[index];
+
+	for (int i = 1; i < 6; i++)
+	{
+		if (ret > 0)
+			return ret;
+
+		if (ret == 0 && index < (lens-i))
+			ret = data[index + i];
+
+		if (ret == 0 && index > i)
+			ret = data[index - i];
+
+		if (ret == 0 && index < (lens - i*640))
+			ret = data[index + i*640];
+
+		if (ret == 0 && index > i*640)
+			ret = data[index - i*640];
+		
+			
+	}
+	return 300;
+}
+
+
 void MeshFusion::constructMesh(ITMMesh * mesh )
 {
-	ITMFloatImage * depth_in = mainView->depth; 
-	Vector4f  intrinparam = mainView->calib->intrinsics_d.projectionParamsSimple.all;
+	ITMFloatImage * depth_in = proDepth; 
+	Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 
 
 	Vector2i imgDims = depth_in->noDims;
@@ -185,28 +246,14 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 			Point2* p1=pT->getCorner(1);
 			Point2* p2=pT->getCorner(2);
 
-			int i1 = p0->x() + w*p0->y();
-			int i2 = p1->x() + w*p1->y();
-			int i3 = p2->x() + w*p2->y();
-			trivec[ti].p0.z = depthData_in[i1];
-			if (trivec[ti].p0.z > 0.5 || trivec[ti].p0.z < 0)
-				trivec[ti].p0.z = 0.25;
-			/*while (trivec[ti].p0.z < 0 && i1 < maxlen)
-			{
-				i1 += w;
-				trivec[ti].p0.z = depthData_in[i1];
-			}*/
-
-
-			trivec[ti].p1.z = depthData_in[i2];
-			if (trivec[ti].p1.z > 0.5 || trivec[ti].p1.z < 0)
-				trivec[ti].p1.z = 0.25;
-
-			trivec[ti].p2.z = depthData_in[i3];
-			if (trivec[ti].p2.z > 0.5 || trivec[ti].p2.z < 0)
-				trivec[ti].p2.z = 0.25;
-
-			//if (trivec[ti].p0.z >= 0 && trivec[ti].p1.z >= 0 && trivec[ti].p2.z >= 0)
+			int i1 = p0->x() + w*((int)p0->y());
+			int i2 = p1->x() + w*((int)p1->y());
+			int i3 = p2->x() + w*((int)p2->y());
+			trivec[ti].p0.z = estivalue(depthData_in, i1);
+			trivec[ti].p1.z = estivalue(depthData_in, i2);			
+			trivec[ti].p2.z = estivalue(depthData_in, i3);
+			
+			//if (trivec[ti].p0.z > 0 && trivec[ti].p1.z > 0 && trivec[ti].p2.z > 0)
 			{
 
 				trivec[ti].p0.x = trivec[ti].p0.z * (p0->x() - intrinparam.z) / intrinparam.x;
@@ -217,6 +264,10 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 
 				trivec[ti].p2.x = trivec[ti].p2.z * (p2->x() - intrinparam.z) / intrinparam.x;
 				trivec[ti].p2.y = trivec[ti].p2.z * (p2->y() - intrinparam.w) / intrinparam.y;
+
+				std::string text( toString(ti) );
+				Label label_pNeigT(c2, text, false);
+				vis2.addObject(label_pNeigT, colorBlue);
 
 				ti++;
 			}

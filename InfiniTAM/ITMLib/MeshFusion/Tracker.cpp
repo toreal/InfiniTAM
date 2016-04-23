@@ -207,7 +207,7 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
     }
     glEnd();
 
-	if ( proDepth != NULL)
+	if ( false)// proDepth != NULL)
 	{
 		glBegin(GL_POINTS);
 		glColor3f(0, 1.0f, 0.0f);
