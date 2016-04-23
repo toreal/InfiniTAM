@@ -159,12 +159,20 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 	int ti = 0;
 	ITMMesh::Triangle * trivec=  mesh->triangles->GetData(MEMORYDEVICE_CPU);
 
+	
+
 	for (std::vector<Triangle2*>::iterator it = vAllDelaunayTriangles.begin(); it != vAllDelaunayTriangles.end(); ++it)
 	{
 		Triangle2* pT(*it);
 		Point2 c2 = pT->getBarycenter();
-		
-		int idx = (c2.x() + w* c2.y());
+		int cx = c2.x();
+		int cy = c2.y();
+		if (cx < 0 || cx >= imgDims.width || cy < 0 || cy >= imgDims.height)
+			continue;
+
+		int idx = (cx + w* cy);
+	  
+
 		Vector4u p = mask[idx];
 		if (p.x >0 || p.y > 0 || p.z > 0 )
 		{

@@ -6,7 +6,7 @@
 
 using namespace ITMLib::Engine;
 
-bool bsence = false;
+bool bsence = true;
 
 ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
@@ -139,7 +139,7 @@ void ITMMainEngine::SaveSceneToMesh(const char *objFileName)
 void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
 	// prepare image and turn it into a depth image
-	if (imuMeasurement==NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter,settings->modelSensorNoise);
+	if (imuMeasurement == NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, settings->modelSensorNoise);
 	else viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, imuMeasurement);
 
 	if (!mainProcessingActive) return;
@@ -149,7 +149,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	SaveImageToFile(view->depthNormal, "normal.ppm");
 	SaveImageToFile(view->curvature, "curvature.ppm");
-	
+
 	mfdata->buildProjDepth();
 
 	//M
@@ -158,18 +158,21 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 		mfdata->MeshFusion_Tracking();
 
 	mfdata->sortpoint(view->rgb);
-	mfdata->constructMesh(  mesh );
+	mfdata->constructMesh(mesh);
 
 
-
+	if (bsence)
+	{
+	
 	//// tracking
-	//trackingController->Track(trackingState, view);
+	trackingController->Track(trackingState, view);
 
 	//// fusion
-	//if (fusionActive) denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);
+	if (fusionActive) denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);
 
 	//// raycast to renderState_live for tracking and free visualisation
-	//trackingController->Prepare(trackingState, view, renderState_live);
+	trackingController->Prepare(trackingState, view, renderState_live);
+     }
 }
 
 Vector2i ITMMainEngine::GetImageSize(void) const
