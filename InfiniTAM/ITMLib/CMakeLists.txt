@@ -127,6 +127,7 @@ Objects/ITMPose.cpp
 set(ITMLIB_MESHFUSION_SOURCES
 MeshFusion/Tracker.cpp
 MeshFusion/MeshFusion.cpp
+MeshFusion/EstimatePose.cpp
 )
 
 

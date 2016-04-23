@@ -161,6 +161,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	mfdata->sortpoint(view->rgb);
 	mfdata->constructMesh(mesh);
 
+	mfdata->estimatePose();
+
 
 	if (bsence)
 	{

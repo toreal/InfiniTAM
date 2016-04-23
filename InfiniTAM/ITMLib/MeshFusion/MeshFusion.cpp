@@ -138,7 +138,7 @@ std::string toString(int i)
 }
 
 
-float estivalue(const float * data, int index )
+float MeshFusion::estivalue(const float * data, int index )
 {
 	const int lens = 640 * 480-1;
 	float ret = data[index];

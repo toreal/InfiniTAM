@@ -19,14 +19,15 @@ namespace ITMLib
 	{
 		class MeshFusion
 		{
-
+		private :
 
 			std::vector< cv::Point2f > _corners, _pre_corners,base_corners;
 			cv::Mat _image, _pre_image;
 			std::vector<uchar> _status;
 			std::vector<float> _err;
 
-
+			float estivalue(const float * data, int index);
+			std::vector<cv::Point3f> Generate3DPoints();
 
 		public:
 			const int MAXNODE = 10000;
@@ -57,7 +58,7 @@ namespace ITMLib
 			void sortpoint(ITMUChar4Image * draw);
 			void constructMesh(ITMMesh *);
 			void buildProjDepth();
-
+			void estimatePose();
 			int MeshFusion_Tracking(float & mindis );
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 
