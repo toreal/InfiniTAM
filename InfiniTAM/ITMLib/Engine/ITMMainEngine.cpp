@@ -6,7 +6,7 @@
 
 using namespace ITMLib::Engine;
 
-bool bsence = true;
+bool bsence = false;
 
 ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
