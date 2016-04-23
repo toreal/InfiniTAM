@@ -35,9 +35,11 @@ using namespace cv;
 
 bool bfirst = true;
 
-int MeshFusion::MeshFusion_Tracking()//
+int MeshFusion::MeshFusion_Tracking( float & mindis)//
 {
 	ITMUChar4Image * draw = mainView->rgb;
+
+	mindis = 0;
 
 	int w = draw->noDims.x;
 	int h = draw->noDims.y;
@@ -48,37 +50,50 @@ int MeshFusion::MeshFusion_Tracking()//
     
 //    cv::namedWindow( "input", CV_WINDOW_NORMAL );
 //    cv::imshow( "input", input );
-    
+    //begin new tracking
 	if (bfirst)
 	{
 		
+		_pre_image = Mat();
+		
+
 	//	_image = input.clone();
+
 	}
 	else
 	{
-		_pre_image = _image.clone();
+		if (_pre_image.empty())
+		{
+			_pre_image = _image.clone();
+			if (_status.size() == 0) {
+
+				base_corners = _corners;
+
+			}
+			else
+			{
+				base_corners.clear();
+				for (int i = 0; i<_corners.size(); i++)
+				{
+					if (_status[i] == 1)
+					{
+						base_corners.push_back(_corners[i]);
+					
+					}
+				}//end of for
+			}
+
+		}//end of _pre
+
+
+		//maintain pre_corner 
+
 
 	}
 
 
     
-	if (_status.size() == 0) {
-
-		_pre_corners = _corners;
-
-	}
-         else
-    {
-        _pre_corners.clear();
-        for(int i=0,k=0;i<_corners.size();i++)
-        {
-            if (_status[i]==1)
-            {
-                _pre_corners.push_back(_corners[i]);
-                k++;
-            }
-        }
-    }
+	
     
 	// mask – The optional region of interest. If the image is not empty (then it
 	// needs to have the type CV_8UC1 and the same size as image ), it will specify

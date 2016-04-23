@@ -21,7 +21,7 @@ namespace ITMLib
 		{
 
 
-			std::vector< cv::Point2f > _corners, _pre_corners;
+			std::vector< cv::Point2f > _corners, _pre_corners,base_corners;
 			cv::Mat _image, _pre_image;
 			std::vector<uchar> _status;
 			std::vector<float> _err;
@@ -58,7 +58,7 @@ namespace ITMLib
 			void constructMesh(ITMMesh *);
 			void buildProjDepth();
 
-			int MeshFusion_Tracking( );
+			int MeshFusion_Tracking(float & mindis );
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 
 

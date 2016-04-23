@@ -152,10 +152,11 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	mfdata->buildProjDepth();
 
+	float mindis;
 	//M
 	assert(view->rgb != NULL);
 	if (view->rgb)
-		mfdata->MeshFusion_Tracking();
+		mfdata->MeshFusion_Tracking(mindis);
 
 	mfdata->sortpoint(view->rgb);
 	mfdata->constructMesh(mesh);

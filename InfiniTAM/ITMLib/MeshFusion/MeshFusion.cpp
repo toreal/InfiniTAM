@@ -143,7 +143,7 @@ float estivalue(const float * data, int index )
 	const int lens = 640 * 480-1;
 	float ret = data[index];
 
-	for (int i = 1; i < 6; i++)
+	for (int i = 1; i < 10; i++)
 	{
 		if (ret > 0)
 			return ret;
