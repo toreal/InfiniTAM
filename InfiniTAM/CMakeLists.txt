@@ -17,14 +17,17 @@ find_package(OpenCV REQUIRED )
 
 set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
 set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
-set(FADE_LIBS fade2D_x64_v140_Debug.lib OpenMeshToolsd.lib )
+set(FADE_LIBS fade2D_x64_v140_Debug.lib  )
 include_directories(${FADE_INCLUDE_DIR} )
 
 
-set(OPENMESH_INCLUDE_DIR  C:/James/OpenMesh51/include)
-set(OPENMESH_LIB_DIR C:/James/OpenMesh51/lib )
-set(OPENMESH_LIBS OpenMeshCored.lib  OpenMeshToolsd.lib)
-include_directories(${OPENMESH_INCLUDE_DIR} )
+# set(OPENMESH_INCLUDE_DIR  C:/James/OpenMesh51/include)
+# set(OPENMESH_LIB_DIR C:/James/OpenMesh51/lib )
+# set(OPENMESH_LIBS OpenMeshCored.lib  OpenMeshToolsd.lib)
+# include_directories(${OPENMESH_INCLUDE_DIR} )
+
+find_package(CGAL REQUIRED COMPONENTS Core) # If the dependency is required, use REQUIRED option - if it's not found CMake will issue an error
+include( ${CGAL_USE_FILE} )
 
 
 find_package(CUDA QUIET)
@@ -55,7 +58,7 @@ IF(MSVC_IDE)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS )
   add_definitions(-DUSING_CMAKE=1)
 
-  LINK_DIRECTORIES(C:/james/openglLIB/lib ${FADE_LIB_DIR} ${OPENMESH_LIB_DIR} )
+  LINK_DIRECTORIES(C:/james/openglLIB/lib ${FADE_LIB_DIR}  )
 ELSE(MSVC_IDE)
   set(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
   set(CMAKE_CXX_FLAGS "-fPIC -O3 -march=native ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
@@ -86,9 +89,9 @@ ENDIF()
 add_executable(InfiniTAM_cli InfiniTAM_cli.cpp)
 target_link_libraries(InfiniTAM_cli Engine)
 target_link_libraries(InfiniTAM_cli Utils)
-target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${FADE_LIBS} ${OPENMESH_LIBS})
+target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${FADE_LIBS} )
 add_executable(InfiniTAM InfiniTAM.cpp )
-target_link_libraries(InfiniTAM ${OpenCV_LIBS} ${FADE_LIBS} ${OPENMESH_LIBS}   )
+target_link_libraries(InfiniTAM ${OpenCV_LIBS} ${FADE_LIBS}    )
 target_link_libraries(InfiniTAM Engine)
 target_link_libraries(InfiniTAM Utils)
 
