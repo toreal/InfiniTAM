@@ -27,6 +27,11 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/video/tracking.hpp"
 
+#define TEST_CGAL
+#ifdef TEST_CGAL
+#include <CGAL/Simple_cartesian.h>
+#endif
+
 //using namespace std;
 using namespace ITMLib::Objects;
 using namespace cv;
@@ -141,6 +146,44 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
     return EXIT_SUCCESS;
 }
 
+#ifdef TEST_CGAL
+typedef CGAL::Simple_cartesian<double> Kernel;
+typedef Kernel::Point_2 Point_2;
+typedef Kernel::Segment_2 Segment_2;
+
+void testcgal()
+{
+    {
+        Point_2 p(1,1), q(10,10);
+        std::cout << "p = " << p << std::endl;
+        std::cout << "q = " << q.x() << " " << q.y() << std::endl;
+        std::cout << "sqdist(p,q) = "
+        << CGAL::squared_distance(p,q) << std::endl;
+        
+        Segment_2 s(p,q);
+        Point_2 m(5, 9);
+        
+        std::cout << "m = " << m << std::endl;
+        std::cout << "sqdist(Segment_2(p,q), m) = "
+        << CGAL::squared_distance(s,m) << std::endl;
+        std::cout << "p, q, and m ";
+        switch (CGAL::orientation(p,q,m)){
+            case CGAL::COLLINEAR:
+                std::cout << "are collinear\n";
+                break;
+            case CGAL::LEFT_TURN:
+                std::cout << "make a left turn\n";
+                break;
+            case CGAL::RIGHT_TURN:
+                std::cout << "make a right turn\n";
+                break;
+        }
+        std::cout << " midpoint(p,q) = " << CGAL::midpoint(p,q) << std::endl;
+        
+    }
+}
+#endif
+
 void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight)
 {
     glColor3f(1.0f, 1.0f, 0.0f);
@@ -223,5 +266,9 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
 			}
 		glEnd();
 	}
-
+    
+#ifdef TEST_CGAL
+    //test cgal
+    testcgal();
+#endif
 }
