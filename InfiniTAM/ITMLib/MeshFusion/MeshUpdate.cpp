@@ -46,16 +46,16 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 	//build new triangle
 	// for each new corner check whether it is belong to a triangle or not 
 	
-	for (int i = 0; i < _corners.size(); i++)
-	{
-		cv::Point2f p = _corners[i];
+	//for (int i = 0; i < _corners.size(); i++)
+	//{
+	//	cv::Point2f p = _corners[i];
 
-		for (int j = 0; j < meshold->noTotalTriangles; j++)
-		{
-			 
-		}
+	//	for (int j = 0; j < meshold->noTotalTriangles; j++)
+	//	{
+	//		 
+	//	}
 
-	}
+	//}
 
 
 }
