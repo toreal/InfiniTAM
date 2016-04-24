@@ -21,11 +21,13 @@ namespace ITMLib
 		{
 		private :
 
-			std::vector< cv::Point2f > _corners, _pre_corners,base_corners;
-			cv::Mat _image, _pre_image;
-			std::vector<uchar> _status;
-			std::vector<float> _err;
-
+            // For Tracker
+			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners;
+			cv::Mat             m_image, m_pre_image;
+			std::vector<uchar>  m_status;
+			std::vector<float>  m_err;
+            bool                m_bfirst = true;
+            
 			float estivalue(const float * data, int index);
 			std::vector<cv::Point3f> Generate3DPoints();
 
@@ -40,6 +42,7 @@ namespace ITMLib
 
 			Vector2i *      sellist;
 			int             selp;
+            
 
 			MeshFusion() {
 				segImage = NULL;
@@ -59,10 +62,13 @@ namespace ITMLib
 			void constructMesh(ITMMesh *);
 			void buildProjDepth();
 			void estimatePose();
-			int MeshFusion_Tracking(float & mindis );
+            
+            ////////////////////////////
+            //  Image feature tracking
+            void MeshFusion_InitTracking( void );
+			int MeshFusion_Tracking(float & maxdis );
+            //ui codes. opengl code inside for drawing motion vectors. Typically, call this func in glutDisplayFunction
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
-
-
 		};
 	}
 }

@@ -12,9 +12,9 @@ std::vector<cv::Point3f> MeshFusion::Generate3DPoints( )
 	int xlens = proDepth->noDims.x;
 	int ylens = proDepth->noDims.y;
 
-	for (int i = 0; i < (int)_pre_corners.size(); i++)
+	for (int i = 0; i < (int)m_pre_corners.size(); i++)
 	{
-		cv::Point2f p = _pre_corners[i];
+		cv::Point2f p = m_pre_corners[i];
 		float z = estivalue(dd,(int)p.x + xlens* (int)p.y);
 		float x = z * (p.x - intrinparam.z) / intrinparam.x;
 		float y = z * (p.y - intrinparam.w) / intrinparam.y;
@@ -26,10 +26,10 @@ std::vector<cv::Point3f> MeshFusion::Generate3DPoints( )
 
 void MeshFusion::estimatePose()
 {
-	if (_corners.size() != _pre_corners.size())
+	if (m_corners.size() != m_pre_corners.size())
 		return;
 	// Read points
-	std::vector<cv::Point2f> imagePoints = _corners;
+	std::vector<cv::Point2f> imagePoints = m_corners;
 	std::vector<cv::Point3f> objectPoints = Generate3DPoints( );
 
 	std::cout << "There are " << imagePoints.size() << " imagePoints and " << objectPoints.size() << " objectPoints." << std::endl;

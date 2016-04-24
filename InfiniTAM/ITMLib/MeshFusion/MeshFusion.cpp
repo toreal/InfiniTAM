@@ -11,7 +11,7 @@
 #include "../../ORUtils/psimpl.h"
 #include "../Engine/DeviceSpecific/CPU/ITMViewBuilder_CPU.h"
 //#include <math.h>
-#include <opencv\cvwimage.h>
+//#include <opencv\cvwimage.h>
 
 #ifdef WITH_FADE 
 #include <Fade_2D.h>
