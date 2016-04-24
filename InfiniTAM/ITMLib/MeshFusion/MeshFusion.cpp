@@ -2,7 +2,8 @@
 
 
 #include "MeshFusion.h"
-#include <Fade_2D.h>
+
+
 #include <algorithm>
 #include <vector> 
 #include <iterator> 
@@ -12,11 +13,17 @@
 //#include <math.h>
 #include <opencv\cvwimage.h>
 
+#ifdef WITH_FADE 
+#include <Fade_2D.h>
+using namespace GEOM_FADE2D;
+
+#endif 
+
+
 using namespace ITMLib::Objects;
 using namespace ITMLib::Engine;
 
 using namespace std;
-using namespace GEOM_FADE2D;
 
 
 void MeshFusion::sortpoint(ITMUChar4Image * draw)
@@ -165,7 +172,7 @@ float MeshFusion::estivalue(const float * data, int index )
 	return 300;
 }
 
-
+#ifdef WITH_FADE
 void MeshFusion::constructMesh(ITMMesh * mesh )
 {
 	ITMFloatImage * depth_in = proDepth; 
@@ -278,3 +285,11 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 
 
 }
+
+#else
+void MeshFusion::constructMesh(ITMMesh * mesh)
+{
+
+}
+
+#endif
