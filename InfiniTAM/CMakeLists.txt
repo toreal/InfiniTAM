@@ -15,21 +15,7 @@ find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
 
-<<<<<<< HEAD
-set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
-set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
-set(FADE_LIBS fade2D_x64_v140_Debug.lib  )
-include_directories(${FADE_INCLUDE_DIR} )
 
-
-# set(OPENMESH_INCLUDE_DIR  C:/James/OpenMesh51/include)
-# set(OPENMESH_LIB_DIR C:/James/OpenMesh51/lib )
-# set(OPENMESH_LIBS OpenMeshCored.lib  OpenMeshToolsd.lib)
-# include_directories(${OPENMESH_INCLUDE_DIR} )
-
-find_package(CGAL REQUIRED COMPONENTS Core) # If the dependency is required, use REQUIRED option - if it's not found CMake will issue an error
-include( ${CGAL_USE_FILE} )
-=======
 #set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
 #set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
 #set(FADE_LIBS fade2D_x64_v140_Debug.lib )
@@ -43,7 +29,7 @@ include( ${CGAL_USE_FILE} )
 #set(OPENMESH_LIB_DIR /usr/local/lib )
 #set(OPENMESH_LIBS /usr/local/lib/libOpenMeshCore.a /usr/local/lib/libOpenMeshTools.dylib)
 #include_directories(${OPENMESH_INCLUDE_DIR} )
->>>>>>> origin/master
+
 
 find_package(CGAL COMPONENTS Core)
 CANONIFY_BOOL(CGAL_FOUND)
@@ -114,17 +100,17 @@ ENDIF()
 add_executable(InfiniTAM_cli InfiniTAM_cli.cpp)
 target_link_libraries(InfiniTAM_cli Engine)
 target_link_libraries(InfiniTAM_cli Utils)
-<<<<<<< HEAD
-target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${FADE_LIBS} )
-add_executable(InfiniTAM InfiniTAM.cpp )
-target_link_libraries(InfiniTAM ${OpenCV_LIBS} ${FADE_LIBS}    )
-=======
+
+#target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${FADE_LIBS} )
+#add_executable(InfiniTAM InfiniTAM.cpp )
+#target_link_libraries(InfiniTAM ${OpenCV_LIBS} ${FADE_LIBS}    )
+
 #target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${OPENMESH_LIBS})
 target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${CGAL_LIBS})
 add_executable(InfiniTAM InfiniTAM.cpp )
 #target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${OPENMESH_LIBS}   )
 target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${CGAL_LIBRARIES}   )
->>>>>>> origin/master
+
 target_link_libraries(InfiniTAM Engine)
 target_link_libraries(InfiniTAM Utils)
 

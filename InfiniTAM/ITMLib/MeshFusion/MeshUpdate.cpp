@@ -3,7 +3,7 @@
 #include "../Objects/ITMPose.h"
 
 
-<<<<<<< HEAD
+
 #include <vector>
 
 #include <boost/foreach.hpp>
@@ -23,11 +23,7 @@ using namespace ITMLib::Objects;
 //#include <OpenMesh/Core/IO/MeshIO.hh>
 //#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 //// ----------------------------------------------------------------------------
-=======
-//#include <OpenMesh/Core/IO/MeshIO.hh>
-//#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
-// ----------------------------------------------------------------------------
->>>>>>> origin/master
+
 //typedef OpenMesh::PolyMesh_ArrayKernelT<> MyMesh;
 
 
@@ -36,11 +32,9 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 {
 	ITMPose pose;
 
-<<<<<<< HEAD
-=======
-#ifdef OPENMESH
-	MyMesh mesh;
->>>>>>> origin/master
+
+	//MyMesh mesh;
+
 
 
 	//MyMesh mesh;
@@ -49,6 +43,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 
 	//MyMesh::VertexHandle vhandle[8];
 
+	//vhandle[0] = mesh.add_vertex(MyMesh::Point(-1, -1, 1));
 	//vhandle[0] = mesh.add_vertex(MyMesh::Point(-1, -1, 1));
 
 	Mesh m;
@@ -71,12 +66,12 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 
 	/* face_descriptor f = */ m.add_face(u, v, w, x);
 
-<<<<<<< HEAD
 
-=======
-	vhandle[0] = mesh.add_vertex(MyMesh::Point(-1, -1, 1));
-#endif
->>>>>>> origin/master
+
+
+	
+
+
 
 	//mesh transform
 
@@ -90,9 +85,9 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 	
 	for (int i = 0; i < meshold->noTotalTriangles; i++)
 	{
-<<<<<<< HEAD
+
 		Vector4f p0;// = trivec[i].p0;
-=======
+
 /*
 		Vector4f p0= trivec[i].p0;
 >>>>>>> origin/master
