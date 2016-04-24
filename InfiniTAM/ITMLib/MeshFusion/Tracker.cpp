@@ -33,13 +33,20 @@ using namespace cv;
 
 #define SQR(x) ((x)*(x))
 
-bool bfirst = true;
+void MeshFusion::MeshFusion_InitTracking( void )
+{
+    m_bfirst = true;
+    m_pre_corners.clear();
+    m_corners.clear();
+    m_base_corners.clear();
+}
 
-int MeshFusion::MeshFusion_Tracking( float & mindis)//
+
+int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 {
 	ITMUChar4Image * draw = mainView->rgb;
 
-	mindis = 0;
+	maxdis = 0;
 
 	int w = draw->noDims.x;
 	int h = draw->noDims.y;
@@ -47,52 +54,12 @@ int MeshFusion::MeshFusion_Tracking( float & mindis)//
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
     cv::Mat input(h,w,CV_8UC4,img);
 	cv::Mat seginput(h, w, CV_8UC4, segimg);
+
+    //cv::namedWindow( "input", CV_WINDOW_NORMAL );
+    //cv::imshow( "input", input );
     
-//    cv::namedWindow( "input", CV_WINDOW_NORMAL );
-//    cv::imshow( "input", input );
-    //begin new tracking
-	if (bfirst)
-	{
-		
-		_pre_image = Mat();
-		
-
-	//	_image = input.clone();
-
-	}
-	else
-	{
-		if (_pre_image.empty())
-		{
-			_pre_image = _image.clone();
-			if (_status.size() == 0) {
-
-				base_corners = _corners;
-
-			}
-			else
-			{
-				base_corners.clear();
-				for (int i = 0; i<_corners.size(); i++)
-				{
-					if (_status[i] == 1)
-					{
-						base_corners.push_back(_corners[i]);
-					
-					}
-				}//end of for
-			}
-
-		}//end of _pre
-
-
-		//maintain pre_corner 
-
-
-	}
-
-
-    
+    if (!m_bfirst && !m_image.empty())
+        m_pre_image = m_image.clone();
 	
     
 	// mask – The optional region of interest. If the image is not empty (then it
@@ -100,16 +67,8 @@ int MeshFusion::MeshFusion_Tracking( float & mindis)//
 	// the region in which the corners are detected
 	cv::Mat mask;
 
-
-    cvtColor(input,_image,COLOR_BGR2GRAY);
+    cvtColor(input,m_image,COLOR_BGR2GRAY);
 	cvtColor(seginput, mask, COLOR_BGR2GRAY);
-
-
-    //_image2 = input.clone();
-    //_image2.convertTo(_image,CV_8UC1,1);
-    
-    //_corners.clear();
-    
     
     // maxCorners – The maximum number of corners to return. If there are more corners
     // than that will be found, the strongest of them will be returned
@@ -128,7 +87,6 @@ int MeshFusion::MeshFusion_Tracking( float & mindis)//
     // minDistance – The minimum possible Euclidean distance between the returned corners
     double minDistance = 20.;
     
-    
     // blockSize – Size of the averaging block for computing derivative covariation
     // matrix over each pixel neighborhood, see cornerEigenValsAndVecs()
     int blockSize = 3;
@@ -139,47 +97,48 @@ int MeshFusion::MeshFusion_Tracking( float & mindis)//
     // k – Free parameter of Harris detector
     double k = 0.04;
     
-    if (bfirst)
+    if (m_bfirst)
 	{
-
-		//_corners.resize(maxCorners);
-		bfirst = false;
-		cv::goodFeaturesToTrack(_image, _corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
-
+		m_bfirst = false;
+		cv::goodFeaturesToTrack(m_image, m_corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
+        m_base_corners = m_corners;
 	}
       else
     {
-        cv::goodFeaturesToTrack( _image, _corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k );
-        int ci=0;
-        while(_pre_corners.size()<(unsigned int)maxCorners && (int)_corners.size()>ci)
+  
+        m_pre_corners = m_corners;
+
+        calcOpticalFlowPyrLK(m_pre_image, m_image, m_pre_corners, m_corners, m_status, m_err);
+
+        //Delete fail to track features & calculate SQR of distance
+        std::vector< cv::Point2f > __corners, __pre_corners,_base_corners;
+        
+        maxdis = 0;
+        float fdistsqr = 0;
+        int k=0;
+        for (int i=0;i<(int)m_status.size();i++)
         {
-            
-            int i;
-            for (i=0;i<(int)_pre_corners.size();i++)
+            if (m_status[i]==1)
             {
-                float fdist = SQR(_pre_corners[i].x - _corners[ci].x) + SQR(_pre_corners[i].y - _corners[ci].y);
-                if (fdist<SQR(minDistance))
-                    break;
+                __corners.push_back(m_corners[i]);
+                __pre_corners.push_back(m_pre_corners[i]);
+                _base_corners.push_back(m_base_corners[i]);
+                
+                fdistsqr = SQR(m_base_corners[i].x - m_corners[i].x) + SQR(m_base_corners[i].y - m_corners[i].y);
+                
+                if (fdistsqr>maxdis)
+                    maxdis = fdistsqr;
+                k++;
             }
-            if (i==(int)_pre_corners.size())
-                _pre_corners.push_back(_corners[ci]);
-            ci++;
         }
-            
-        calcOpticalFlowPyrLK(_pre_image, _image, _pre_corners, _corners, _status, _err);
+        
+        m_corners     = __corners;
+        m_pre_corners = __pre_corners;
+        m_base_corners = _base_corners;
+
     }
-//    for( size_t i = 0; i < _corners.size(); i++ )
-//    {
-//        if (i==0)
-//            cv::circle( _image2, _corners[i], 5, CV_RGB(255,0,0), -1 );
-//        else
-//            cv::circle( _image2, _corners[i], 5, CV_RGB(255,255,0), -1 );
-//    }
-//    
-//    cv::namedWindow( "output", CV_WINDOW_NORMAL );
-//    cv::imshow( "output", _image2 );
     
-    return EXIT_SUCCESS;   return 0;
+    return EXIT_SUCCESS;
 }
 
 void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight)
@@ -188,39 +147,60 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
     
     glPointSize(3.4f);
     glBegin(GL_POINTS);
-    for (int i=0;i<(int)_corners.size();i++)
+    for (int i=0;i<(int)m_corners.size();i++)
     {
-        if (_pre_corners.size()!=0 && _status[i]==0)
+        if (m_pre_corners.size()!=0 && m_status[i]==0)
             glColor3f(1.0f, 0.0f, 0.0f);
         else
             glColor3f(1.0f, 1.0f, 0.0f);
 
-        float x = _corners[i].x/_image.cols;
-        float y = 1-_corners[i].y/_image.rows;
+        float x = m_corners[i].x/m_image.cols;
+        float y = 1-m_corners[i].y/m_image.rows;
         glVertex2f(fstartx+x*fwidth, fstarty+y*fheight);
     }
     glEnd();
 
-    if (_pre_corners.size()!=0)
+    if (m_pre_corners.size()!=0)
     {
-        glColor3f(1.0f, 1.0f, 0.0f);
+        // Draw yellow vector from pre_corner to _corner
+       glColor3f(1.0f, 1.0f, 0.0f);
         glBegin(GL_LINES); {
-            for (int i=0;i<(int)_corners.size();i++)
+            for (int i=0;i<(int)m_corners.size();i++)
             {
-                if (_status[i]==1)
+                if (m_status[i]==1)
                 {
-                    float x1 = _corners[i].x/_image.cols;
-                    float y1 = 1-_corners[i].y/_image.rows;
-                    float x2 = _pre_corners[i].x/_image.cols;
-                    float y2 = 1-_pre_corners[i].y/_image.rows;
+                    float x1 = m_corners[i].x/m_image.cols;
+                    float y1 = 1-m_corners[i].y/m_image.rows;
+                    float x2 = m_pre_corners[i].x/m_image.cols;
+                    float y2 = 1-m_pre_corners[i].y/m_image.rows;
                     glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
                     glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
 
                 }
             }
         }
+        glEnd();
+
+        // Draw green vector from base_corner to _corner
+        glColor3f(0.0f, 1.0f, 0.0f);
+        glBegin(GL_LINES); {
+            for (int i=0;i<(int)m_corners.size();i++)
+            {
+                if (m_status[i]==1)
+                {
+                    float x1 = m_corners[i].x/m_image.cols;
+                    float y1 = 1-m_corners[i].y/m_image.rows;
+                    float x2 = m_base_corners[i].x/m_image.cols;
+                    float y2 = 1-m_base_corners[i].y/m_image.rows;
+                    glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
+                    glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
+                    
+                }
+            }
+        }
+        glEnd();
+        
     }
-    glEnd();
 
 	if ( false)// proDepth != NULL)
 	{
@@ -236,8 +216,8 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
 
 				if (val > 0)
 				{
-					float x = nx*1.0 / _image.cols;
-					float y =1- ny*1.0 / _image.rows;
+					float x = nx*1.0 / m_image.cols;
+					float y =1- ny*1.0 / m_image.rows;
 					glVertex2f(fstartx + x*fwidth, fstarty + y*fheight);
 				}
 			}
