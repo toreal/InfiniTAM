@@ -4,10 +4,10 @@
 
 using namespace ITMLib::Objects;
 
-#include <OpenMesh/Core/IO/MeshIO.hh>
-#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
+//#include <OpenMesh/Core/IO/MeshIO.hh>
+//#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 // ----------------------------------------------------------------------------
-typedef OpenMesh::PolyMesh_ArrayKernelT<> MyMesh;
+//typedef OpenMesh::PolyMesh_ArrayKernelT<> MyMesh;
 
 
 
@@ -15,6 +15,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 {
 	ITMPose pose;
 
+#ifdef OPENMESH
 	MyMesh mesh;
 
 	// generate vertices
@@ -22,7 +23,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 	MyMesh::VertexHandle vhandle[8];
 
 	vhandle[0] = mesh.add_vertex(MyMesh::Point(-1, -1, 1));
-
+#endif
 
 	//mesh transform
 
@@ -33,6 +34,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 	
 	for (int i = 0; i < meshold->noTotalTriangles; i++)
 	{
+/*
 		Vector4f p0= trivec[i].p0;
 		p0.w = 1;
 		Vector4f pp0 = m*p0;
@@ -40,7 +42,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 		p1.w = 1;
 		Vector4f pp1 = m*p1;
 
-
+*/
 	}
 
 	//build new triangle
