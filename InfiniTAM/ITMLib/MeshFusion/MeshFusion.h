@@ -59,6 +59,7 @@ namespace ITMLib
 			void constructMesh(ITMMesh *);
 			void buildProjDepth();
 			void estimatePose();
+			void meshUpdate(ITMMesh * mesh);
 			int MeshFusion_Tracking(float & mindis );
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 

@@ -163,6 +163,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	mfdata->estimatePose();
 
+	mfdata->meshUpdate(mesh);
+
 
 	if (bsence)
 	{

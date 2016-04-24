@@ -2,7 +2,11 @@
 # Specify the project files #
 #############################
 
-include_directories(${OpenCV_INCLUDE_DIRS} ${FADE_INCLUDE_DIR} )
+include_directories(${OpenCV_INCLUDE_DIRS} ${FADE_INCLUDE_DIR}  ${OPENMESH_INCLUDE_DIR})
+
+add_definitions(-D_USE_MATH_DEFINES )
+
+
 
 include_directories(${GLUT_INCLUDE_DIR})
 
@@ -128,6 +132,7 @@ set(ITMLIB_MESHFUSION_SOURCES
 MeshFusion/Tracker.cpp
 MeshFusion/MeshFusion.cpp
 MeshFusion/EstimatePose.cpp
+MeshFusion/MeshUpdate.cpp
 )
 
 
