@@ -13,7 +13,7 @@
 //#include <math.h>
 //#include <opencv\cvwimage.h>
 
-#define WITH_FADE 1
+//#define WITH_FADE 1
 
 #ifdef WITH_FADE 
 #include <Fade_2D.h>
@@ -300,6 +300,42 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 #else
 void MeshFusion::constructMesh(ITMMesh * mesh)
 {
+
+	ITMMesh::Triangle * trivec = mesh->triangles->GetData(MEMORYDEVICE_CPU);
+	trivec[0].p1.x = -40;
+	trivec[0].p1.y = -113;
+	trivec[0].p1.z = 360;
+
+	trivec[0].p0.x = -40;
+	trivec[0].p0.y = 66;
+	trivec[0].p0.z = 360;
+
+	trivec[0].p2.x = 70;
+	trivec[0].p2.y = 66;
+	trivec[0].p2.z = 360;
+
+	trivec[1].p1.x = -40;
+	trivec[1].p1.y = -113;
+	trivec[1].p1.z = 360;
+
+	trivec[1].p0.x = 70;
+	trivec[1].p0.y = 66;
+	trivec[1].p0.z = 360;
+
+
+	trivec[1].p2.x = 70;
+	trivec[1].p2.y = -113;
+	trivec[1].p2.z = 360;
+
+	mesh->noTotalTriangles = 2;
+	uvlist.clear();
+	uvlist.push_back(cv::Point2f(0,1));
+	uvlist.push_back(cv::Point2f(0, 0));
+	uvlist.push_back(cv::Point2f(1, 1));
+	uvlist.push_back(cv::Point2f(1, 1));
+	uvlist.push_back(cv::Point2f(0, 0));
+	uvlist.push_back(cv::Point2f(1, 0));
+
 
 }
 
