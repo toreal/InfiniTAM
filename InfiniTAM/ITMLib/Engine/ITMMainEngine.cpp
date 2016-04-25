@@ -153,17 +153,33 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	mfdata->buildProjDepth();
 
 	float mindis;
+	
 	//M
 	assert(view->rgb != NULL);
 	if (view->rgb)
 		mfdata->MeshFusion_Tracking(mindis);
 
-	mfdata->sortpoint(view->rgb);
-	mfdata->constructMesh(mesh);
+	std::cout << mindis << std::endl;
 
-	mfdata->estimatePose();
+	if ( mesh->noTotalTriangles==0 || mindis > 36 )
+	{
+		mfdata->sortpoint(view->rgb);
+		mfdata->estimatePose();
+		mfdata->constructMesh(mesh);
+		mfdata->meshUpdate(mesh);
+		if (mindis > 5)
+		{
+			mfdata->MeshFusion_InitTracking();
+			if (view->rgb)
+				mfdata->MeshFusion_Tracking(mindis);
 
-	mfdata->meshUpdate(mesh);
+		}
+		
+	}
+
+	
+
+	
 
 
 	if (bsence)

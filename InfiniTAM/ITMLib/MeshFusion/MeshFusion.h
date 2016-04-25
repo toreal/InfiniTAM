@@ -32,18 +32,21 @@ namespace ITMLib
 			cv::Mat             m_image, m_pre_image;
 			std::vector<uchar>  m_status;
 			std::vector<float>  m_err;
-            bool                m_bfirst = true;
+			bool                m_bfirst = true;
             
 			float estivalue(const float * data, int index);
 			std::vector<cv::Point3f> Generate3DPoints();
 
 		public:
+			
 			int      shift = 0;
 			const int MAXNODE = 10000;
 			ITMView     *mainView=NULL;
 			//segmented image
 			ITMUChar4Image *segImage;
 			ITMFloatImage * proDepth=NULL;
+
+			//silhouette features
 			Vector2i *      pointlist;
 			int             npoint;
 

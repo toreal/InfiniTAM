@@ -25,6 +25,7 @@
 #include <boost/foreach.hpp>
 
 #include <CGAL/Parameterization_polyhedron_adaptor_3.h>
+#include <CGAL/Polyhedron_incremental_builder_3.h>
 
 
 #include <iostream>
@@ -227,15 +228,16 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 		
 		glLoadIdentity();
 		//glRotatef(shift, 0, 0, 1);
-		glTranslatef(25, 0, -600);
+		glTranslatef(-60, 0, -600);
+	
 		//gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
 
 		/*glGetIntegerv(GL_VIEWPORT, viewport);
 		glGetDoublev(GL_MODELVIEW_MATRIX, mvmatrix);
 		glGetDoublev(GL_PROJECTION_MATRIX, projmatrix);
 */
-		glCullFace(GL_CW);
-		glEnable(GL_CULL_FACE);
+		/*glCullFace(GL_CW);
+		glEnable(GL_CULL_FACE);*/
 
 		glDisable(GL_LIGHTING);
 		glEnable(GL_BLEND);
@@ -247,7 +249,7 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 			int n = mesh_adaptor.count_mesh_facets();
 			Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
 			Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
-			
+			glScalef(1.f, -1.f, 1.f);
 			glBegin(GL_TRIANGLES);
 			int idx=0;
 			while (it != ie)
