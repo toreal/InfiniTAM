@@ -10,21 +10,75 @@
 
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/Parameterization_polyhedron_adaptor_3.h>
 
+
+#include <iostream>
+#include <string.h>
+#include <ctype.h>
+#include <fstream>
+#include <cassert>
+
+
+
+// ----------------------------------------------------------------------------
+// Private types
+// ----------------------------------------------------------------------------
 typedef CGAL::Simple_cartesian<double> K;
-typedef CGAL::Surface_mesh<K::Point_3> Mesh;
-typedef Mesh::Vertex_index vertex_descriptor;
-typedef Mesh::Face_index face_descriptor;
+
+typedef CGAL::Polyhedron_3<K >      Polyhedron;
+
+typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterization_polyhedron_adaptor;
+
+
+
+
+// Type describing a border or seam as a vertex list
+typedef std::list<Parameterization_polyhedron_adaptor::Vertex_handle> Seam;
+
+
+
+
+typedef           Parameterization_polyhedron_adaptor::Vertex_handle  SeamHandle;
+typedef typename Polyhedron::Vertex_iterator Vertex_iterator;
 
 
 
 using namespace ITMLib::Objects;
-//
-//#include <OpenMesh/Core/IO/MeshIO.hh>
-//#include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
-//// ----------------------------------------------------------------------------
 
-//typedef OpenMesh::PolyMesh_ArrayKernelT<> MyMesh;
+template<class HDS>
+class polyhedron_builder : public CGAL::Modifier_base<HDS> {
+public:
+	std::vector<double> &coords;
+	std::vector<int>    &tris;
+	polyhedron_builder(std::vector<double> &_coords, std::vector<int> &_tris) : coords(_coords), tris(_tris) {}
+	void operator()(HDS& hds) {
+		typedef typename HDS::Vertex   Vertex;
+		typedef typename Vertex::Point Point;
+
+		// create a cgal incremental builder
+		CGAL::Polyhedron_incremental_builder_3<HDS> B(hds, true);
+		B.begin_surface(coords.size() / 3, tris.size() / 3);
+
+		// add the polyhedron vertices
+		for (int i = 0; i<(int)coords.size(); i += 3) {
+			B.add_vertex(Point(coords[i + 0], coords[i + 1], coords[i + 2]));
+		}
+
+		// add the polyhedron triangles
+		for (int i = 0; i<(int)tris.size(); i += 3) {
+			B.begin_facet();
+			B.add_vertex_to_facet(tris[i + 0]);
+			B.add_vertex_to_facet(tris[i + 1]);
+			B.add_vertex_to_facet(tris[i + 2]);
+			B.end_facet();
+		}
+
+		// finish up the surface
+		B.end_surface();
+	}
+};
 
 
 
@@ -32,45 +86,52 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 {
 	ITMPose pose;
 
-
-	//MyMesh mesh;
-
-
-
-	//MyMesh mesh;
-
-	//// generate vertices
-
-	//MyMesh::VertexHandle vhandle[8];
-
-	//vhandle[0] = mesh.add_vertex(MyMesh::Point(-1, -1, 1));
-	//vhandle[0] = mesh.add_vertex(MyMesh::Point(-1, -1, 1));
-
-	Mesh m;
-
-	// u            x
-	// +------------+
-	// |            |
-	// |            |
-	// |      f     |
-	// |            |
-	// |            |
-	// +------------+
-	// v            w
-
-	// Add the points as vertices
-	vertex_descriptor u = m.add_vertex(K::Point_3(0, 1, 0));
-	vertex_descriptor v = m.add_vertex(K::Point_3(0, 0, 0));
-	vertex_descriptor w = m.add_vertex(K::Point_3(1, 0, 0));
-	vertex_descriptor x = m.add_vertex(K::Point_3(1, 1, 0));
-
-	/* face_descriptor f = */ m.add_face(u, v, w, x);
+	std::vector<double> coords;
+	std::vector<int>    tris;
 
 
+	typedef Polyhedron::HalfedgeDS             HDS;
 
+	Polyhedron m;
+	coords.push_back(0);
+	coords.push_back(0);
+	coords.push_back(0);
+	coords.push_back(0);
+	coords.push_back(1);
+	coords.push_back(0);
+	coords.push_back(1);
+	coords.push_back(1);
+	coords.push_back(0);
+	tris.push_back(0);
+	tris.push_back(1);
+	tris.push_back(2);
+	
+	polyhedron_builder<HDS> builder(coords, tris);
+	m.delegate(builder);
+
+	Parameterization_polyhedron_adaptor       mesh_adaptor(m);
 
 	
+	int nv=mesh_adaptor.count_mesh_vertices();
+	int n=mesh_adaptor.count_mesh_facets();
+	Vertex_iterator  it=mesh_adaptor.mesh_vertices_begin();
+	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
+	Polyhedron::Halfedge_handle seam_halfedges[10];
+	Polyhedron::Halfedge_handle seam_half[10];
+	float v = 0.001;
+	while (it!=ie)
+	{ 	K::Point_3 pp=  mesh_adaptor.get_vertex_position(it);
+	
+	// map vertex on unit circle
+	        CGAL::Point_2<K> uv;
+	             uv = CGAL::Point_2<K>(0.5+v , 0.5 );
+				 v += 0.002;
+             mesh_adaptor.set_vertex_uv(it, uv);
+			 uv=mesh_adaptor.get_vertex_uv(it);
+			 it++;
+	}
 
+	 
 
 
 	//mesh transform
