@@ -269,6 +269,6 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
     
 #ifdef TEST_CGAL
     //test cgal
-    testcgal();
+  //  testcgal();
 #endif
 }

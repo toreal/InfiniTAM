@@ -1,4 +1,20 @@
 
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
+#ifdef FREEGLUT
+#include <GL/freeglut.h>
+#else
+#if (!defined USING_CMAKE) && (defined _MSC_VER)
+#pragma comment(lib, "glut64")
+#endif
+#endif
+
+
 #include "MeshFusion.h"
 #include "../Objects/ITMPose.h"
 
@@ -8,9 +24,6 @@
 
 #include <boost/foreach.hpp>
 
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Surface_mesh.h>
-#include <CGAL/Polyhedron_3.h>
 #include <CGAL/Parameterization_polyhedron_adaptor_3.h>
 
 
@@ -25,22 +38,18 @@
 // ----------------------------------------------------------------------------
 // Private types
 // ----------------------------------------------------------------------------
-typedef CGAL::Simple_cartesian<double> K;
 
-typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
 typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterization_polyhedron_adaptor;
 
-
-
-
-// Type describing a border or seam as a vertex list
-typedef std::list<Parameterization_polyhedron_adaptor::Vertex_handle> Seam;
-
-
-
-
-typedef           Parameterization_polyhedron_adaptor::Vertex_handle  SeamHandle;
+//
+//// Type describing a border or seam as a vertex list
+//typedef std::list<Parameterization_polyhedron_adaptor::Vertex_handle> Seam;
+//
+//
+//
+//
+//typedef           Parameterization_polyhedron_adaptor::Vertex_handle  SeamHandle;
 typedef typename Polyhedron::Vertex_iterator Vertex_iterator;
 
 
@@ -50,9 +59,9 @@ using namespace ITMLib::Objects;
 template<class HDS>
 class polyhedron_builder : public CGAL::Modifier_base<HDS> {
 public:
-	std::vector<double> &coords;
+	std::vector<float> &coords;
 	std::vector<int>    &tris;
-	polyhedron_builder(std::vector<double> &_coords, std::vector<int> &_tris) : coords(_coords), tris(_tris) {}
+	polyhedron_builder(std::vector<float> &_coords, std::vector<int> &_tris) : coords(_coords), tris(_tris) {}
 	void operator()(HDS& hds) {
 		typedef typename HDS::Vertex   Vertex;
 		typedef typename Vertex::Point Point;
@@ -80,58 +89,53 @@ public:
 	}
 };
 
+void maintainList(Vector3f vec, std::vector<float> & coords, std::vector<int>   & tris)
+{
+	
+	coords.push_back(vec.x);
+	coords.push_back(vec.y);
+	coords.push_back(vec.z);
+	int n = coords.size()/3-1;
+	tris.push_back(n);
 
+}
 
 void MeshFusion::meshUpdate(ITMMesh * meshold)
 {
 	ITMPose pose;
 
-	std::vector<double> coords;
+	std::vector<float> coords;
 	std::vector<int>    tris;
+	ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
 
-
-	typedef Polyhedron::HalfedgeDS             HDS;
-
-	Polyhedron m;
-	coords.push_back(0);
-	coords.push_back(0);
-	coords.push_back(0);
-	coords.push_back(0);
-	coords.push_back(1);
-	coords.push_back(0);
-	coords.push_back(1);
-	coords.push_back(1);
-	coords.push_back(0);
-	tris.push_back(0);
-	tris.push_back(1);
-	tris.push_back(2);
+	for (int i = 0; i < meshold->noTotalTriangles; i++)
+	{
+		maintainList(trivec[i].p0, coords, tris);
+		maintainList(trivec[i].p1, coords, tris);
+		maintainList(trivec[i].p2, coords, tris);
+	}	
 	
-	polyhedron_builder<HDS> builder(coords, tris);
-	m.delegate(builder);
+	mymesh.clear();
 
-	Parameterization_polyhedron_adaptor       mesh_adaptor(m);
+	polyhedron_builder<Polyhedron::HalfedgeDS > builder(coords, tris);
+	mymesh.delegate(builder);
 
-	
+	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);	
 	int nv=mesh_adaptor.count_mesh_vertices();
 	int n=mesh_adaptor.count_mesh_facets();
 	Vertex_iterator  it=mesh_adaptor.mesh_vertices_begin();
 	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
-	Polyhedron::Halfedge_handle seam_halfedges[10];
-	Polyhedron::Halfedge_handle seam_half[10];
-	float v = 0.001;
+	int idx = 0;
 	while (it!=ie)
-	{ 	K::Point_3 pp=  mesh_adaptor.get_vertex_position(it);
-	
-	// map vertex on unit circle
-	        CGAL::Point_2<K> uv;
-	             uv = CGAL::Point_2<K>(0.5+v , 0.5 );
-				 v += 0.002;
-             mesh_adaptor.set_vertex_uv(it, uv);
-			 uv=mesh_adaptor.get_vertex_uv(it);
-			 it++;
+	{ 
+		CGAL::Point_2<K> uv(uvlist[idx].x, uvlist[idx].y);	  
+        mesh_adaptor.set_vertex_uv(it, uv);		
+		idx++;
+		if (idx >= uvlist.size())
+			break;
+	   it++;
 	}
 
-	 
 
 
 	//mesh transform
@@ -142,7 +146,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 
 
 	Matrix4f  mm= pose.GetM();
-	ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
+	//ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
 	
 	for (int i = 0; i < meshold->noTotalTriangles; i++)
 	{
@@ -175,5 +179,97 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 
 	//}
 
+
+}
+
+
+void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight)
+{
+	GLint viewport[4];
+	GLdouble mvmatrix[16];
+	float projmatrix[16]= { 614,0.0000,-308,0.0000,
+		                    0.0000,614,-234,0.0000,
+		                    0.0000,0.0000,700,100000,
+		                    0.0000,0.0000,-1,0.0000 };
+
+	GLuint textureID;
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glEnable(GL_TEXTURE_2D); // Enable texturing	
+
+	if (mainView != NULL)
+	{
+		glGenTextures(1, &textureID); // Obtain an id for the texture
+		glBindTexture(GL_TEXTURE_2D, textureID); // Set as the current texture
+
+		Vector4u* buf = this->mainView->rgb->GetData(MEMORYDEVICE_CPU);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 640, 480, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+
+	glPushMatrix();
+	{
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		float aspect = 1;
+		gluPerspective(60.0f, aspect, 0.1, 10000.0f);
+		//glLoadMatrixf(projmatrix);
+
+		//glOrtho(-640 / 2, 640 / 2, -480 / 2, 480 / 2, 200, 500);
+		//glOrtho(0, 640, 480, 0, 200, 500);
+		//glMultMatrixf(projmatrix);
+
+
+
+		glMatrixMode(GL_MODELVIEW);
+		
+		glLoadIdentity();
+		//glRotatef(shift, 0, 0, 1);
+		glTranslatef(25, 0, -600);
+		//gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+
+		/*glGetIntegerv(GL_VIEWPORT, viewport);
+		glGetDoublev(GL_MODELVIEW_MATRIX, mvmatrix);
+		glGetDoublev(GL_PROJECTION_MATRIX, projmatrix);
+*/
+		glCullFace(GL_CW);
+		glEnable(GL_CULL_FACE);
+
+		glDisable(GL_LIGHTING);
+		glEnable(GL_BLEND);
+		glPushMatrix();
+		{
+			
+			Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
+			int nv = mesh_adaptor.count_mesh_vertices();
+			int n = mesh_adaptor.count_mesh_facets();
+			Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
+			Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
+			
+			glBegin(GL_TRIANGLES);
+			int idx=0;
+			while (it != ie)
+			{
+				CGAL::Point_3<K> pos= mesh_adaptor.get_vertex_position(it);
+				CGAL::Point_2<K> uv=mesh_adaptor.get_vertex_uv(it);
+
+				glTexCoord2f(uvlist[idx].x , uvlist[idx].y);
+				glVertex3f(pos.x(), pos.y(), pos.z());
+
+				idx++;
+				it++;
+			}
+			glEnd();
+
+
+
+			
+		}
+		glPopMatrix();
+	}
+	glPopMatrix();
+	glDisable(GL_TEXTURE_2D);
 
 }

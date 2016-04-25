@@ -78,11 +78,16 @@ void UIEngine::glutDisplayFunction()
 		glPopMatrix();
 	}
 
+	
 	//M Display Motion Vector Here
 	uiEngine->mfdata->MeshFusion_DrawVector(winReg[2][0], winReg[2][1], winReg[2][2] - winReg[2][0], winReg[2][3] - winReg[2][1]);
 
-	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
+
+	uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1]);
+
+	//glMatrixMode(GL_PROJECTION);
+	
 
 	glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(0.85f, -0.962f);
 
@@ -158,6 +163,14 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 
 	switch (key)
 	{
+	case 'a':
+		uiEngine->mfdata->shift += 5;
+		uiEngine->needsRefresh = true;
+		break;
+	case 'd':
+		uiEngine->mfdata->shift -= 5;
+		uiEngine->needsRefresh = true;
+		break;
 	case 'n':
 		printf("processing one frame ...\n");
 		uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;

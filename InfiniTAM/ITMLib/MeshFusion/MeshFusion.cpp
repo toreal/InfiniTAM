@@ -13,7 +13,7 @@
 //#include <math.h>
 //#include <opencv\cvwimage.h>
 
-//#define WITH_FADE 1
+#define WITH_FADE 1
 
 #ifdef WITH_FADE 
 #include <Fade_2D.h>
@@ -73,7 +73,7 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 
 void MeshFusion::buildProjDepth()
 {
-	ITMFloatImage * floatImage= new ITMFloatImage(mainView->depth->noDims, true, false);
+	//ITMFloatImage * floatImage= new ITMFloatImage(mainView->depth->noDims, true, false);
 
 	if (proDepth == NULL  )
 	proDepth=	new ITMFloatImage(mainView->depth->noDims, true, false);
@@ -183,6 +183,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 
 	Vector2i imgDims = depth_in->noDims;
 	int w = imgDims.x;
+	int h = imgDims.y;
 	int maxlen = (imgDims.y - 2)*w;
 
 	const float *depthData_in = depth_in->GetData(MEMORYDEVICE_CPU);
@@ -199,9 +200,9 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 		vInputPoints.push_back(Point2(sellist[i].x,sellist[i].y));
 	}
 
-	for (int i = 0; i<(int)_corners.size(); i++)
+	for (int i = 0; i<(int)m_base_corners.size(); i++)
 	{
-		vInputPoints.push_back(Point2(_corners[i].x, _corners[i].y));
+		vInputPoints.push_back(Point2(m_base_corners[i].x, m_base_corners[i].y));
 
 	}
 
@@ -229,7 +230,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 	int ti = 0;
 	ITMMesh::Triangle * trivec=  mesh->triangles->GetData(MEMORYDEVICE_CPU);
 
-	
+	uvlist.clear();
 
 	for (std::vector<Triangle2*>::iterator it = vAllDelaunayTriangles.begin(); it != vAllDelaunayTriangles.end(); ++it)
 	{
@@ -261,6 +262,14 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 			trivec[ti].p0.z = estivalue(depthData_in, i1);
 			trivec[ti].p1.z = estivalue(depthData_in, i2);			
 			trivec[ti].p2.z = estivalue(depthData_in, i3);
+			cv::Point2f uv0 = cv::Point2f(p0->x() / w, p0->y() / h);
+			uvlist.push_back(uv0);
+			cv::Point2f uv1 = cv::Point2f(p1->x() / w, p1->y() / h);
+			uvlist.push_back(uv1);
+
+			cv::Point2f uv2 = cv::Point2f(p2->x() / w, p2->y() / h);
+			uvlist.push_back(uv2);
+
 			
 			//if (trivec[ti].p0.z > 0 && trivec[ti].p1.z > 0 && trivec[ti].p2.z > 0)
 			{

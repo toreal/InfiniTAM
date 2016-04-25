@@ -11,6 +11,11 @@
 #include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Polyhedron_3.h>
+
+typedef CGAL::Simple_cartesian<double> K;
+typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
 
 namespace ITMLib
@@ -20,7 +25,8 @@ namespace ITMLib
 		class MeshFusion
 		{
 		private :
-
+			Polyhedron mymesh;
+			std::vector< cv::Point2f > uvlist;
             // For Tracker
 			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners;
 			cv::Mat             m_image, m_pre_image;
@@ -32,6 +38,7 @@ namespace ITMLib
 			std::vector<cv::Point3f> Generate3DPoints();
 
 		public:
+			int      shift = 0;
 			const int MAXNODE = 10000;
 			ITMView     *mainView=NULL;
 			//segmented image
@@ -71,6 +78,7 @@ namespace ITMLib
 			int MeshFusion_Tracking(float & maxdis );
             //ui codes. opengl code inside for drawing motion vectors. Typically, call this func in glutDisplayFunction
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
+			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight);
 		};
 	}
 }
