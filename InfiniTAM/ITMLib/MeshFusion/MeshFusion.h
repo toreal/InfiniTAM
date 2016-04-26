@@ -82,6 +82,7 @@ namespace ITMLib
             //ui codes. opengl code inside for drawing motion vectors. Typically, call this func in glutDisplayFunction
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight);
+			void writeMesh(char *);
 		};
 	}
 }

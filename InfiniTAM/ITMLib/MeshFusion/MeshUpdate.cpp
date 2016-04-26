@@ -26,7 +26,9 @@
 
 #include <CGAL/Parameterization_polyhedron_adaptor_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
-
+#include <CGAL/IO/Polyhedron_iostream.h>
+#include <CGAL/IO/Polyhedron_VRML_2_ostream.h>
+#include <fstream>
 
 #include <iostream>
 #include <string.h>
@@ -137,7 +139,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 	   it++;
 	}
 
-
+	meshold->noTotalTriangles = 0;
 
 	//mesh transform
 
@@ -195,26 +197,30 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 
 	GLuint textureID;
 
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glEnable(GL_TEXTURE_2D); // Enable texturing	
-
-	if (mainView != NULL)
-	{
-		glGenTextures(1, &textureID); // Obtain an id for the texture
-		glBindTexture(GL_TEXTURE_2D, textureID); // Set as the current texture
-
-		Vector4u* buf = this->mainView->rgb->GetData(MEMORYDEVICE_CPU);
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 640, 480, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	}
+	
 
 	glPushMatrix();
 	{
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		glViewport(viewport[2]*fstartx, viewport[3] * fstarty, viewport[2] * fwidth, viewport[3] * fheight);
+		glColor3f(1.0f, 1.0f, 1.0f);
+		glEnable(GL_TEXTURE_2D); // Enable texturing	
+
+		if (mainView != NULL)
+		{
+			glGenTextures(1, &textureID); // Obtain an id for the texture
+			glBindTexture(GL_TEXTURE_2D, textureID); // Set as the current texture
+
+			Vector4u* buf = this->mainView->rgb->GetData(MEMORYDEVICE_CPU);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 640, 480, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
+
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		float aspect = 1;
+		float aspect = viewport[2] * fwidth/ (viewport[3] * fheight);
 		gluPerspective(60.0f, aspect, 0.1, 10000.0f);
 		//glLoadMatrixf(projmatrix);
 
@@ -235,10 +241,10 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 		/*glGetIntegerv(GL_VIEWPORT, viewport);
 		glGetDoublev(GL_MODELVIEW_MATRIX, mvmatrix);
 		glGetDoublev(GL_PROJECTION_MATRIX, projmatrix);
-*/
+/*
 		/*glCullFace(GL_CW);
-		glEnable(GL_CULL_FACE);*/
-
+		glEnable(GL_CULL_FACE);
+*/
 		glDisable(GL_LIGHTING);
 		glEnable(GL_BLEND);
 		glPushMatrix();
@@ -273,5 +279,18 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 	}
 	glPopMatrix();
 	glDisable(GL_TEXTURE_2D);
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+
+void MeshFusion::writeMesh(char * fn)
+{
+	std::fstream fs;
+	fs.open(fn, std::fstream::out);
+
+	//CGAL::VRML_2_ostream out(fs);
+	fs << mymesh;
+	fs.close();
+
 
 }

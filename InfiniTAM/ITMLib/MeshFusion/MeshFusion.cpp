@@ -13,7 +13,7 @@
 //#include <math.h>
 //#include <opencv\cvwimage.h>
 
-//#define WITH_FADE 1
+#define WITH_FADE 1
 
 #ifdef WITH_FADE 
 #include <Fade_2D.h>
@@ -174,6 +174,24 @@ float MeshFusion::estivalue(const float * data, int index )
 	return 300;
 }
 
+
+void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
+{
+	for (int i = 0; i < vInputPoints.size(); i++)
+	{
+		Point2 ap = vInputPoints[i];
+		Point2 dis= Point2(ap.x()-p.x(),ap.y()-p.y());
+		float diff = dis.x()*dis.x() + dis.y()*dis.y();
+
+		if (diff < 50)
+			return;
+
+
+	}
+	vInputPoints.push_back(p);
+
+}
+
 #ifdef WITH_FADE
 void MeshFusion::constructMesh(ITMMesh * mesh )
 {
@@ -197,12 +215,13 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 
 	for (int i = 0; i < selp; i++)
 	{
-		vInputPoints.push_back(Point2(sellist[i].x,sellist[i].y));
+		addvextex(vInputPoints,Point2(sellist[i].x,sellist[i].y));
 	}
 
+	int ncon = vInputPoints.size();
 	for (int i = 0; i<(int)m_base_corners.size(); i++)
 	{
-		vInputPoints.push_back(Point2(m_base_corners[i].x, m_base_corners[i].y));
+		addvextex(vInputPoints, Point2(m_base_corners[i].x, m_base_corners[i].y));
 
 	}
 
@@ -211,14 +230,14 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 	dt.insert(vInputPoints);
 	std::vector<Segment2> vSegments;
 
-	for (int i = 0; i < selp-1; i++)
+	for (int i = 0; i < ncon-1; i++)
 	{
 		vSegments.push_back(Segment2(vInputPoints[i], vInputPoints[i+1]));
 		
 	}
 
 	
-	ConstraintGraph2* pCG = dt.createConstraint(vSegments, CIS_CONFORMING_DELAUNAY);
+	ConstraintGraph2* pCG = dt.createConstraint(vSegments,CIS_CONSTRAINED_DELAUNAY);
 	dt.applyConstraintsAndZones();
 
 	Visualizer2 vis2("example3_withConstraints.ps");
