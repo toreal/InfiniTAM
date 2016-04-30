@@ -24,7 +24,7 @@ std::vector<cv::Point3f> MeshFusion::Generate3DPoints( )
 	return ret;
 }
 
-void MeshFusion::estimatePose()
+void MeshFusion::estimatePose( ITMPose * posd)
 {
 	if (m_corners.size() != m_pre_corners.size())
 		return;
@@ -58,6 +58,26 @@ void MeshFusion::estimatePose()
 	std::cout << "rvec: " << rvec << std::endl;
 	std::cout << "tvec: " << tvec << std::endl;
 
+	cv::Mat RM(3, 3, cv::DataType<double>::type);
+
+	cv::Rodrigues(rvec, RM);
+
+	std::cout << RM << std::endl;
+	
+	Matrix3f R ;
+	for(int i=0 ; i < 3;i++ )
+		for (int j = 0; j < 3; j++)
+		{
+			float v = RM.at<double>(i,j);
+			R.m[i + j * 3] = v;
+		}
+	Vector3f T(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2));
+	
+	posd->SetR(R);
+	posd->SetT(T);
+	posd->Coerce();
+
+	
 
 
 }

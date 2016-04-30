@@ -150,8 +150,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	mfdata->mainView = view;
 
 
-	SaveImageToFile(view->depthNormal, "normal.ppm");
-	SaveImageToFile(view->curvature, "curvature.ppm");
+	//SaveImageToFile(view->depthNormal, "normal.ppm");
+	//SaveImageToFile(view->curvature, "curvature.ppm");
 
 	mfdata->buildProjDepth();
 
@@ -166,8 +166,10 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	if ( mesh->noTotalTriangles==0 || mindis > 36 )
 	{
+		//build silhouette features
 		mfdata->sortpoint(view->rgb);
-		mfdata->estimatePose();
+		//update current pose
+		mfdata->estimatePose(this->trackingState->pose_d  );
 		mfdata->constructMesh(mesh);
 		mfdata->meshUpdate(mesh);
 		if (mindis > 5)

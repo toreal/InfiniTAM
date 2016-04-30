@@ -8,6 +8,7 @@
 #include "opencv2/core/core.hpp"
 #include "../Objects/ITMMesh.h"
 #include "../Objects/ITMView.h"
+#include "../Objects/ITMPose.h"
 #include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
@@ -26,6 +27,7 @@ namespace ITMLib
 		{
 		private :
 			Polyhedron mymesh;
+			Polyhedron currMesh;
 			std::vector< cv::Point2f > uvlist;
             // For Tracker
 			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners;
@@ -71,7 +73,7 @@ namespace ITMLib
 			void sortpoint(ITMUChar4Image * draw);
 			void constructMesh(ITMMesh *);
 			void buildProjDepth();
-			void estimatePose();
+			void estimatePose(ITMPose * posd);
 
 			void meshUpdate(ITMMesh * mesh);
             
@@ -83,6 +85,7 @@ namespace ITMLib
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight);
 			void writeMesh(char *);
+
 		};
 	}
 }
