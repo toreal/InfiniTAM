@@ -36,7 +36,7 @@ namespace ITMLib
 			std::vector<float>  m_err;
 			bool                m_bfirst = true;
             
-			float estivalue(const float * data, int index);
+			float estivalue(const float * data, Vector2i ,Vector2i);
 			std::vector<cv::Point3f> Generate3DPoints();
 
 		public:
@@ -83,7 +83,7 @@ namespace ITMLib
 			int MeshFusion_Tracking(float & maxdis );
             //ui codes. opengl code inside for drawing motion vectors. Typically, call this func in glutDisplayFunction
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
-			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight);
+			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight, bool getImageType, ITMPose *pose, ITMIntrinsics *intrinsics);
 			void writeMesh(char *);
 
 		};

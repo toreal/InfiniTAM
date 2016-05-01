@@ -1,5 +1,6 @@
 
 #include "RealsenseEngineSDK.h"
+#define COMPILE_WITH_RealSenseSDK 1
 
 #ifdef COMPILE_WITH_RealSenseSDK
 
@@ -7,7 +8,7 @@
 #include "pxcsensemanager.h"
 #include "pxcprojection.h"
 #include "pxccalibration.h"
-#include "util_cmdline.h"
+//#include "util_cmdline.h"
 
 using namespace InfiniTAM::Engine;
 
@@ -34,16 +35,16 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	data = new PrivateData();
 	data->pp = PXCSenseManager::CreateInstance();
 	/* Collects command line arguments */
-	UtilCmdLine cmdl(data->pp->QuerySession());
+//	UtilCmdLine cmdl(data->pp->QuerySession());
 //	pxcCHAR * tmp[] = {L"", L"-csize", L"640x480x30", L"-dsize", L"320x240x60" };
 //	cmdl.Parse(L"-listio-nframes-sdname-csize-dsize-isize-lsize-rsize-file-record-noRender-mirror", 5, tmp);
 //	if (!cmdl.Parse(L"-listio-nframes-sdname-csize-dsize-isize-lsize-rsize-file-record-noRender-mirror", argc, argv)) return 3;
 
 	/* Sets file recording or playback */
 	 data->cm= data->pp->QueryCaptureManager();
-	data->cm->SetFileName(cmdl.m_recordedFile, cmdl.m_bRecord);
-	if (cmdl.m_sdname) 
-		data->cm->FilterByDeviceInfo(cmdl.m_sdname, 0, 0);
+	//data->cm->SetFileName(cmdl.m_recordedFile, cmdl.m_bRecord);
+	//if (cmdl.m_sdname) 
+		//data->cm->FilterByDeviceInfo(cmdl.m_sdname, 0, 0);
 
 
 
@@ -154,12 +155,12 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 
 
 	/* Set mirror mode */
-	if (cmdl.m_bMirror) {
-		device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_HORIZONTAL);
-	}
-	else {
-		device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_DISABLED);
-	}
+	//if (cmdl.m_bMirror) {
+	//	device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_HORIZONTAL);
+	//}
+	//else {
+	//	device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_DISABLED);
+	//}
 
 
 

@@ -147,30 +147,73 @@ std::string toString(int i)
 }
 
 
-float MeshFusion::estivalue(const float * data, int index )
+float MeshFusion::estivalue(const float * data, Vector2i  p1,Vector2i p2 )
 {
-	const int lens = 640 * 480-1;
-	float ret = data[index];
-
-	for (int i = 1; i < 10; i++)
+	int w = 640;
+	int h=480;
+	int index=p1.x+ p1.y*w;
+	float ret;
+	if (p2.x > 0 || p2.y > 0)
 	{
-		if (ret > 0)
-			return ret;
 
-		if (ret == 0 && index < (lens-i))
-			ret = data[index + i];
+		float delx = abs(p2.x - p1.x);
+		float dely = abs(p2.y - p1.y);
+		float  nx, ny;
+		if (delx > dely)
+		{
+			for (int i = 0; i < delx; i++)
+			{
+				nx = p1.x + (i / delx)*(p2.x - p1.x);
+				ny = p1.y + (i / delx)*(p2.y - p1.y);
+				ret = data[(int)nx + (int)ny * w];
+				if (ret > 0)
+					return ret;
 
-		if (ret == 0 && index > i)
-			ret = data[index - i];
+			}
+		}
+		else
+		{
+			for (int i = 0; i < dely; i++)
+			{
+				nx = p1.x + (i / dely)*(p2.x - p1.x);
+				ny = p1.y + (i / dely)*(p2.y - p1.y);
+				ret = data[(int)nx + (int)ny * w];
+				if (ret > 0)
+					return ret;
 
-		if (ret == 0 && index < (lens - i*640))
-			ret = data[index + i*640];
+			}
 
-		if (ret == 0 && index > i*640)
-			ret = data[index - i*640];
-		
-			
+		}
+
+
 	}
+		const int lens = w * h - 1;
+		ret = data[index];
+
+		for (int i = 1; i < 10; i++)
+		{
+			if (ret > 0)
+				return ret;
+
+			if (ret == 0 && index < (lens - i))
+				ret = data[index + i];
+
+			if (ret == 0 && index > i)
+				ret = data[index - i];
+
+			if (ret == 0 && index < (lens - i * 640))
+				ret = data[index + i * w];
+
+			if (ret == 0 && index > i * w)
+				ret = data[index - i * w];
+
+
+		}
+	
+	
+		 
+		
+	
 	return 300;
 }
 
@@ -275,12 +318,15 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 			Point2* p1=pT->getCorner(1);
 			Point2* p2=pT->getCorner(2);
 
-			int i1 = p0->x() + w*((int)p0->y());
-			int i2 = p1->x() + w*((int)p1->y());
-			int i3 = p2->x() + w*((int)p2->y());
-			trivec[ti].p0.z = estivalue(depthData_in, i1);
-			trivec[ti].p1.z = estivalue(depthData_in, i2);			
-			trivec[ti].p2.z = estivalue(depthData_in, i3);
+			//int i1 = p0->x() + w*((int)p0->y());
+			//int i2 = p1->x() + w*((int)p1->y());
+			//int i3 = p2->x() + w*((int)p2->y());
+			Vector2i pc0=Vector2i(p1->x()+p2->x(),p1->y()+p2->y())/2;
+			Vector2i pc1 = Vector2i(p0->x() + p2->x(), p0->y() + p2->y()) / 2;
+			Vector2i pc2 = Vector2i(p1->x() + p0->x(), p1->y() + p0->y()) / 2;
+			trivec[ti].p0.z = estivalue(depthData_in, Vector2i(p0->x(),p0->y()), pc0);
+			trivec[ti].p1.z = estivalue(depthData_in, Vector2i(p1->x(), p1->y()), pc1);
+			trivec[ti].p2.z = estivalue(depthData_in, Vector2i(p2->x(), p2->y()), pc2);
 			cv::Point2f uv0 = cv::Point2f(p0->x() / w, p0->y() / h);
 			uvlist.push_back(uv0);
 			cv::Point2f uv1 = cv::Point2f(p1->x() / w, p1->y() / h);

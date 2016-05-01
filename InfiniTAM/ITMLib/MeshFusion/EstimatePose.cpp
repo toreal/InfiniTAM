@@ -15,7 +15,7 @@ std::vector<cv::Point3f> MeshFusion::Generate3DPoints( )
 	for (int i = 0; i < (int)m_pre_corners.size(); i++)
 	{
 		cv::Point2f p = m_pre_corners[i];
-		float z = estivalue(dd,(int)p.x + xlens* (int)p.y);
+		float z = estivalue(dd, Vector2i(p.x,p.y), Vector2i(-1,-1));
 		float x = z * (p.x - intrinparam.z) / intrinparam.x;
 		float y = z * (p.y - intrinparam.w) / intrinparam.y;
 

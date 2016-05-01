@@ -186,7 +186,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 }
 
 
-void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight)
+void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight, bool busepose, ITMPose *pose, ITMIntrinsics *intrinsics)
 {
 	GLint viewport[4];
 	GLdouble mvmatrix[16];
@@ -234,9 +234,9 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 		
 		glLoadIdentity();
 		//glRotatef(shift, 0, 0, 1);
-		glTranslatef(-60, 0, -600);
+		//glTranslatef(-60, 0, -600);
 	
-		//gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+		gluLookAt(0, 0, 0, 0, 0, 1, 0, -1, 0);
 
 		/*glGetIntegerv(GL_VIEWPORT, viewport);
 		glGetDoublev(GL_MODELVIEW_MATRIX, mvmatrix);
@@ -250,12 +250,18 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 		glPushMatrix();
 		{
 			
+
 			Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
+			CGAL::Point_3<K> center = CGAL::Point_3<K>(0, 0, 300);
+			glTranslated(center.x(), center.y(),center.z());
+			if (busepose)
+				glMultMatrixf(pose->GetM().m);
+
 			int nv = mesh_adaptor.count_mesh_vertices();
 			int n = mesh_adaptor.count_mesh_facets();
 			Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
 			Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
-			glScalef(1.f, -1.f, 1.f);
+			//glScalef(1.f, -1.f, 1.f);
 			glBegin(GL_TRIANGLES);
 			int idx=0;
 			while (it != ie)
@@ -263,8 +269,9 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 				CGAL::Point_3<K> pos= mesh_adaptor.get_vertex_position(it);
 				CGAL::Point_2<K> uv=mesh_adaptor.get_vertex_uv(it);
 
+				CGAL::Vector_3<K> spos=  pos - center;
 				glTexCoord2f(uvlist[idx].x , uvlist[idx].y);
-				glVertex3f(pos.x(), pos.y(), pos.z());
+				glVertex3f(spos.x(), spos.y(), spos.z());
 
 				idx++;
 				it++;

@@ -25,6 +25,24 @@
 using namespace InfiniTAM::Engine;
 UIEngine* UIEngine::instance;
 
+void init(void)
+{
+	GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat mat_shininess[] = { 50.0 };
+	GLfloat light_position[] = { 0.0, 0.0, 250.0, 1.0 };
+	glClearColor(0.5, 0.5, 0.5, 0.0);
+	glShadeModel(GL_SMOOTH);
+
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
+}
+
+
 static void safe_glutBitmapString(void *font, const char *str)
 {
 	size_t len = strlen(str);
@@ -84,7 +102,8 @@ void UIEngine::glutDisplayFunction()
 
 	glPopMatrix();
 
-	uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1]);
+	uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1] ,
+		uiEngine->outImageType[0]!=ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST, &uiEngine->freeviewPose, &uiEngine->freeviewIntrinsics);
 
 	//glMatrixMode(GL_PROJECTION);
 	
@@ -394,6 +413,8 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 	glutInitWindowSize(winSize.x, winSize.y);
 	glutCreateWindow("InfiniTAM");
 	glGenTextures(NUM_WIN, textureId);
+
+	//init();
 
 	glutDisplayFunc(UIEngine::glutDisplayFunction);
 	glutKeyboardUpFunc(UIEngine::glutKeyUpFunction);

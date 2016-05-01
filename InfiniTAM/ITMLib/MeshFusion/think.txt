@@ -1,0 +1,13 @@
+each time estimate the mesh, the depth may be not correct.
+however, We will track these features. 
+In the next frame, we can get its depth again. and  compare the error, 
+
+to determine which one is better?
+1.but it maybe a false tracking 
+
+
+mesh refine 
+compare the face error to refine mesh
+
+how to refine?
+each vertex bind with multiple faces
