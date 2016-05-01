@@ -31,13 +31,14 @@ namespace ITMLib
 			std::vector< cv::Point2f > uvlist;
             // For Tracker
 			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners;
+			std::vector<cv::Point3f> objectPoints;
 			cv::Mat             m_image, m_pre_image;
 			std::vector<uchar>  m_status;
 			std::vector<float>  m_err;
 			bool                m_bfirst = true;
             
 			float estivalue(const float * data, Vector2i ,Vector2i);
-			std::vector<cv::Point3f> Generate3DPoints();
+			
 
 		public:
 			
@@ -69,6 +70,7 @@ namespace ITMLib
 				delete sellist;
 			};
 
+			bool find3DPos(cv::Point2f p, cv::Point3f&);
 			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);
 			void constructMesh(ITMMesh *);
@@ -85,6 +87,7 @@ namespace ITMLib
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
 			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight, bool getImageType, ITMPose *pose, ITMIntrinsics *intrinsics);
 			void writeMesh(char *);
+			void Generate3DPoints();
 
 		};
 	}

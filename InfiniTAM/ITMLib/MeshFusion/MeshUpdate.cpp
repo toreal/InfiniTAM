@@ -103,13 +103,55 @@ void maintainList(Vector3f vec, std::vector<float> & coords, std::vector<int>   
 
 }
 
+bool MeshFusion::find3DPos(cv::Point2f p , cv::Point3f &ret)
+{
+	//bool ret = false;
+
+	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
+	Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
+	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
+	//int idx = 0;
+	Vector4f intrinRGB =mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+	float mdis = 10000;
+
+
+	while (it != ie)
+	{
+		CGAL::Point_3<K> pos = mesh_adaptor.get_vertex_position(it);
+		//Vector3f p = Vector3f(pos.x(), pos.y(), pos.z());
+		int ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
+		int iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
+
+		float dis = (ix - p.x)*(ix - p.x) + (iy - p.y)*(iy - p.y);
+		if (dis <= 1)
+		{
+			ret=cv::Point3f(pos.x(), pos.y(), pos.z());
+			return true;
+		}
+		else if (dis < mdis)
+		{
+			mdis = dis;
+			ret= cv::Point3f(pos.x(), pos.y(), pos.z());
+		}
+		it++;
+
+	}
+
+
+	return false;
+}
+
 void MeshFusion::meshUpdate(ITMMesh * meshold)
 {
 	ITMPose pose;
 
+
 	std::vector<float> coords;
 	std::vector<int>    tris;
 	ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
+
+	//if (mymesh.size_of_vertices() > 0)
+	//	return;
 
 	for (int i = 0; i < meshold->noTotalTriangles; i++)
 	{
@@ -122,7 +164,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 
 	polyhedron_builder<Polyhedron::HalfedgeDS > builder(coords, tris);
 	mymesh.delegate(builder);
-
+/*
 	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);	
 	int nv=mesh_adaptor.count_mesh_vertices();
 	int n=mesh_adaptor.count_mesh_facets();
@@ -138,8 +180,9 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 			break;
 	   it++;
 	}
-
-	meshold->noTotalTriangles = 0;
+*/
+	//meshold->noTotalTriangles = 0;
+	
 
 	//mesh transform
 
@@ -270,6 +313,7 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 				CGAL::Point_2<K> uv=mesh_adaptor.get_vertex_uv(it);
 
 				CGAL::Vector_3<K> spos=  pos - center;
+				if ( idx < uvlist.size())
 				glTexCoord2f(uvlist[idx].x , uvlist[idx].y);
 				glVertex3f(spos.x(), spos.y(), spos.z());
 

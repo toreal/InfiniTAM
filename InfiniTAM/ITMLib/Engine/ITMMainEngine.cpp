@@ -3,6 +3,7 @@
 #include "ITMMainEngine.h"
 #include "../../Utils/FileUtils.h"
 #include "../MeshFusion/Tracker.h"
+#include "../../Utils/NVTimer.h"
 
 using namespace ITMLib::Engine;
 
@@ -141,6 +142,15 @@ void ITMMainEngine::SaveSceneToMesh(const char *objFileName)
 
 void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
 {
+	StopWatchInterface *timer_instant;
+	sdkCreateTimer(&timer_instant);
+	sdkResetTimer(&timer_instant);
+	sdkStartTimer(&timer_instant);
+	sdkStopTimer(&timer_instant);
+	float processedTime_inst = sdkGetTimerValue(&timer_instant);
+	std::cout << "Time:" << processedTime_inst << std::endl;
+	sdkResetTimer(&timer_instant);
+	sdkStartTimer(&timer_instant);
 	// prepare image and turn it into a depth image
 	if (imuMeasurement == NULL) viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, settings->modelSensorNoise);
 	else viewBuilder->UpdateView(&view, rgbImage, rawDepthImage, settings->useBilateralFilter, imuMeasurement);
@@ -162,24 +172,61 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	if (view->rgb)
 		mfdata->MeshFusion_Tracking(mindis);
 
-	std::cout << mindis << std::endl;
+	sdkStopTimer(&timer_instant);
+	 processedTime_inst = sdkGetTimerValue(&timer_instant);
+	std::cout << "tracking Time:" << processedTime_inst << std::endl;
+	sdkResetTimer(&timer_instant);
+	sdkStartTimer(&timer_instant);
+	//std::cout << mindis << std::endl;
 
 	if ( mesh->noTotalTriangles==0 || mindis > 36 )
 	{
-		//build silhouette features
-		mfdata->sortpoint(view->rgb);
-		//update current pose
-		mfdata->estimatePose(this->trackingState->pose_d  );
-		mfdata->constructMesh(mesh);
-		mfdata->meshUpdate(mesh);
-		if (mindis > 5)
+		try {
+			mesh->noTotalTriangles = 0;
+			//build silhouette features
+			mfdata->sortpoint(view->rgb);
+			//update current pose
+			mfdata->estimatePose(this->trackingState->pose_d);
+
+			sdkStopTimer(&timer_instant);
+			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			std::cout << "pose Time:" << processedTime_inst << std::endl;
+			sdkResetTimer(&timer_instant);
+			sdkStartTimer(&timer_instant);
+			mfdata->constructMesh(mesh);
+
+			sdkStopTimer(&timer_instant);
+			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			std::cout << "construct mesh Time:" << processedTime_inst << std::endl;
+			sdkResetTimer(&timer_instant);
+			sdkStartTimer(&timer_instant);
+			mfdata->meshUpdate(mesh);
+
+			sdkStopTimer(&timer_instant);
+			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			std::cout << " update mesh Time:" << processedTime_inst << std::endl;
+			sdkResetTimer(&timer_instant);
+			sdkStartTimer(&timer_instant);
+			if (mindis > 5)
+			{
+				mfdata->MeshFusion_InitTracking();
+				if (view->rgb)
+					mfdata->MeshFusion_Tracking(mindis);
+
+
+			}
+			mfdata->Generate3DPoints();
+
+			sdkStopTimer(&timer_instant);
+			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			std::cout << "generate 3d point Time:" << processedTime_inst << std::endl;
+			sdkResetTimer(&timer_instant);
+		}
+		catch (std::exception em)
 		{
-			mfdata->MeshFusion_InitTracking();
-			if (view->rgb)
-				mfdata->MeshFusion_Tracking(mindis);
+			std::cout << em.what();
 
 		}
-		
 	}
 
 	
