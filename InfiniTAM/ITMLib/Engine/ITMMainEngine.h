@@ -69,8 +69,8 @@ namespace ITMLib
 			ITMTrackingState *trackingState;
 
 			ITMScene<ITMVoxel, ITMVoxelIndex> *scene;
-			ITMRenderState *renderState_live;
-			ITMRenderState *renderState_freeview;
+			ITMRenderState *renderState_live=NULL;
+			ITMRenderState *renderState_freeview=NULL;
 
 			
 

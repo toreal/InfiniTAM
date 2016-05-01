@@ -11,3 +11,10 @@ compare the face error to refine mesh
 
 how to refine?
 each vertex bind with multiple faces
+
+
+There are many lists
+how to find the relation 
+1.mcorner  x
+2.addvertex x-a
+3.remove by tracking x-b

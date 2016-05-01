@@ -117,7 +117,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 
         //Delete fail to track features & calculate SQR of distance
         std::vector< cv::Point2f > __corners, __pre_corners,_base_corners;
-        
+		std::vector<cv::Point3f> objpos;
         maxdis = 0;
         float fdistsqr = 0;
         int k=0;
@@ -128,19 +128,21 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
                 __corners.push_back(m_corners[i]);
                 __pre_corners.push_back(m_pre_corners[i]);
                 _base_corners.push_back(m_base_corners[i]);
-                
+				objpos.push_back(objectPoints[i]);
                 fdistsqr = SQR(m_base_corners[i].x - m_corners[i].x) + SQR(m_base_corners[i].y - m_corners[i].y);
                 
                 if (fdistsqr>maxdis)
                     maxdis = fdistsqr;
                 k++;
-            }
+			}
+			
         }
         
         m_corners     = __corners;
         m_pre_corners = __pre_corners;
         m_base_corners = _base_corners;
-
+		objectPoints = objpos;
+		
     }
     
     return EXIT_SUCCESS;
