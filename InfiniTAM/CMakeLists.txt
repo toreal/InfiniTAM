@@ -16,11 +16,12 @@ find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
 
 
-set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
-set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
-set(FADE_LIBS fade2D_x64_v140_Debug.lib )
-include_directories(${FADE_INCLUDE_DIR} )
-
+IF(MSVC_IDE)
+  set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
+  set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
+  set(FADE_LIBS fade2D_x64_v140_Debug.lib )
+  include_directories(${FADE_INCLUDE_DIR} )
+ENDIF(MSVC_IDE)
 
 #find_package(OpenMesh)
 #set(OPENMESH_INCLUDE_DIR  C:/James/OpenMesh51/include)
@@ -31,7 +32,7 @@ include_directories(${FADE_INCLUDE_DIR} )
 #include_directories(${OPENMESH_INCLUDE_DIR} )
 
 
-find_package(CGAL COMPONENTS Core)
+find_package(CGAL COMPONENTS Core ImageIO Qt5)
 CANONIFY_BOOL(CGAL_FOUND)
 message(STATUS "CGAL found: " ${CGAL_FOUND})
 
@@ -64,6 +65,7 @@ OPTION(WITH_REALSENSE "Build with Intel RealSense support?" ${REALSENSE_FOUND})
 IF(MSVC_IDE)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS )
   add_definitions(-DUSING_CMAKE=1)
+  add_definitions(-DWITH-FADE=1)
 
   LINK_DIRECTORIES(C:/james/openglLIB/lib ${FADE_LIB_DIR}  )
 ELSE(MSVC_IDE)
