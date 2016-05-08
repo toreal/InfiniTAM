@@ -15,12 +15,12 @@ find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
 
-
-set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
-set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
-set(FADE_LIBS fade2D_x64_v140_Debug.lib )
-include_directories(${FADE_INCLUDE_DIR} )
-
+IF(MSVC_IDE)
+  set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
+  set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
+  set(FADE_LIBS fade2D_x64_v140_Debug.lib )
+  include_directories(${FADE_INCLUDE_DIR} )
+ENDIF(MSVC_IDE)
 
 #find_package(OpenMesh)
 #set(OPENMESH_INCLUDE_DIR  C:/James/OpenMesh51/include)
@@ -80,10 +80,11 @@ if(APPLE)
   set(CUDA_HOST_COMPILER /usr/bin/clang)
 endif(APPLE)
 
-IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -Wno-deprecated-declarations -Wno-unused-function")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++")
-ENDIF()
+
+#IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -Wno-deprecated-declarations -Wno-unused-function")
+#  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++")
+#ENDIF()
 
 add_subdirectory(ORUtils)
 add_subdirectory(ITMLib)
@@ -104,8 +105,11 @@ target_link_libraries(InfiniTAM_cli ${FADE_LIBS} )
 target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${CGAL_LIBS})
 add_executable(InfiniTAM InfiniTAM.cpp )
 #target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${OPENMESH_LIBS}   )
-target_link_libraries(InfiniTAM ${FADE_LIBS} )
-target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${CGAL_LIBRARIES} libpxc_d.lib  )
+
+IF(MSVC_IDE)
+  target_link_libraries(InfiniTAM ${FADE_LIBS} libpxc_d.lib )
+ENDIF(MSVC_IDE)
+target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${CGAL_LIBRARIES}   )
 target_link_libraries(InfiniTAM Engine)
 target_link_libraries(InfiniTAM Utils)
 
