@@ -237,7 +237,7 @@ float MeshFusion::estivalue(const float * data, Vector2i  p1,Vector2i p2 )
 
 
 
-#ifdef WITH_FADE
+
 
 void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
 {
@@ -255,7 +255,7 @@ void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
     vInputPoints.push_back(p);
     
 }
-
+#ifdef WITH_FADE
 void MeshFusion::constructMesh(ITMMesh * mesh )
 {
 	ITMFloatImage * depth_in = proDepth; 
