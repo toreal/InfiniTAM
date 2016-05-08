@@ -1,6 +1,6 @@
 
 #include "RealsenseEngineSDK.h"
-#define COMPILE_WITH_RealSenseSDK 1
+//#define COMPILE_WITH_RealSenseSDK 1
 
 #ifdef COMPILE_WITH_RealSenseSDK
 

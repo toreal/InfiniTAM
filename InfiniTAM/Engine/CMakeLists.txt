@@ -34,6 +34,7 @@ ENDIF()
 IF(WITH_REALSENSE)
   include_directories(${RealSense_INCLUDE_DIR})
   add_definitions(-DCOMPILE_WITH_RealSense)
+  add_definitions(-DCOMPILE_WITH_RealSenseSDK=1)
   SET_PROPERTY(SOURCE RealSenseEngine.cpp PROPERTY COMPILE_FLAGS -std=c++11)
 ENDIF()
 

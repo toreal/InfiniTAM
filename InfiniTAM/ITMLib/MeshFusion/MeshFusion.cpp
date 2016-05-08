@@ -236,24 +236,26 @@ float MeshFusion::estivalue(const float * data, Vector2i  p1,Vector2i p2 )
 }
 
 
-void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
-{
-	for (int i = 0; i < vInputPoints.size(); i++)
-	{
-		Point2 ap = vInputPoints[i];
-		Point2 dis= Point2(ap.x()-p.x(),ap.y()-p.y());
-		float diff = dis.x()*dis.x() + dis.y()*dis.y();
-
-		if (diff < 50)
-			return;
-
-
-	}
-	vInputPoints.push_back(p);
-
-}
 
 #ifdef WITH_FADE
+
+void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
+{
+    for (int i = 0; i < vInputPoints.size(); i++)
+    {
+        Point2 ap = vInputPoints[i];
+        Point2 dis= Point2(ap.x()-p.x(),ap.y()-p.y());
+        float diff = dis.x()*dis.x() + dis.y()*dis.y();
+        
+        if (diff < 50)
+            return;
+        
+        
+    }
+    vInputPoints.push_back(p);
+    
+}
+
 void MeshFusion::constructMesh(ITMMesh * mesh )
 {
 	ITMFloatImage * depth_in = proDepth; 
