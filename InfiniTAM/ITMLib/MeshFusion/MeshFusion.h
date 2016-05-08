@@ -19,6 +19,7 @@ typedef CGAL::Simple_cartesian<double> K;
 typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
 
+
 namespace ITMLib
 {
 	namespace Objects
@@ -27,21 +28,25 @@ namespace ITMLib
 		{
 		private :
 			Polyhedron mymesh;
-			Polyhedron currMesh;
+			//Polyhedron currMesh;
 			std::vector< cv::Point2f > uvlist;
-            // For Tracker
-			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners;
+			std::vector<cv::Point3f> meshVertex;
+		//	std::vector<cv::Point3i> meshTri;
+
+			// For Tracker
+			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup,m_backup2;
 			std::vector<cv::Point3f> objectPoints;
 			cv::Mat             m_image, m_pre_image;
 			std::vector<uchar>  m_status;
 			std::vector<float>  m_err;
 			bool                m_bfirst = true;
-            
+
+				
 			float estivalue(const float * data, Vector2i ,Vector2i);
 			
 
 		public:
-			
+			bool bmesh = false;
 			int      shift = 0;
 			const int MAXNODE = 10000;
 			ITMView     *mainView=NULL;
@@ -77,7 +82,7 @@ namespace ITMLib
 			void buildProjDepth();
 			void estimatePose(ITMPose * posd);
 
-			void meshUpdate(ITMMesh * mesh);
+			void meshUpdate(ITMMesh * mesh, ITMPose *);
             
             ////////////////////////////
             //  Image feature tracking

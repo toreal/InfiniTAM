@@ -190,7 +190,7 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
 {
     glColor3f(1.0f, 1.0f, 0.0f);
     
-    glPointSize(3.4f);
+    glPointSize(0.4f);
     glBegin(GL_POINTS);
     for (int i=0;i<(int)m_corners.size();i++)
     {
@@ -205,19 +205,19 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
     }
     glEnd();
 
-    if (m_pre_corners.size()!=0)
+    if (m_backup.size()!=0)
     {
         // Draw yellow vector from pre_corner to _corner
-       glColor3f(1.0f, 1.0f, 0.0f);
+       glColor3f(0.0f, 1.0f, 0.0f);
         glBegin(GL_LINES); {
-            for (int i=0;i<(int)m_corners.size();i++)
+            for (int i=0;i<(int)m_backup.size();i++)
             {
-                if (m_status[i]==1)
+                //if (m_status[i]==1)
                 {
-                    float x1 = m_corners[i].x/m_image.cols;
-                    float y1 = 1-m_corners[i].y/m_image.rows;
-                    float x2 = m_pre_corners[i].x/m_image.cols;
-                    float y2 = 1-m_pre_corners[i].y/m_image.rows;
+                    float x1 = m_backup[i].x/m_image.cols;
+                    float y1 = 1-m_backup[i].y/m_image.rows;
+                    float x2 = m_backup2[i].x/m_image.cols;
+                    float y2 = 1-m_backup2[i].y/m_image.rows;
                     glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
                     glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
 
@@ -226,25 +226,25 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
         }
         glEnd();
 
-        // Draw green vector from base_corner to _corner
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glBegin(GL_LINES); {
-            for (int i=0;i<(int)m_corners.size();i++)
-            {
-                if (m_status[i]==1)
-                {
-                    float x1 = m_corners[i].x/m_image.cols;
-                    float y1 = 1-m_corners[i].y/m_image.rows;
-                    float x2 = m_base_corners[i].x/m_image.cols;
-                    float y2 = 1-m_base_corners[i].y/m_image.rows;
-                    glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
-                    glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
-                    
-                }
-            }
-        }
-        glEnd();
-        
+        //// Draw green vector from base_corner to _corner
+        //glColor3f(0.0f, 1.0f, 0.0f);
+        //glBegin(GL_LINES); {
+        //    for (int i=0;i<(int)m_corners.size();i++)
+        //    {
+        //        if (m_status[i]==1)
+        //        {
+        //            float x1 = m_corners[i].x/m_image.cols;
+        //            float y1 = 1-m_corners[i].y/m_image.rows;
+        //            float x2 = m_base_corners[i].x/m_image.cols;
+        //            float y2 = 1-m_base_corners[i].y/m_image.rows;
+        //            glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
+        //            glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
+        //            
+        //        }
+        //    }
+        //}
+        //glEnd();
+        //
     }
 
 	if ( false)// proDepth != NULL)

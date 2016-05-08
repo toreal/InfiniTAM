@@ -179,7 +179,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	sdkStartTimer(&timer_instant);
 	//std::cout << mindis << std::endl;
 
-	if ( mesh->noTotalTriangles==0 || mindis > 36 )
+	if ( mesh->noTotalTriangles==0 || mindis > 100 )
 	{
 		try {
 			mesh->noTotalTriangles = 0;
@@ -193,14 +193,10 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			std::cout << "pose Time:" << processedTime_inst << std::endl;
 			sdkResetTimer(&timer_instant);
 			sdkStartTimer(&timer_instant);
+			//if (! mfdata->bmesh)
 			mfdata->constructMesh(mesh);
-
-			sdkStopTimer(&timer_instant);
-			 processedTime_inst = sdkGetTimerValue(&timer_instant);
-			std::cout << "construct mesh Time:" << processedTime_inst << std::endl;
-			sdkResetTimer(&timer_instant);
-			sdkStartTimer(&timer_instant);
-			mfdata->meshUpdate(mesh);
+			
+			mfdata->meshUpdate(mesh, this->trackingState->pose_d);
 
 			sdkStopTimer(&timer_instant);
 			 processedTime_inst = sdkGetTimerValue(&timer_instant);

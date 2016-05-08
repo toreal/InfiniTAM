@@ -28,6 +28,7 @@
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/IO/Polyhedron_VRML_2_ostream.h>
+
 #include <fstream>
 
 #include <iostream>
@@ -54,6 +55,8 @@ typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterizat
 //
 //typedef           Parameterization_polyhedron_adaptor::Vertex_handle  SeamHandle;
 typedef typename Polyhedron::Vertex_iterator Vertex_iterator;
+typedef typename Polyhedron::Facet_iterator Facet_iterator;
+typedef CGAL::Triangle_2<K >      Tri2;
 
 
 
@@ -116,11 +119,16 @@ bool MeshFusion::find3DPos(cv::Point2f p , cv::Point3f &ret)
 
 
 	while (it != ie)
+	//for(int i = 0 ; i < meshVertex.size();i++)	
 	{
+		//cv::Point3f posf = meshVertex[i];
 		CGAL::Point_3<K> pos = mesh_adaptor.get_vertex_position(it);
 		//Vector3f p = Vector3f(pos.x(), pos.y(), pos.z());
 		int ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
 		int iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
+
+		//int ix = posf.x * intrinRGB.x / posf.z + intrinRGB.z;
+		//int iy = posf.y * intrinRGB.y / posf.z + intrinRGB.w;
 
 		float dis = (ix - p.x)*(ix - p.x) + (iy - p.y)*(iy - p.y);
 		if (dis <= 1)
@@ -141,29 +149,71 @@ bool MeshFusion::find3DPos(cv::Point2f p , cv::Point3f &ret)
 	return false;
 }
 
-void MeshFusion::meshUpdate(ITMMesh * meshold)
+//for all m_base_corners to determine that whether it is a new vertex or not
+//if it is a new vertex, contruct the new triangle
+
+
+
+void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 {
-	ITMPose pose;
-
-
-	std::vector<float> coords;
-	std::vector<int>    tris;
-	ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
-
-	//if (mymesh.size_of_vertices() > 0)
-	//	return;
-
-	for (int i = 0; i < meshold->noTotalTriangles; i++)
-	{
-		maintainList(trivec[i].p0, coords, tris);
-		maintainList(trivec[i].p1, coords, tris);
-		maintainList(trivec[i].p2, coords, tris);
-	}	
 	
-	mymesh.clear();
 
-	polyhedron_builder<Polyhedron::HalfedgeDS > builder(coords, tris);
-	mymesh.delegate(builder);
+	if (meshold->noTotalTriangles > 0)
+	{
+
+		std::vector<float> coords;
+		std::vector<int>    tris;
+		ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
+
+		//if (mymesh.size_of_vertices() > 0)
+		//	return;
+
+		for (int i = 0; i < meshold->noTotalTriangles; i++)
+		{
+			maintainList(trivec[i].p0, coords, tris);
+			maintainList(trivec[i].p1, coords, tris);
+			maintainList(trivec[i].p2, coords, tris);
+		
+		/*	meshVertex.push_back(cv::Point3f(trivec[i].p0.x, trivec[i].p0.y, trivec[i].p0.z));
+			meshVertex.push_back(cv::Point3f(trivec[i].p1.x, trivec[i].p1.y, trivec[i].p1.z));
+			meshVertex.push_back(cv::Point3f(trivec[i].p2.x, trivec[i].p2.y, trivec[i].p2.z));*/
+		}
+
+		mymesh.clear();
+
+		polyhedron_builder<Polyhedron::HalfedgeDS > builder(coords, tris);
+		mymesh.delegate(builder);
+		return;
+
+
+	}
+	return;
+	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
+	Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
+	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
+	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+	meshVertex.clear();
+	std::vector<cv::Point2f> meshProj;
+
+
+	while (it!=ie)
+	{
+		CGAL::Point_3<K> pos = mesh_adaptor.get_vertex_position(it);
+		Vector3f vpos;
+		Vector3f npos=pose->GetM()*vpos;
+
+		float ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
+		float iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
+		meshVertex.push_back(cv::Point3f(pos.x(),pos.y(),pos.z()));
+		meshProj.push_back(cv::Point2f(ix,iy));
+
+		it++;
+	}
+	Facet_iterator fit = mesh_adaptor.mesh_facets_begin();
+	fit->facet_begin();
+	
+	
+
 /*
 	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);	
 	int nv=mesh_adaptor.count_mesh_vertices();
@@ -191,7 +241,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold)
 
 
 
-	Matrix4f  mm= pose.GetM();
+	Matrix4f  mm= pose->GetM();
 	//ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
 	
 	for (int i = 0; i < meshold->noTotalTriangles; i++)

@@ -5,6 +5,9 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${OPENGL_INCLUDE_DIR})
 include_directories(${GLUT_INCLUDE_DIR})
 
+include_directories($ENV{RSSDK_DIR}/include)
+
+
 IF(WITH_CUDA)
   include_directories(${CUDA_INCLUDE_DIRS})
 ELSE()

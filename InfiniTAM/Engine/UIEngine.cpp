@@ -102,8 +102,12 @@ void UIEngine::glutDisplayFunction()
 
 	glPopMatrix();
 
+
 	uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1] ,
 		uiEngine->outImageType[0]!=ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST, &uiEngine->freeviewPose, &uiEngine->freeviewIntrinsics);
+
+	//uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
+	//	true, uiEngine->mainEngine->GetTrackingState()->pose_d, &uiEngine->freeviewIntrinsics);
 
 	//glMatrixMode(GL_PROJECTION);
 	
