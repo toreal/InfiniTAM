@@ -24,14 +24,32 @@ namespace ITMLib
 {
 	namespace Objects
 	{
+
+		struct MyVertex
+		{
+			float x, y, z;        //Vertex
+			//float nx, ny, nz;     //Normal
+			float s0, t0;         //Texcoord0
+		};
+	/*	struct MyIndices
+		{
+			ushort pindices[3];
+		}*/
+
 		class MeshFusion
 		{
 		private :
 			Polyhedron mymesh;
 			//Polyhedron currMesh;
-			std::vector< cv::Point2f > uvlist;
-			std::vector<cv::Point3f> meshVertex;
-		//	std::vector<cv::Point3i> meshTri;
+			//std::vector< cv::Point2f > uvlist;
+			//std::vector<cv::Point3f> meshVertex;
+			MyVertex meshVertex[2048];
+			ushort  meshTri[2048*3];
+			int totalVertex=0;
+			int totalFace=0;
+
+			//std::vector<cv::Point3f> meshVertex;
+			//std::vector<cv::Point3i> meshTri;
 
 			// For Tracker
 			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup,m_backup2;

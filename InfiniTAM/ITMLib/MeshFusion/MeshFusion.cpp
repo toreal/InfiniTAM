@@ -23,18 +23,22 @@ using namespace GEOM_FADE2D;
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Constrained_Delaunay_triangulation_2.h>
+#include <CGAL/Triangulation_vertex_base_with_info_2.h>
+
 
 #include <cassert>
 #include <iostream>
+#include <fstream>
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K2;
-
-typedef CGAL::Triangulation_vertex_base_2<K2>                     Vb;
+typedef CGAL::Triangulation_vertex_base_with_info_2<unsigned, K2> Vb;
+//typedef CGAL::Triangulation_vertex_base_2<K2>                     Vb;
 typedef CGAL::Constrained_triangulation_face_base_2<K2>           Fb;
 typedef CGAL::Triangulation_data_structure_2<Vb, Fb>              TDS;
 typedef CGAL::Exact_predicates_tag                               Itag;
 typedef CGAL::Constrained_Delaunay_triangulation_2<K2, TDS, Itag> CDT;
 typedef CDT::Point          Point2;
+typedef CGAL::Spatial_sort_traits_adapter_2<K2, Point2*> Search_traits;
 
 
 #endif 
@@ -383,6 +387,44 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 }
 
 #else
+
+void add3DVertex(std::vector<cv::Point3f> &list, std::vector< cv::Point2f > &uvlist,Point2 p0 , Vector4f intrinparam ,int w,int h)
+{
+	
+}
+
+template <class InputIterator>
+void insert_with_info(CDT& cdt, InputIterator first, InputIterator last)
+{
+	std::vector<std::ptrdiff_t> indices;
+	std::vector<Point2> points;
+	std::ptrdiff_t index = 0;
+
+	for (InputIterator it = first; it != last; ++it) {
+		points.push_back(*it);
+		indices.push_back(index++);
+		
+	}
+
+	CGAL::spatial_sort(indices.begin(), indices.end(), Search_traits(&(points[0]), cdt.geom_traits()));
+
+	CDT::Vertex_handle v_hint;
+	CDT::Face_handle hint;
+	for (typename std::vector<std::ptrdiff_t>::const_iterator
+		it = indices.begin(), end = indices.end();
+		it != end; ++it) {
+		v_hint = cdt.insert(points[*it], hint);
+		if (v_hint != CDT::Vertex_handle()) {
+			v_hint->info() = *it;
+			hint = v_hint->face();
+		}
+		else
+		{
+			cout << "wrong";
+		}
+	}
+}
+
 void MeshFusion::constructMesh(ITMMesh * mesh)
 {
 
@@ -417,11 +459,11 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 	}
 
 
+
 	CDT dt;
+	
+	insert_with_info(dt, vInputPoints.begin(), vInputPoints.end());
 
-
-	dt.insert(vInputPoints.begin(), vInputPoints.end());
-	//std::vector<Segment2> vSegments;
 
 	for (int i = 0; i < ncon - 1; i++)
 	{
@@ -430,41 +472,76 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 
 	}
 
+	//uvlist.clear();
+	//meshVertex.clear();
 
-	//ConstraintGraph2* pCG = dt.createConstraint(vSegments, CIS_CONSTRAINED_DELAUNAY);
-	//dt.applyConstraintsAndZones();
-
-	//Visualizer2 vis2("example3_withConstraints.ps");
-	//dt.show(&vis2);
-
-//	Color colorBlue(0.0, 0.0, 1.0, 0.01);
-	//std::vector<Triangle2*> vAllDelaunayTriangles;
-	//dt.getTrianglePointers(vAllDelaunayTriangles);
-	CDT::Face_iterator it = dt.faces_begin(),
-		beyond = dt.faces_end();
 	CDT::Face_handle face;
 	CDT::Face_handle neighbor;
+	int idx = 0;
+
+	for (
+		CDT::Vertex_iterator vit = dt.vertices_begin(),
+		vend = dt.vertices_end();
+		vit != vend; ++vit)
+	{
+		//cv::Point3f  pout;
+		Point2 p0 = vit->point();
+		//int ndx=vit->info();
+		//if (ndx != idx)
+			vit->info() = idx;
+
+		//
+		//pout.z = -1;// estivalue(depthData_in, Vector2i(p0.x(), p0.y()), NULL);
+
+		
+
+		//cv::Point2f uv0 = cv::Point2f(p0.x() / w, p0.y() / h);
+		////uvlist.push_back(uv0);
+		////meshVertex[idx].x = pout.x;//   push_back(pout);
+		////meshVertex[idx].y = pout.y;
+		meshVertex[idx].z = -1;
+		//meshVertex[idx].s0 = uv0.x;
+		//meshVertex[idx].t0 = uv0.y;
 
 
-	int ti = 0;
-	ITMMesh::Triangle * trivec = mesh->triangles->GetData(MEMORYDEVICE_CPU);
 
-	uvlist.clear();
+		idx++;
+	}
+	totalVertex = idx;
 
+
+
+	CDT::Face_iterator it = dt.faces_begin(),
+		beyond = dt.faces_end();
+
+
+	//int ti = 0;
+	//ITMMesh::Triangle * trivec = mesh->triangles->GetData(MEMORYDEVICE_CPU);
+
+
+	//CDT::Finite_vertices_iterator vit;
+
+	int nface = 0;
+	fstream fout;
+	fout.open("debug.txt", ios::out);
+	
 	while (it != beyond) {
 		face = it;                                //get face
 		++it;                                      //advance the iterator
 		int count = 0;                             //initialize counter
-	//	for (int i = 0; i<3; ++i) {                   //for index 0,1,2
-		Point2 p0=	face->vertex(0)->point();
-		Point2 p1= face->vertex(1)->point();
-		Point2 p2=face->vertex(2)->point();
+	//	for (int i = 0; i<3; ++i) {      //for index 0,1,2
+
+		CDT::Vertex_handle vh0 = face->vertex(0);
+		CDT::Vertex_handle vh1 = face->vertex(1);
+		CDT::Vertex_handle vh2 = face->vertex(2);
+		
+		
+		Point2 p0= vh0->point();
+		Point2 p1= vh1->point();
+		Point2 p2= vh2->point();
+
 
 		Point2 c2=CGAL::centroid(p0, p1, p2);
-		
-	
-
-
 		
 		int cx = c2.x();
 		int cy = c2.y();
@@ -475,58 +552,58 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 
 
 		Vector4u p = mask[idx];
+
 		if (p.x >0 || p.y > 0 || p.z > 0)
 		{
-			//Circle2 cc(c2, 2);
-			//vis2.addObject(cc, colorBlue);
+			fout << p0 << "  moveto" << endl;
+			fout << p1 << "  lineto" << endl;
+			fout << p1 << "  moveto" << endl;
+			fout << p2 << "  lineto" << endl;
+			fout << p2 << "  moveto" << endl;
+			fout << p0 << "  lineto" << endl;
 
-
-			// An alternative method (just to show how to access the vertices) would be:
-			//Point2* p0 = pT->getCorner(0);
-			//Point2* p1 = pT->getCorner(1);
-			//Point2* p2 = pT->getCorner(2);
-
-			//int i1 = p0->x() + w*((int)p0->y());
-			//int i2 = p1->x() + w*((int)p1->y());
-			//int i3 = p2->x() + w*((int)p2->y());
-			Vector2i pc0 = Vector2i(p1.x() + p2.x(), p1.y() + p2.y()) / 2;
-			Vector2i pc1 = Vector2i(p0.x() + p2.x(), p0.y() + p2.y()) / 2;
-			Vector2i pc2 = Vector2i(p1.x() + p0.x(), p1.y() + p0.y()) / 2;
-			trivec[ti].p0.z = estivalue(depthData_in, Vector2i(p0.x(), p0.y()), pc0);
-			trivec[ti].p1.z = estivalue(depthData_in, Vector2i(p1.x(), p1.y()), pc1);
-			trivec[ti].p2.z = estivalue(depthData_in, Vector2i(p2.x(), p2.y()), pc2);
-			cv::Point2f uv0 = cv::Point2f(p0.x() / w, p0.y() / h);
-			uvlist.push_back(uv0);
-			cv::Point2f uv1 = cv::Point2f(p1.x() / w, p1.y() / h);
-			uvlist.push_back(uv1);
-
-			cv::Point2f uv2 = cv::Point2f(p2.x() / w, p2.y() / h);
-			uvlist.push_back(uv2);
-
-
-			//if (trivec[ti].p0.z > 0 && trivec[ti].p1.z > 0 && trivec[ti].p2.z > 0)
+			int v0 = vh0->info();
+			int v1 = vh1->info();
+			int v2 = vh2->info();
+			
+			if (meshVertex[v0].z < 0)
 			{
-
-				trivec[ti].p0.x = trivec[ti].p0.z * (p0.x() - intrinparam.z) / intrinparam.x;
-				trivec[ti].p0.y = trivec[ti].p0.z * (p0.y() - intrinparam.w) / intrinparam.y;
-
-				trivec[ti].p1.x = trivec[ti].p1.z * (p1.x() - intrinparam.z) / intrinparam.x;
-				trivec[ti].p1.y = trivec[ti].p1.z * (p1.y() - intrinparam.w) / intrinparam.y;
-
-				trivec[ti].p2.x = trivec[ti].p2.z * (p2.x() - intrinparam.z) / intrinparam.x;
-				trivec[ti].p2.y = trivec[ti].p2.z * (p2.y() - intrinparam.w) / intrinparam.y;
-
-				std::string text(toString(ti));
-				//Label label_pNeigT(c2, text, false);
-				//vis2.addObject(label_pNeigT, colorBlue);
-
-				ti++;
+				meshVertex[v0].z = estivalue(depthData_in, Vector2i(p0.x(), p0.y()), Vector2i(c2.x(), c2.y()));
+				meshVertex[v0].x = meshVertex[v0].z * (p0.x() - intrinparam.z) / intrinparam.x;
+				meshVertex[v0].y = meshVertex[v0].z * (p0.y() - intrinparam.w) / intrinparam.y;
+				meshVertex[v0].s0 = p0.x() / w;
+				meshVertex[v0].t0 = p0.y() / h;
 			}
+			if (meshVertex[v1].z < 0)
+			{
+				meshVertex[v1].z = estivalue(depthData_in, Vector2i(p1.x(), p1.y()), Vector2i(c2.x(), c2.y()));
+				meshVertex[v1].x = meshVertex[v1].z * (p1.x() - intrinparam.z) / intrinparam.x;
+				meshVertex[v1].y = meshVertex[v1].z * (p1.y() - intrinparam.w) / intrinparam.y;
+				meshVertex[v1].s0 = p1.x() / w;
+				meshVertex[v1].t0 = p1.y() / h;
+
+			}
+			if (meshVertex[v2].z < 0)
+			{
+				meshVertex[v2].z = estivalue(depthData_in, Vector2i(p2.x(), p2.y()), Vector2i(c2.x(), c2.y()));
+				meshVertex[v2].x = meshVertex[v2].z * (p2.x() - intrinparam.z) / intrinparam.x;
+				meshVertex[v2].y = meshVertex[v2].z * (p2.y() - intrinparam.w) / intrinparam.y;
+				meshVertex[v2].s0 = p2.x() / w;
+				meshVertex[v2].t0 = p2.y() / h;
+
+			}
+
+			meshTri[nface] = v0;
+			meshTri[nface+1] = v1;
+			meshTri[nface+2] = v2;// .push_back(cv::Point3i(v0, v1, v2));
+			nface = nface + 3;
 		}
 	}
+	totalFace = nface;
+	fout.close();
 
-	mesh->noTotalTriangles = ti;
-	bmesh = true;
+//	mesh->noTotalTriangles = ti;
+	//bmesh = true;
 
 
 }

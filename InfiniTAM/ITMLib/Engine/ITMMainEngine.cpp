@@ -193,7 +193,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			std::cout << "pose Time:" << processedTime_inst << std::endl;
 			sdkResetTimer(&timer_instant);
 			sdkStartTimer(&timer_instant);
-			//if (! mfdata->bmesh)
+			if (! mfdata->bmesh)
 			mfdata->constructMesh(mesh);
 			
 			mfdata->meshUpdate(mesh, this->trackingState->pose_d);

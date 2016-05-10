@@ -1,7 +1,7 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of InfiniTAM
 
 #include "UIEngine.h"
-
+#include <GL/glew.h>
 #include <string.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -102,13 +102,17 @@ void UIEngine::glutDisplayFunction()
 
 	glPopMatrix();
 
-
-	uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1] ,
-		uiEngine->outImageType[0]!=ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST, &uiEngine->freeviewPose, &uiEngine->freeviewIntrinsics);
-
-	//uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
-	//	true, uiEngine->mainEngine->GetTrackingState()->pose_d, &uiEngine->freeviewIntrinsics);
-
+	bool buser = uiEngine->outImageType[0] != ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST;
+	if (buser)
+	{
+		uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
+			buser, &uiEngine->freeviewPose, &uiEngine->freeviewIntrinsics);
+	}
+	else
+	{
+		uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
+			true, uiEngine->mainEngine->GetTrackingState()->pose_d, &uiEngine->freeviewIntrinsics);
+	}
 	//glMatrixMode(GL_PROJECTION);
 	
 
@@ -231,6 +235,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 		else
 		{
 			uiEngine->outImageType[0] = ITMMainEngine::InfiniTAM_IMAGE_FREECAMERA_SHADED;
+
 			uiEngine->outImageType[1] = ITMMainEngine::InfiniTAM_IMAGE_SCENERAYCAST;
 
 			uiEngine->freeviewPose.SetFrom(uiEngine->mainEngine->GetTrackingState()->pose_d);
@@ -411,7 +416,7 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 
 	this->isRecording = false;
 	this->currentFrameNo = 0;
-
+	glewInit();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(winSize.x, winSize.y);

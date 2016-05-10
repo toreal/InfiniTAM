@@ -1,19 +1,23 @@
 
+#include <GL/glew.h>
 
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
 
 #ifdef FREEGLUT
+
 #include <GL/freeglut.h>
+
 #else
 #if (!defined USING_CMAKE) && (defined _MSC_VER)
 #pragma comment(lib, "glut64")
 #endif
 #endif
 
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
 
 #include "MeshFusion.h"
 #include "../Objects/ITMPose.h"
@@ -45,6 +49,7 @@
 
 
 typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterization_polyhedron_adaptor;
+
 
 //
 //// Type describing a border or seam as a vertex list
@@ -187,12 +192,14 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 
 
 	}
+
 	return;
+
 	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
 	Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
 	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
-	meshVertex.clear();
+	//meshVertex.clear();
 	std::vector<cv::Point2f> meshProj;
 
 
@@ -204,13 +211,17 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 
 		float ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
 		float iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
-		meshVertex.push_back(cv::Point3f(pos.x(),pos.y(),pos.z()));
+		//meshVertex.push_back(cv::Point3f(pos.x(),pos.y(),pos.z()));
 		meshProj.push_back(cv::Point2f(ix,iy));
 
 		it++;
 	}
 	Facet_iterator fit = mesh_adaptor.mesh_facets_begin();
-	fit->facet_begin();
+    
+	bool bt = fit->is_triangle();
+
+
+	//fit->facet_begin();
 	
 	
 
@@ -344,33 +355,69 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 		{
 			
 
-			Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
-			CGAL::Point_3<K> center = CGAL::Point_3<K>(0, 0, 300);
-			glTranslated(center.x(), center.y(),center.z());
+	//		Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
+//			CGAL::Point_3<K> center = CGAL::Point_3<K>(0, 0, 300);
+			cv::Point3f center = cv::Point3f(0, 0, 300);
+
+		//	glTranslated(center.x, center.y,center.z);
 			if (busepose)
 				glMultMatrixf(pose->GetM().m);
 
-			int nv = mesh_adaptor.count_mesh_vertices();
-			int n = mesh_adaptor.count_mesh_facets();
-			Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
-			Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
+			//int nv = meshVertex.size();//  mesh_adaptor.count_mesh_vertices();
+			//int n = meshTri.size();// mesh_adaptor.count_mesh_facets();
+			glewInit();
+
+			GLuint VertexVBOID,IndexVBOID;
+			glGenBuffers(1, &VertexVBOID);
+			glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(MyVertex) * totalVertex, &meshVertex[0].x, GL_STATIC_DRAW);
+
+			glGenBuffers(1, &IndexVBOID);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ushort) * totalFace, meshTri, GL_STATIC_DRAW);
+
+			//Define this somewhere in your header file
+#define BUFFER_OFFSET(i) ((void*)(i))
+
+			glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glVertexPointer(3, GL_FLOAT, sizeof(MyVertex), BUFFER_OFFSET(0));   //The starting point of the VBO, for the vertices
+			//glEnableClientState(GL_NORMAL_ARRAY);
+			//glNormalPointer(GL_FLOAT, sizeof(MyVertex), BUFFER_OFFSET(12));   //The starting point of normals, 12 bytes away
+			glClientActiveTexture(GL_TEXTURE0);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(MyVertex), BUFFER_OFFSET(12));   //The starting point of texcoords, 24 bytes away
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
+			//To render, we can either use glDrawElements or glDrawRangeElements
+			//The is the number of indices. 3 indices needed to make a single triangle
+			glDrawElements(GL_TRIANGLES, totalFace, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));   //The starting point of the IBO
+																					//0 and 3 are the first and last vertices
+																					//glDrawRangeElements(GL_TRIANGLES, 0, 3, 3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));   //The starting point of the IBO
+																					//glDrawRangeElements may or may not give a performance advantage over glDrawElements
+
+
+
+								   //Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
+			//Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
 			//glScalef(1.f, -1.f, 1.f);
-			glBegin(GL_TRIANGLES);
-			int idx=0;
-			while (it != ie)
-			{
-				CGAL::Point_3<K> pos= mesh_adaptor.get_vertex_position(it);
-				CGAL::Point_2<K> uv=mesh_adaptor.get_vertex_uv(it);
+			//glBegin(GL);
+			//int idx=0;
+			//while (it != ie)
+			//for(int i = 0 ; i < nv; i++)
+			//{
+			//	cv::Point3f pos( meshVertex[i].x, meshVertex[i].y, meshVertex[i].z);// mesh_adaptor.get_vertex_position(it);
+			//	cv::Point2f uv(meshVertex[i].s0, meshVertex[i].t0);// //mesh_adaptor.get_vertex_uv(it);
 
-				CGAL::Vector_3<K> spos=  pos - center;
-				if ( idx < uvlist.size())
-				glTexCoord2f(uvlist[idx].x , uvlist[idx].y);
-				glVertex3f(spos.x(), spos.y(), spos.z());
+			//	cv::Point3f spos=  pos - center;
+			//	//if ( i < uvlist.size())
+			//	//glTexCoord2f(uvlist[i].x , uvlist[i].y);
+			//	//glVertex3f(spos.x, spos.y, spos.z);
 
-				idx++;
-				it++;
-			}
-			glEnd();
+			//	//idx++;
+			//	//it++;
+			//}
+			//glEnd();
 
 
 
