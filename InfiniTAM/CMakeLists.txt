@@ -15,7 +15,6 @@ find_package(GLUT REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
 
-
 IF(MSVC_IDE)
   set(FADE_INCLUDE_DIR  C:/James/fadeRelease/include_fade2d)
   set(FADE_LIB_DIR C:/James/fadeRelease/x64 )
@@ -31,11 +30,8 @@ ENDIF(MSVC_IDE)
 #set(OPENMESH_LIBS /usr/local/lib/libOpenMeshCore.a /usr/local/lib/libOpenMeshTools.dylib)
 #include_directories(${OPENMESH_INCLUDE_DIR} )
 
-find_package(Boost)
-CANONIFY_BOOL(Boost_FOUND)
-message(STATUS "Boost found: " ${Boost_FOUND})
 
-find_package(CGAL COMPONENTS Core ImageIO )
+find_package(CGAL COMPONENTS Core)
 CANONIFY_BOOL(CGAL_FOUND)
 message(STATUS "CGAL found: " ${CGAL_FOUND})
 
@@ -68,7 +64,6 @@ OPTION(WITH_REALSENSE "Build with Intel RealSense support?" ${REALSENSE_FOUND})
 IF(MSVC_IDE)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS )
   add_definitions(-DUSING_CMAKE=1)
-  #add_definitions(-DWITH_FADE=1)
 
   LINK_DIRECTORIES(C:/james/openglLIB/lib ${FADE_LIB_DIR}  $ENV{RSSDK_DIR}/lib/x64 )
 ELSE(MSVC_IDE)
@@ -85,7 +80,7 @@ if(APPLE)
   set(CUDA_HOST_COMPILER /usr/bin/clang)
 endif(APPLE)
 
-## the followings makes CGAL Links failed... Don't know why
+
 #IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 #  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -Wno-deprecated-declarations -Wno-unused-function")
 #  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++")
@@ -106,15 +101,15 @@ ENDIF()
 add_executable(InfiniTAM_cli InfiniTAM_cli.cpp)
 target_link_libraries(InfiniTAM_cli Engine)
 target_link_libraries(InfiniTAM_cli Utils)
-target_link_libraries(InfiniTAM_cli ${FADE_LIBS} glew32.lib )
-target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} )
+target_link_libraries(InfiniTAM_cli ${FADE_LIBS} )
+target_link_libraries(InfiniTAM_cli ${OpenCV_LIBS} ${CGAL_LIBS}  glew32.lib )
 add_executable(InfiniTAM InfiniTAM.cpp )
 #target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${OPENMESH_LIBS}   )
-#target_link_libraries(InfiniTAM ${FADE_LIBS} )
+
 IF(MSVC_IDE)
-  target_link_libraries(InfiniTAM libpxc_d.lib glew32.lib)
+  target_link_libraries(InfiniTAM ${FADE_LIBS} libpxc_d.lib )
 ENDIF(MSVC_IDE)
-target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${CGAL_LIBRARIES}   )
+target_link_libraries(InfiniTAM ${OpenCV_LIBS}  ${CGAL_LIBRARIES} glew32.lib   )
 target_link_libraries(InfiniTAM Engine)
 target_link_libraries(InfiniTAM Utils)
 
