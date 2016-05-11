@@ -38,9 +38,9 @@ using namespace cv;
 
 #define SQR(x) ((x)*(x))
 
-#define CLAMP_ENABLE
-#define MAX_CLAMP_SQRDIST 3.0f
-#define MIN_CLAMP_SQRDIST 0.01f
+#define CULL_ENABLE
+#define CULL_MAX_SQRDIST 3.0f
+#define CULL_MIN_SQRDIST 0.01f
 
 void MeshFusion::MeshFusion_InitTracking( void )
 {
@@ -156,9 +156,9 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
             {
                 if (m_status[i]==1)
                 {
-#ifdef CLAMP_ENABLE
+#ifdef CULL_ENABLE
                     fdistsqr = SQR(m_base_corners[i].x - m_corners[i].x) + SQR(m_base_corners[i].y - m_corners[i].y);
-                    if (fdistsqr <= fAverageDistSqr*MAX_CLAMP_SQRDIST && fdistsqr >= fAverageDistSqr*MIN_CLAMP_SQRDIST)
+                    if (fdistsqr <= fAverageDistSqr*CULL_MAX_SQRDIST && fdistsqr >= fAverageDistSqr*CULL_MIN_SQRDIST)
 #endif
                     {
                         __corners.push_back(m_corners[i]);
