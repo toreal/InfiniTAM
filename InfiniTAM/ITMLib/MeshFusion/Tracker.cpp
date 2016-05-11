@@ -38,6 +38,10 @@ using namespace cv;
 
 #define SQR(x) ((x)*(x))
 
+#define CLAMP_ENABLE
+#define MAX_CLAMP_SQRDIST 3.0f
+#define MIN_CLAMP_SQRDIST 0.01f
+
 void MeshFusion::MeshFusion_InitTracking( void )
 {
     m_bfirst = true;
@@ -115,33 +119,64 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 
         calcOpticalFlowPyrLK(m_pre_image, m_image, m_pre_corners, m_corners, m_status, m_err);
 
-        //Delete fail to track features & calculate SQR of distance
-        std::vector< cv::Point2f > __corners, __pre_corners,_base_corners;
-		std::vector<cv::Point3f> objpos;
+        // Calculate max and average SQR of motion vector distance
         maxdis = 0;
         float fdistsqr = 0;
+        float fAverageDistSqr = 0;
         int k=0;
+        
         for (int i=0;i<(int)m_status.size();i++)
         {
             if (m_status[i]==1)
             {
-                __corners.push_back(m_corners[i]);
-                __pre_corners.push_back(m_pre_corners[i]);
-                _base_corners.push_back(m_base_corners[i]);
-				objpos.push_back(objectPoints[i]);
                 fdistsqr = SQR(m_base_corners[i].x - m_corners[i].x) + SQR(m_base_corners[i].y - m_corners[i].y);
+                
+                fAverageDistSqr += fdistsqr;
                 
                 if (fdistsqr>maxdis)
                     maxdis = fdistsqr;
+                
                 k++;
-			}
-			
+            }
+            
         }
+
         
+        //Delete fail to track features & distance too large or too small
+        std::vector< cv::Point2f > __corners, __pre_corners,_base_corners;
+        std::vector<cv::Point3f> objpos;
+
+        if (k>0)
+        {
+
+            fAverageDistSqr /= k;
+
+            k=0;
+            for (int i=0;i<(int)m_status.size();i++)
+            {
+                if (m_status[i]==1)
+                {
+#ifdef CLAMP_ENABLE
+                    fdistsqr = SQR(m_base_corners[i].x - m_corners[i].x) + SQR(m_base_corners[i].y - m_corners[i].y);
+                    if (fdistsqr <= fAverageDistSqr*MAX_CLAMP_SQRDIST && fdistsqr >= fAverageDistSqr*MIN_CLAMP_SQRDIST)
+#endif
+                    {
+                        __corners.push_back(m_corners[i]);
+                        __pre_corners.push_back(m_pre_corners[i]);
+                        _base_corners.push_back(m_base_corners[i]);
+                        objpos.push_back(objectPoints[i]);
+                        k++;
+                    }
+                }
+                
+            }
+            
+        }
+
         m_corners     = __corners;
         m_pre_corners = __pre_corners;
         m_base_corners = _base_corners;
-		objectPoints = objpos;
+        objectPoints = objpos;
 		
     }
     
