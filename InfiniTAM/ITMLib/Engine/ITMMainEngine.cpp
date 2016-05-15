@@ -179,12 +179,12 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	sdkStartTimer(&timer_instant);
 	//std::cout << mindis << std::endl;
 
-	if ( mesh->noTotalTriangles==0 || mindis > 100 )
+	if ( mfdata->totalFace==0 || mindis > 100 )
 	{
 		try {
 			mesh->noTotalTriangles = 0;
 			//build silhouette features
-			mfdata->sortpoint(view->rgb);
+			//mfdata->sortpoint(view->rgb);
 			//update current pose
 			mfdata->estimatePose(this->trackingState->pose_d);
 
@@ -193,11 +193,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			std::cout << "pose Time:" << processedTime_inst << std::endl;
 			sdkResetTimer(&timer_instant);
 			sdkStartTimer(&timer_instant);
-			if (! mfdata->bmesh)
-			mfdata->constructMesh(mesh);
 			
-			mfdata->meshUpdate(mesh, this->trackingState->pose_d);
-
+			
 			sdkStopTimer(&timer_instant);
 			 processedTime_inst = sdkGetTimerValue(&timer_instant);
 			std::cout << " update mesh Time:" << processedTime_inst << std::endl;
@@ -205,12 +202,23 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			sdkStartTimer(&timer_instant);
 			if (mindis > 5)
 			{
+
+
+
 				mfdata->MeshFusion_InitTracking();
 				if (view->rgb)
 					mfdata->MeshFusion_Tracking(mindis);
 
+			
 
 			}
+			mfdata->sortpoint(view->rgb);
+
+			if (!mfdata->bmesh)
+				mfdata->constructMesh(mesh);
+
+			mfdata->meshUpdate(mesh, this->trackingState->pose_d);
+
 			mfdata->Generate3DPoints();
 
 			sdkStopTimer(&timer_instant);

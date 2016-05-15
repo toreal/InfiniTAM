@@ -40,6 +40,21 @@
 #include <ctype.h>
 #include <fstream>
 #include <cassert>
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Barycentric_coordinates_2/Triangle_coordinates_2.h>
+
+// Some convenient typedefs.
+//typedef CGAL::Simple_cartesian<float> Kernel;
+
+typedef K::FT      Scalar;
+//typedef K::Point_2 Point2;
+
+typedef std::vector<Scalar> Scalar_vector;
+
+typedef CGAL::Barycentric_coordinates::Triangle_coordinates_2<K> Triangle_coordinates;
+
+using std::cout; using std::endl; using std::string;
+using std::fstream; using std::ios;
 
 
 
@@ -193,84 +208,112 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 
 	}
 
-	return;
-
-	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
-	Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
-	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 	//meshVertex.clear();
-	std::vector<cv::Point2f> meshProj;
+	std::vector<Point2> meshProj;
 
 
-	while (it!=ie)
+
+	for ( int i = 0 ; i < totalVertex; i++)	
 	{
-		CGAL::Point_3<K> pos = mesh_adaptor.get_vertex_position(it);
-		Vector3f vpos;
+		
+		Vector3f vpos(meshVertex[i].x, meshVertex[i].y, meshVertex[i].z);
 		Vector3f npos=pose->GetM()*vpos;
 
-		float ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
-		float iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
+		float ix = npos.x * intrinRGB.x / npos.z + intrinRGB.z;
+		float iy = npos.y * intrinRGB.y / npos.z + intrinRGB.w;
 		//meshVertex.push_back(cv::Point3f(pos.x(),pos.y(),pos.z()));
-		meshProj.push_back(cv::Point2f(ix,iy));
+		meshProj.push_back(Point2(ix,iy));
+	}//end of for 
 
+	 // Instantiate some interior, boundary, and exterior query points for which we compute coordinates.
+//	 int number_of_query_points = vInputPoints.size();
+	//const Point2 query_points[number_of_query_points];// = { Point(0.5f , 0.5f), Point(1.0f, 0.5f), Point(1.0f , 0.75f), Point(1.0f , 1.0f),                     // interior query points
+		//Point(1.0f , 1.25f), Point(1.0f, 1.5f), Point(0.75f, 1.0f), Point(1.25f, 1.0f), Point(1.5f, 0.75f),
+		//Point(1.0f , 0.25f), Point(0.5f, 1.0f), Point(1.5f , 1.25f), Point(1.0f , 2.0f), Point(2.0f, 0.5f), // boundary query points
+		//Point(0.25f, 1.0f), Point(0.5f, 1.75f), Point(1.5f , 1.75f), Point(1.75f, 1.5f)                      // exterior query points
+	//};
+
+	fstream fout;
+	fout.open("projdebug.txt", ios::out);
+
+	fout << "0	0	1	setrgbcolor" << endl;
+	int i = 0;
+	std::vector <Point2>::const_iterator   it = vInputPoints.begin();
+	while (it != vInputPoints.end()) {
+		fout << *it << "  moveto" << endl;
+		fout << ((*it).x() - 2) << " " << (*it).y() << " 2	0	360	arc" << endl;
 		it++;
+		i++;
+		if (i == ncon)
+		{
+			fout << "stroke " << endl;
+			fout << "0	1	0	setrgbcolor" << endl;
+
+		}
+
 	}
-	Facet_iterator fit = mesh_adaptor.mesh_facets_begin();
-    
-	bool bt = fit->is_triangle();
+	Scalar_vector coordinates;
+	coordinates.reserve(3);
 
-
-	//fit->facet_begin();
-	
+	// Reserve memory to store triangle coordinates for 18 query points.
 	
 
-/*
-	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);	
-	int nv=mesh_adaptor.count_mesh_vertices();
-	int n=mesh_adaptor.count_mesh_facets();
-	Vertex_iterator  it=mesh_adaptor.mesh_vertices_begin();
-	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
-	int idx = 0;
-	while (it!=ie)
-	{ 
-		CGAL::Point_2<K> uv(uvlist[idx].x, uvlist[idx].y);	  
-        mesh_adaptor.set_vertex_uv(it, uv);		
-		idx++;
-		if (idx >= uvlist.size())
-			break;
-	   it++;
-	}
-*/
-	//meshold->noTotalTriangles = 0;
-	
-
-	//mesh transform
-
-	//projection 
-	
-
-
-
-	Matrix4f  mm= pose->GetM();
-	//ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
-	
-	for (int i = 0; i < meshold->noTotalTriangles; i++)
+	// Construct a triangle
+	int nface = totalFace / 3;
+	for (int i = 0; i < nface; i++)
 	{
 
-		Vector4f p0;// = trivec[i].p0;
+	  Point2  first_vertex=meshProj[meshTri[3*i]];
+	  Point2  second_vertex= meshProj[meshTri[3 * i+1]];
+	  Point2  third_vertex= meshProj[meshTri[3 * i+2]];
 
-/*
-		Vector4f p0= trivec[i].p0;
->>>>>>> origin/master
-		p0.w = 1;
-		Vector4f pp0 = mm*p0;
-		Vector4f p1;// = trivec[i].p1;
-		p1.w = 1;
-		Vector4f pp1 = mm*p1;
 
-*/
+	  fout << first_vertex << "  moveto" << endl;
+	  fout << second_vertex << "  lineto" << endl;
+	  fout << second_vertex << "  moveto" << endl;
+	  fout << third_vertex << "  lineto" << endl;
+	  fout << third_vertex << "  moveto" << endl;
+	  fout << first_vertex << "  lineto" << endl;
+
+		// Create an std::vector to store coordinates.
+
+		// Instantiate the class Triangle_coordinates_2 for the triangle defined above.
+		Triangle_coordinates triangle_coordinates(first_vertex, second_vertex, third_vertex);
+
+		
+		// Compute triangle coordinates for these points.
+		//cout << endl << "Computed triangle coordinates: " << endl << endl;
+		std::vector <Point2>::const_iterator   it = vInputPoints.begin();
+		while (it !=vInputPoints.end()) {
+			coordinates.clear();
+
+			triangle_coordinates(*it, coordinates);
+			if (coordinates[0] > 0 && coordinates[1] > 0 && coordinates[ 2] > 0)
+			{
+				it = vInputPoints.erase(it);
+				
+			}
+			else
+				it++;
+		};
+
 	}
+	
+	cout << vInputPoints.size() << endl;
+	fout << "stroke" << endl;
+	fout << "1	0	0	setrgbcolor" << endl;
+
+   it = vInputPoints.begin();
+	while (it != vInputPoints.end()) {
+		fout << *it << "  moveto" << endl;
+		fout << ((*it).x() - 1.5) << " " << (*it).y() << " 1.5	0	360	arc" << endl;
+		it++;
+			
+	}
+
+
+	fout.close();
 
 	//build new triangle
 	// for each new corner check whether it is belong to a triangle or not 
@@ -359,7 +402,7 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 //			CGAL::Point_3<K> center = CGAL::Point_3<K>(0, 0, 300);
 			cv::Point3f center = cv::Point3f(0, 0, 300);
 
-		//	glTranslated(center.x, center.y,center.z);
+	//	glTranslated(center.x, center.y,center.z);
 			if (busepose)
 				glMultMatrixf(pose->GetM().m);
 

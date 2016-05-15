@@ -30,15 +30,15 @@ using namespace GEOM_FADE2D;
 #include <iostream>
 #include <fstream>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel K2;
-typedef CGAL::Triangulation_vertex_base_with_info_2<unsigned, K2> Vb;
-//typedef CGAL::Triangulation_vertex_base_2<K2>                     Vb;
-typedef CGAL::Constrained_triangulation_face_base_2<K2>           Fb;
+//typedef CGAL::Exact_predicates_inexact_constructions_kernel K2;
+typedef CGAL::Triangulation_vertex_base_with_info_2<unsigned, K> Vb;
+//typedef CGAL::Triangulation_vertex_base_2<K>                     Vb;
+typedef CGAL::Constrained_triangulation_face_base_2<K>           Fb;
 typedef CGAL::Triangulation_data_structure_2<Vb, Fb>              TDS;
 typedef CGAL::Exact_predicates_tag                               Itag;
-typedef CGAL::Constrained_Delaunay_triangulation_2<K2, TDS, Itag> CDT;
-typedef CDT::Point          Point2;
-typedef CGAL::Spatial_sort_traits_adapter_2<K2, Point2*> Search_traits;
+typedef CGAL::Constrained_Delaunay_triangulation_2<K, TDS, Itag> CDT;
+
+typedef CGAL::Spatial_sort_traits_adapter_2<K, Point2*> Search_traits;
 
 
 #endif 
@@ -48,6 +48,24 @@ using namespace ITMLib::Objects;
 using namespace ITMLib::Engine;
 
 using namespace std;
+
+
+void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
+{
+	for (int i = 0; i < vInputPoints.size(); i++)
+	{
+		Point2 ap = vInputPoints[i];
+		Point2 dis = Point2(ap.x() - p.x(), ap.y() - p.y());
+		float diff = dis.x()*dis.x() + dis.y()*dis.y();
+
+		if (diff < 50)
+			return;
+
+
+	}
+	vInputPoints.push_back(p);
+
+}
 
 
 void MeshFusion::sortpoint(ITMUChar4Image * draw)
@@ -90,6 +108,23 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 	}
 
 	this->selp = i;
+
+
+	vInputPoints.clear();
+	for (int i = 0; i < selp; i++)
+	{
+		addvextex(vInputPoints, Point2(sellist[i].x, sellist[i].y));
+	}
+
+	ncon = vInputPoints.size();
+	for (int i = 0; i<(int)m_corners.size(); i++)
+	{
+		addvextex(vInputPoints, Point2(m_corners[i].x, m_corners[i].y));
+
+	}
+
+
+
 
 }
 
@@ -243,22 +278,6 @@ float MeshFusion::estivalue(const float * data, Vector2i  p1,Vector2i p2 )
 
 
 
-void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
-{
-    for (int i = 0; i < vInputPoints.size(); i++)
-    {
-        Point2 ap = vInputPoints[i];
-        Point2 dis= Point2(ap.x()-p.x(),ap.y()-p.y());
-        float diff = dis.x()*dis.x() + dis.y()*dis.y();
-        
-        if (diff < 50)
-            return;
-        
-        
-    }
-    vInputPoints.push_back(p);
-    
-}
 #ifdef WITH_FADE
 void MeshFusion::constructMesh(ITMMesh * mesh )
 {
@@ -388,10 +407,6 @@ void MeshFusion::constructMesh(ITMMesh * mesh )
 
 #else
 
-void add3DVertex(std::vector<cv::Point3f> &list, std::vector< cv::Point2f > &uvlist,Point2 p0 , Vector4f intrinparam ,int w,int h)
-{
-	
-}
 
 template <class InputIterator>
 void insert_with_info(CDT& cdt, InputIterator first, InputIterator last)
@@ -444,20 +459,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 	cv::Mat a;
 
 
-	std::vector<Point2> vInputPoints;
-
-	for (int i = 0; i < selp; i++)
-	{
-		addvextex(vInputPoints, Point2(sellist[i].x, sellist[i].y));
-	}
-
-	int ncon = vInputPoints.size();
-	for (int i = 0; i<(int)m_base_corners.size(); i++)
-	{
-		addvextex(vInputPoints, Point2(m_base_corners[i].x, m_base_corners[i].y));
-
-	}
-
+	
 
 
 	CDT dt;
@@ -520,7 +522,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 
 
 	//CDT::Finite_vertices_iterator vit;
-
+	int center = 0;
 	int nface = 0;
 	fstream fout;
 	fout.open("debug.txt", ios::out);
@@ -573,6 +575,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 				meshVertex[v0].y = meshVertex[v0].z * (p0.y() - intrinparam.w) / intrinparam.y;
 				meshVertex[v0].s0 = p0.x() / w;
 				meshVertex[v0].t0 = p0.y() / h;
+				meshVertex[v0].z = meshVertex[v0].z  -center;
 			}
 			if (meshVertex[v1].z < 0)
 			{
@@ -581,7 +584,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 				meshVertex[v1].y = meshVertex[v1].z * (p1.y() - intrinparam.w) / intrinparam.y;
 				meshVertex[v1].s0 = p1.x() / w;
 				meshVertex[v1].t0 = p1.y() / h;
-
+				meshVertex[v1].z = meshVertex[v1].z -center;
 			}
 			if (meshVertex[v2].z < 0)
 			{
@@ -590,7 +593,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 				meshVertex[v2].y = meshVertex[v2].z * (p2.y() - intrinparam.w) / intrinparam.y;
 				meshVertex[v2].s0 = p2.x() / w;
 				meshVertex[v2].t0 = p2.y() / h;
-
+				meshVertex[v2].z = meshVertex[v2].z -center;
 			}
 
 			meshTri[nface] = v0;
@@ -603,7 +606,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 	fout.close();
 
 //	mesh->noTotalTriangles = ti;
-	//bmesh = true;
+	bmesh = true;
 
 
 }

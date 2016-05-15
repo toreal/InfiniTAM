@@ -15,7 +15,8 @@
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Polyhedron_3.h>
 
-typedef CGAL::Simple_cartesian<double> K;
+typedef CGAL::Simple_cartesian<float> K;
+typedef K::Point_2          Point2;
 typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
 
@@ -46,7 +47,7 @@ namespace ITMLib
 			MyVertex meshVertex[2048];
 			ushort  meshTri[2048*3];
 			int totalVertex=0;
-			int totalFace=0;
+		
 
 			//std::vector<cv::Point3f> meshVertex;
 			//std::vector<cv::Point3i> meshTri;
@@ -58,12 +59,13 @@ namespace ITMLib
 			std::vector<uchar>  m_status;
 			std::vector<float>  m_err;
 			bool                m_bfirst = true;
-
+			std::vector<Point2> vInputPoints;
 				
 			float estivalue(const float * data, Vector2i ,Vector2i);
 			
 
 		public:
+			int totalFace = 0;
 			bool bmesh = false;
 			int      shift = 0;
 			const int MAXNODE = 10000;
@@ -78,7 +80,7 @@ namespace ITMLib
 
 			Vector2i *      sellist;
 			int             selp;
-            
+			int             ncon;
 
 			MeshFusion() {
 				segImage = NULL;
