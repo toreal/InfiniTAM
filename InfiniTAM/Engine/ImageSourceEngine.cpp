@@ -57,6 +57,7 @@ void ImageFileReader::loadIntoCache(void)
 	char str[2048];
 
 	sprintf(str, rgbImageMask, currentFrameNo);
+	std::cout << str << std::endl;
 	if (!ReadImageFromFile(cached_rgb, str)) 
 	{
 		delete cached_rgb; cached_rgb = NULL;
@@ -98,6 +99,7 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 
 
 		sprintf(str, rgbImageMask, currentFrameNo);
+		std::cout << str << std::endl;
 		if (!ReadImageFromFile(rgb, str)) printf("error reading file '%s'\n", str);
 
 		sprintf(str, depthImageMask, currentFrameNo);

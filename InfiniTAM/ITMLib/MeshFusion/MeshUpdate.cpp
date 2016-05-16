@@ -174,7 +174,7 @@ bool MeshFusion::find3DPos(cv::Point2f p , cv::Point3f &ret)
 
 
 
-void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
+void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 {
 	
 
@@ -209,23 +209,13 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 	}
 
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+
+	Matrix4f m=pose->GetM();
 	//meshVertex.clear();
-	std::vector<Point2> meshProj;
-
-
-
-	for ( int i = 0 ; i < totalVertex; i++)	
-	{
-		
-		Vector3f vpos(meshVertex[i].x, meshVertex[i].y, meshVertex[i].z);
-		Vector3f npos=pose->GetM()*vpos;
-
-		float ix = npos.x * intrinRGB.x / npos.z + intrinRGB.z;
-		float iy = npos.y * intrinRGB.y / npos.z + intrinRGB.w;
-		//meshVertex.push_back(cv::Point3f(pos.x(),pos.y(),pos.z()));
-		meshProj.push_back(Point2(ix,iy));
-	}//end of for 
-
+	
+	tridata->project(&m, intrinRGB);
+	currTri.project(NULL, intrinRGB);
+	
 	 // Instantiate some interior, boundary, and exterior query points for which we compute coordinates.
 //	 int number_of_query_points = vInputPoints.size();
 	//const Point2 query_points[number_of_query_points];// = { Point(0.5f , 0.5f), Point(1.0f, 0.5f), Point(1.0f , 0.75f), Point(1.0f , 1.0f),                     // interior query points
@@ -234,39 +224,38 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 		//Point(0.25f, 1.0f), Point(0.5f, 1.75f), Point(1.5f , 1.75f), Point(1.75f, 1.5f)                      // exterior query points
 	//};
 
+		float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
+		int w = proDepth->noDims.x;
+		memset(currTri.stat, 0x00, sizeof(bool) * 2048);
 	fstream fout;
 	fout.open("projdebug.txt", ios::out);
 
-	fout << "0	0	1	setrgbcolor" << endl;
+	fout << "0	1	1	setrgbcolor" << endl;
 	int i = 0;
-	std::vector <Point2>::const_iterator   it = vInputPoints.begin();
-	while (it != vInputPoints.end()) {
-		fout << *it << "  moveto" << endl;
-		fout << ((*it).x() - 2) << " " << (*it).y() << " 2	0	360	arc" << endl;
-		it++;
-		i++;
-		if (i == ncon)
-		{
-			fout << "stroke " << endl;
-			fout << "0	1	0	setrgbcolor" << endl;
-
-		}
-
-	}
+	//currTri.meshProj
+	//std::vector <Point2>::const_iterator   it = vInputPoints.begin();
+	//while (it != vInputPoints.end())
+	/*for ( int i =0 ; i < currTri.totalVertex; i++)
+	{
+		fout << currTri.meshProj[i] << "  moveto" << endl;
+		fout << ((currTri.meshProj[i]).x() - 2) << " " << (currTri.meshProj[i]).y() << " 2	0	360	arc" << endl;
+	
+	}*/
 	Scalar_vector coordinates;
 	coordinates.reserve(3);
 
-	// Reserve memory to store triangle coordinates for 18 query points.
-	
-
 	// Construct a triangle
-	int nface = totalFace / 3;
+	int nface = tridata->totalFace / 3;
 	for (int i = 0; i < nface; i++)
 	{
 
-	  Point2  first_vertex=meshProj[meshTri[3*i]];
-	  Point2  second_vertex= meshProj[meshTri[3 * i+1]];
-	  Point2  third_vertex= meshProj[meshTri[3 * i+2]];
+	  Point2  first_vertex=tridata->meshProj[tridata->meshTri[3*i]];
+	  Point2  second_vertex= tridata->meshProj[tridata->meshTri[3 * i+1]];
+	  Point2  third_vertex= tridata->meshProj[tridata->meshTri[3 * i+2]];
+
+	 float d1 = tridata->meshDepth[tridata->meshTri[3 * i]];
+	 float d2 = tridata->meshDepth[tridata->meshTri[3 * i+1]];
+	 float d3 = tridata->meshDepth[tridata->meshTri[3 * i+2]];
 
 
 	  fout << first_vertex << "  moveto" << endl;
@@ -284,32 +273,117 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose)
 		
 		// Compute triangle coordinates for these points.
 		//cout << endl << "Computed triangle coordinates: " << endl << endl;
-		std::vector <Point2>::const_iterator   it = vInputPoints.begin();
-		while (it !=vInputPoints.end()) {
+		for (int j = 0; j < currTri.totalVertex; j++)
+		//std::vector <Point2>::const_iterator   it = vInputPoints.begin();
+		//while (it !=vInputPoints.end()) 
+		{
+			if (currTri.stat[j])
+				continue;
+
 			coordinates.clear();
 
-			triangle_coordinates(*it, coordinates);
+			triangle_coordinates(currTri.meshProj[j], coordinates);
 			if (coordinates[0] > 0 && coordinates[1] > 0 && coordinates[ 2] > 0)
 			{
-				it = vInputPoints.erase(it);
+				int nx = (currTri.meshProj[j]).x();
+				int ny = (currTri.meshProj[j]).y();
+
+				float dz = currTri.meshDepth[j];
+			//	float dd = estivalue(dp, Vector2i(nx, ny), NULL);
+			//	float dd2 = dp[nx + ny*w];
+				float ed = d1*coordinates[0] + d2*coordinates[1] + d3*coordinates[2];
+				float err = fabs(dz - ed);
+				if (err < 5)
+					currTri.stat[j] = true;
+					//it = vInputPoints.erase(it);
+				else
+				{
+					fout << "stroke" << endl;
+					float evalue = err / 50;
+					if (evalue > 1)
+						evalue = 1;
+					fout << nx <<" " << ny  << "  moveto" << endl;
+					fout << nx-2 << " " << ny << " 2	0	360	arc" << endl;
+					fout << "stroke" << endl;
+					fout << nx << " " << ny << "  moveto" << endl;
+					fout << "(" << (int)err << ") show" << endl;
+
+					cout << "depth err" << err << endl;
+					//it++;
+				}
 				
 			}
-			else
-				it++;
+			
 		};
 
 	}
 	
-	cout << vInputPoints.size() << endl;
-	fout << "stroke" << endl;
-	fout << "1	0	0	setrgbcolor" << endl;
+//	cout << vInputPoints.size() << endl;
+	//fout << "stroke" << endl;
+	//fout << "1	0	0	setrgbcolor" << endl;
 
-   it = vInputPoints.begin();
-	while (it != vInputPoints.end()) {
-		fout << *it << "  moveto" << endl;
-		fout << ((*it).x() - 1.5) << " " << (*it).y() << " 1.5	0	360	arc" << endl;
-		it++;
-			
+ //  //it = vInputPoints.begin();
+	////while (it != vInputPoints.end()) 
+	//for (int j = 0; j < currTri.totalVertex; j++)
+	//{
+	//	if (currTri.stat[j])
+	//	{
+	//		fout << currTri.meshProj[j] << "  moveto" << endl;
+	//		fout << ((currTri.meshProj[j]).x() - 1.5) << " " << (currTri.meshProj[j]).y() << " 1.5	0	360	arc" << endl;
+	//	//	it++;
+	//	}
+	//}
+	
+	
+	int ocase = -1;
+	 nface = currTri.totalFace / 3;
+	 for (int i = 0; i < nface; i++)
+	 {
+
+		 Point2  first_vertex = currTri.meshProj[currTri.meshTri[3 * i]];
+		 Point2  second_vertex = currTri.meshProj[currTri.meshTri[3 * i + 1]];
+		 Point2  third_vertex = currTri.meshProj[currTri.meshTri[3 * i + 2]];
+
+		 bool s0 = currTri.stat[currTri.meshTri[3 * i]];
+		 bool s1 = currTri.stat[currTri.meshTri[3 * i+1]];
+		 bool s2 = currTri.stat[currTri.meshTri[3 * i+2]];
+	 
+		 if (!s0 && !s1 && !s2)
+		 {
+			 if (ocase != 0)
+			 {
+				 fout << "stroke" << endl;
+				 fout << "1	0	0	setrgbcolor" << endl;
+			 }
+			 ocase = 0;
+		 }
+		 else if (s0 && s1 && s2)
+		 {
+			 if (ocase != 1)
+			 {
+				 fout << "stroke" << endl;
+				 fout << "1	0.7	0	setrgbcolor" << endl;
+			 }
+			 ocase = 1;
+		 }
+		 else
+		 {
+			 if (ocase != 2)
+			 {
+				 fout << "stroke" << endl;
+				 fout << "0	1	0	setrgbcolor" << endl;
+			 }
+			 ocase = 2;
+		 }
+	
+
+		fout << first_vertex << "  moveto" << endl;
+		fout << second_vertex << "  lineto" << endl;
+		fout << second_vertex << "  moveto" << endl;
+		fout << third_vertex << "  lineto" << endl;
+		fout << third_vertex << "  moveto" << endl;
+		fout << first_vertex << "  lineto" << endl;
+
 	}
 
 
@@ -413,11 +487,11 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 			GLuint VertexVBOID,IndexVBOID;
 			glGenBuffers(1, &VertexVBOID);
 			glBindBuffer(GL_ARRAY_BUFFER, VertexVBOID);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(MyVertex) * totalVertex, &meshVertex[0].x, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(MyVertex) * mytriData.totalVertex, &mytriData.meshVertex[0].x, GL_STATIC_DRAW);
 
 			glGenBuffers(1, &IndexVBOID);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ushort) * totalFace, meshTri, GL_STATIC_DRAW);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ushort) * mytriData.totalFace, mytriData.meshTri, GL_STATIC_DRAW);
 
 			//Define this somewhere in your header file
 #define BUFFER_OFFSET(i) ((void*)(i))
@@ -434,7 +508,7 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexVBOID);
 			//To render, we can either use glDrawElements or glDrawRangeElements
 			//The is the number of indices. 3 indices needed to make a single triangle
-			glDrawElements(GL_TRIANGLES, totalFace, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));   //The starting point of the IBO
+			glDrawElements(GL_TRIANGLES, mytriData.totalFace, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));   //The starting point of the IBO
 																					//0 and 3 are the first and last vertices
 																					//glDrawRangeElements(GL_TRIANGLES, 0, 3, 3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));   //The starting point of the IBO
 																					//glDrawRangeElements may or may not give a performance advantage over glDrawElements

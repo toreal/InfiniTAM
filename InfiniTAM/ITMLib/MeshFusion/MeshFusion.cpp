@@ -168,8 +168,12 @@ void MeshFusion::buildProjDepth()
 				int iy = prgb.y * intrinRGB.y / prgb.z + intrinRGB.w;
 				if ( ix >=0 && ix < xlens && iy >=0 && iy < ylens)
 				{  
-					if (dp[ix + iy*xlens] > 0 && ABS(dp[ix + iy*xlens] - prgb.z) > 10)
-						cout << dp[ix + iy*xlens] << "," << prgb.z << endl;
+					if (dp[ix + iy*xlens] > 0 && fabs(dp[ix + iy*xlens] - prgb.z) > 10)
+					{
+						//cout << ix << "," << iy << ":";
+						//cout << dp[ix + iy*xlens] << "," << prgb.z << endl;
+						prgb.z = (dp[ix + iy*xlens] + prgb.z) / 2;
+					}
 					dp[ix + iy*xlens] = prgb.z;
 				}
 			}
@@ -213,8 +217,8 @@ float MeshFusion::estivalue(const float * data, Vector2i  p1,Vector2i p2 )
 	if (p2.x > 0 || p2.y > 0)
 	{
 
-		float delx = abs(p2.x - p1.x);
-		float dely = abs(p2.y - p1.y);
+		float delx = fabs(p2.x - p1.x);
+		float dely = fabs(p2.y - p1.y);
 		float  nx, ny;
 		if (delx > dely)
 		{
@@ -440,7 +444,7 @@ void insert_with_info(CDT& cdt, InputIterator first, InputIterator last)
 	}
 }
 
-void MeshFusion::constructMesh(ITMMesh * mesh)
+void MeshFusion::constructMesh(ITMMesh * mesh, MyTri * tridata)
 {
 
 	ITMFloatImage * depth_in = proDepth;
@@ -501,7 +505,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 		////uvlist.push_back(uv0);
 		////meshVertex[idx].x = pout.x;//   push_back(pout);
 		////meshVertex[idx].y = pout.y;
-		meshVertex[idx].z = -1;
+		tridata->meshVertex[idx].z = -1;
 		//meshVertex[idx].s0 = uv0.x;
 		//meshVertex[idx].t0 = uv0.y;
 
@@ -509,7 +513,7 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 
 		idx++;
 	}
-	totalVertex = idx;
+	tridata->totalVertex = idx;
 
 
 
@@ -568,45 +572,45 @@ void MeshFusion::constructMesh(ITMMesh * mesh)
 			int v1 = vh1->info();
 			int v2 = vh2->info();
 			
-			if (meshVertex[v0].z < 0)
+			if (tridata->meshVertex[v0].z < 0)
 			{
-				meshVertex[v0].z = estivalue(depthData_in, Vector2i(p0.x(), p0.y()), Vector2i(c2.x(), c2.y()));
-				meshVertex[v0].x = meshVertex[v0].z * (p0.x() - intrinparam.z) / intrinparam.x;
-				meshVertex[v0].y = meshVertex[v0].z * (p0.y() - intrinparam.w) / intrinparam.y;
-				meshVertex[v0].s0 = p0.x() / w;
-				meshVertex[v0].t0 = p0.y() / h;
-				meshVertex[v0].z = meshVertex[v0].z  -center;
+				tridata->meshVertex[v0].z = estivalue(depthData_in, Vector2i(p0.x(), p0.y()), Vector2i(c2.x(), c2.y()));
+				tridata->meshVertex[v0].x = tridata->meshVertex[v0].z * (p0.x() - intrinparam.z) / intrinparam.x;
+				tridata->meshVertex[v0].y = tridata->meshVertex[v0].z * (p0.y() - intrinparam.w) / intrinparam.y;
+				tridata->meshVertex[v0].s0 = p0.x() / w;
+				tridata->meshVertex[v0].t0 = p0.y() / h;
+				tridata->meshVertex[v0].z = tridata->meshVertex[v0].z  -center;
 			}
-			if (meshVertex[v1].z < 0)
+			if (tridata->meshVertex[v1].z < 0)
 			{
-				meshVertex[v1].z = estivalue(depthData_in, Vector2i(p1.x(), p1.y()), Vector2i(c2.x(), c2.y()));
-				meshVertex[v1].x = meshVertex[v1].z * (p1.x() - intrinparam.z) / intrinparam.x;
-				meshVertex[v1].y = meshVertex[v1].z * (p1.y() - intrinparam.w) / intrinparam.y;
-				meshVertex[v1].s0 = p1.x() / w;
-				meshVertex[v1].t0 = p1.y() / h;
-				meshVertex[v1].z = meshVertex[v1].z -center;
+				tridata->meshVertex[v1].z = estivalue(depthData_in, Vector2i(p1.x(), p1.y()), Vector2i(c2.x(), c2.y()));
+				tridata->meshVertex[v1].x = tridata->meshVertex[v1].z * (p1.x() - intrinparam.z) / intrinparam.x;
+				tridata->meshVertex[v1].y = tridata->meshVertex[v1].z * (p1.y() - intrinparam.w) / intrinparam.y;
+				tridata->meshVertex[v1].s0 = p1.x() / w;
+				tridata->meshVertex[v1].t0 = p1.y() / h;
+				tridata->meshVertex[v1].z = tridata->meshVertex[v1].z -center;
 			}
-			if (meshVertex[v2].z < 0)
+			if (tridata->meshVertex[v2].z < 0)
 			{
-				meshVertex[v2].z = estivalue(depthData_in, Vector2i(p2.x(), p2.y()), Vector2i(c2.x(), c2.y()));
-				meshVertex[v2].x = meshVertex[v2].z * (p2.x() - intrinparam.z) / intrinparam.x;
-				meshVertex[v2].y = meshVertex[v2].z * (p2.y() - intrinparam.w) / intrinparam.y;
-				meshVertex[v2].s0 = p2.x() / w;
-				meshVertex[v2].t0 = p2.y() / h;
-				meshVertex[v2].z = meshVertex[v2].z -center;
+				tridata->meshVertex[v2].z = estivalue(depthData_in, Vector2i(p2.x(), p2.y()), Vector2i(c2.x(), c2.y()));
+				tridata->meshVertex[v2].x = tridata->meshVertex[v2].z * (p2.x() - intrinparam.z) / intrinparam.x;
+				tridata->meshVertex[v2].y = tridata->meshVertex[v2].z * (p2.y() - intrinparam.w) / intrinparam.y;
+				tridata->meshVertex[v2].s0 = p2.x() / w;
+				tridata->meshVertex[v2].t0 = p2.y() / h;
+				tridata->meshVertex[v2].z = tridata->meshVertex[v2].z -center;
 			}
 
-			meshTri[nface] = v0;
-			meshTri[nface+1] = v1;
-			meshTri[nface+2] = v2;// .push_back(cv::Point3i(v0, v1, v2));
+			tridata->meshTri[nface] = v0;
+			tridata->meshTri[nface+1] = v1;
+			tridata->meshTri[nface+2] = v2;// .push_back(cv::Point3i(v0, v1, v2));
 			nface = nface + 3;
 		}
 	}
-	totalFace = nface;
+	tridata->totalFace = nface;
 	fout.close();
 
 //	mesh->noTotalTriangles = ti;
-	bmesh = true;
+//	bmesh = true;
 
 
 }

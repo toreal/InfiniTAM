@@ -179,7 +179,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	sdkStartTimer(&timer_instant);
 	//std::cout << mindis << std::endl;
 
-	if ( mfdata->totalFace==0 || mindis > 100 )
+	if ( mfdata->mytriData.totalFace==0 || mindis > 400 )
 	{
 		try {
 			mesh->noTotalTriangles = 0;
@@ -214,10 +214,14 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			}
 			mfdata->sortpoint(view->rgb);
 
-			if (!mfdata->bmesh)
-				mfdata->constructMesh(mesh);
+				mfdata->constructMesh(mesh,&mfdata->currTri);
+				if (!mfdata->bmesh)
+				{
+					mfdata->mytriData.copyFrom(&mfdata->currTri);
+					mfdata->bmesh = true;
+				}
 
-			mfdata->meshUpdate(mesh, this->trackingState->pose_d);
+			mfdata->meshUpdate(mesh, this->trackingState->pose_d,&mfdata->mytriData);
 
 			mfdata->Generate3DPoints();
 
