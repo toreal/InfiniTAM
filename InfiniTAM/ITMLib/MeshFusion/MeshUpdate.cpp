@@ -76,7 +76,7 @@ typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterizat
 //typedef           Parameterization_polyhedron_adaptor::Vertex_handle  SeamHandle;
 typedef typename Polyhedron::Vertex_iterator Vertex_iterator;
 typedef typename Polyhedron::Facet_iterator Facet_iterator;
-typedef CGAL::Triangle_2<K >      Tri2;
+//typedef CGAL::Triangle_2<K >      Tri2;
 
 
 
@@ -172,31 +172,24 @@ bool MeshFusion::find3DPos(cv::Point2f p , cv::Point3f &ret)
 //for all m_base_corners to determine that whether it is a new vertex or not
 //if it is a new vertex, contruct the new triangle
 
-
-
-void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
+void MeshFusion::buildMesh( MyTri * data  )
 {
-	
 
-	if (meshold->noTotalTriangles > 0)
-	{
 
 		std::vector<float> coords;
 		std::vector<int>    tris;
-		ITMMesh::Triangle * trivec = meshold->triangles->GetData(MEMORYDEVICE_CPU);
 
-		//if (mymesh.size_of_vertices() > 0)
-		//	return;
 
-		for (int i = 0; i < meshold->noTotalTriangles; i++)
+		for (int i = 0; i < data->totalVertex; i++)
 		{
-			maintainList(trivec[i].p0, coords, tris);
-			maintainList(trivec[i].p1, coords, tris);
-			maintainList(trivec[i].p2, coords, tris);
-		
-		/*	meshVertex.push_back(cv::Point3f(trivec[i].p0.x, trivec[i].p0.y, trivec[i].p0.z));
-			meshVertex.push_back(cv::Point3f(trivec[i].p1.x, trivec[i].p1.y, trivec[i].p1.z));
-			meshVertex.push_back(cv::Point3f(trivec[i].p2.x, trivec[i].p2.y, trivec[i].p2.z));*/
+			coords.push_back(data->meshVertex[i].x);
+			coords.push_back(data->meshVertex[i].y);
+			coords.push_back(data->meshVertex[i].z);
+		}
+
+		for (int i = 0; i < data->totalFace; i++)
+		{
+			tris.push_back(data->meshTri[i]);
 		}
 
 		mymesh.clear();
@@ -206,11 +199,17 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 		return;
 
 
-	}
+}
 
+
+void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
+{
+	
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 
 	Matrix4f m=pose->GetM();
+	Matrix4f invm = pose->GetInvM();
+
 	//meshVertex.clear();
 	
 	tridata->project(&m, intrinRGB);
@@ -298,6 +297,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 					//it = vInputPoints.erase(it);
 				else
 				{
+					currTri.stat[j] = true;
 					fout << "stroke" << endl;
 					float evalue = err / 50;
 					if (evalue > 1)
@@ -308,7 +308,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 					fout << nx << " " << ny << "  moveto" << endl;
 					fout << "(" << (int)err << ") show" << endl;
 
-					cout << "depth err" << err << endl;
+			//		cout << "depth err" << err << endl;
 					//it++;
 				}
 				
@@ -334,19 +334,22 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 	//	}
 	//}
 	
-	
+	int nnode[2048];
+
 	int ocase = -1;
 	 nface = currTri.totalFace / 3;
 	 for (int i = 0; i < nface; i++)
 	 {
+		 int n0 = currTri.meshTri[3 * i];
+		 int n1 = currTri.meshTri[3 * i + 1];
+		 int n2 = currTri.meshTri[3 * i + 2];
+		 Point2  first_vertex = currTri.meshProj[n0];
+		 Point2  second_vertex = currTri.meshProj[n1];
+		 Point2  third_vertex = currTri.meshProj[n2];
 
-		 Point2  first_vertex = currTri.meshProj[currTri.meshTri[3 * i]];
-		 Point2  second_vertex = currTri.meshProj[currTri.meshTri[3 * i + 1]];
-		 Point2  third_vertex = currTri.meshProj[currTri.meshTri[3 * i + 2]];
-
-		 bool s0 = currTri.stat[currTri.meshTri[3 * i]];
-		 bool s1 = currTri.stat[currTri.meshTri[3 * i+1]];
-		 bool s2 = currTri.stat[currTri.meshTri[3 * i+2]];
+		 bool s0 = currTri.stat[n0];
+		 bool s1 = currTri.stat[n1];
+		 bool s2 = currTri.stat[n2];
 	 
 		 if (!s0 && !s1 && !s2)
 		 {
@@ -356,6 +359,45 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 				 fout << "1	0	0	setrgbcolor" << endl;
 			 }
 			 ocase = 0;
+			 Vector3f pos0(currTri.meshVertex[n0].x, currTri.meshVertex[n0].y, currTri.meshVertex[n0].z);
+			 Vector3f pos1(currTri.meshVertex[n1].x, currTri.meshVertex[n1].y, currTri.meshVertex[n1].z);
+			 Vector3f pos2(currTri.meshVertex[n2].x, currTri.meshVertex[n2].y, currTri.meshVertex[n2].z);
+
+			 Vector3f ipos0 = invm *pos0;
+			 Vector3f ipos1 = invm *pos1;
+			 Vector3f ipos2 = invm *pos2;
+
+			 if (nnode[n0] <= 0)
+			 {
+				 mytriData.meshVertex[mytriData.totalVertex].x = ipos0.x;
+				 mytriData.meshVertex[mytriData.totalVertex].y = ipos0.y;
+				 mytriData.meshVertex[mytriData.totalVertex].z = ipos0.z;
+				 nnode[n0] = mytriData.totalVertex;
+				 mytriData.totalVertex++;
+			 }
+
+			 if (nnode[n1] <= 0)
+			 {
+				 mytriData.meshVertex[mytriData.totalVertex].x = ipos1.x;
+				 mytriData.meshVertex[mytriData.totalVertex].y = ipos1.y;
+				 mytriData.meshVertex[mytriData.totalVertex].z = ipos1.z;
+				 nnode[n1] = mytriData.totalVertex;
+				 mytriData.totalVertex++;
+			 }
+
+			 if (nnode[n2] <= 0)
+			 {
+				 mytriData.meshVertex[mytriData.totalVertex].x = ipos2.x;
+				 mytriData.meshVertex[mytriData.totalVertex].y = ipos2.y;
+				 mytriData.meshVertex[mytriData.totalVertex].z = ipos2.z;
+				 nnode[n2] = mytriData.totalVertex;
+				 mytriData.totalVertex++;
+			 }
+
+			 mytriData.meshTri[mytriData.totalFace++] = nnode[n0];
+			 mytriData.meshTri[mytriData.totalFace++] = nnode[n1];
+			 mytriData.meshTri[mytriData.totalFace++] = nnode[n2];
+
 		 }
 		 else if (s0 && s1 && s2)
 		 {
@@ -550,6 +592,8 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 
 void MeshFusion::writeMesh(char * fn)
 {
+	buildMesh(&mytriData);
+
 	std::fstream fs;
 	fs.open(fn, std::fstream::out);
 

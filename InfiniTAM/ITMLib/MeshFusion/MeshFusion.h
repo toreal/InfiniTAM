@@ -142,7 +142,7 @@ namespace ITMLib
 			void estimatePose(ITMPose * posd);
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
-            
+			void buildMesh( MyTri *);
             ////////////////////////////
             //  Image feature tracking
             void MeshFusion_InitTracking( void );

@@ -50,7 +50,8 @@ _CPU_AND_GPU_CODE_ inline bool computePerPointGH_Depth_Ab(THREADPTR(float) *A, T
 
 	b = corr3Dnormal.x * ptDiff.x + corr3Dnormal.y * ptDiff.y + corr3Dnormal.z * ptDiff.z;
 
-	// TODO check whether normal matches normal from image, done in the original paper, but does not seem to be required
+	// TODO check whether normal matches normal from image, done in the original paper,
+	// but does not seem to be required
 	if (shortIteration)
 	{
 		if (rotationOnly)
