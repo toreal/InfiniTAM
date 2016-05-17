@@ -1,6 +1,7 @@
 
 #include "MeshFusion.h"
 #include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/core/core.hpp"
 using namespace ITMLib::Objects;
 
 
@@ -67,6 +68,9 @@ void MeshFusion::estimatePose( ITMPose * aposd)
 	cv::Mat tvec(3, 1, cv::DataType<double>::type);
 
 	cv::solvePnP(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec, false, CV_EPNP	);
+
+	//tvec.at<double>(2) = tvec.at<double>(2) + 50;
+	//cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec, true,  100, 4, 0.99,  cv::noArray(), CV_EPNP);// , false, CV_EPNP);
 
 	std::cout << "rvec: " << rvec << std::endl;
 	std::cout << "tvec: " << tvec << std::endl;

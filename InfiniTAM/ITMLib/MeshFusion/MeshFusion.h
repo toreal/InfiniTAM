@@ -48,6 +48,7 @@ namespace ITMLib
 				memcpy(this, data, sizeof(MyTri));
 			}
 		
+			float findError(MyTri &, std::vector<float> &);
 			void project(Matrix4f * m,Vector4f intrinRGB)
 			{
 				for (int i = 0; i < totalVertex; i++)
@@ -140,6 +141,7 @@ namespace ITMLib
 			void constructMesh(ITMMesh *, MyTri * tridata);
 			void buildProjDepth();
 			void estimatePose(ITMPose * posd);
+			void refinePose(ITMPose * posd);
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
 			void buildMesh( MyTri *);

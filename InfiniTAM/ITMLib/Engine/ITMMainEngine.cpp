@@ -7,7 +7,7 @@
 
 using namespace ITMLib::Engine;
 
-bool bsence = true;
+bool bsence = false;
 
 ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
@@ -222,7 +222,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 				}
 				else
 				{
-
+					mfdata->refinePose(trackingState->pose_d);
 					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
 			mfdata->Generate3DPoints();

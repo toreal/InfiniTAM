@@ -215,13 +215,6 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 	tridata->project(&m, intrinRGB);
 	currTri.project(NULL, intrinRGB);
 	
-	 // Instantiate some interior, boundary, and exterior query points for which we compute coordinates.
-//	 int number_of_query_points = vInputPoints.size();
-	//const Point2 query_points[number_of_query_points];// = { Point(0.5f , 0.5f), Point(1.0f, 0.5f), Point(1.0f , 0.75f), Point(1.0f , 1.0f),                     // interior query points
-		//Point(1.0f , 1.25f), Point(1.0f, 1.5f), Point(0.75f, 1.0f), Point(1.25f, 1.0f), Point(1.5f, 0.75f),
-		//Point(1.0f , 0.25f), Point(0.5f, 1.0f), Point(1.5f , 1.25f), Point(1.0f , 2.0f), Point(2.0f, 0.5f), // boundary query points
-		//Point(0.25f, 1.0f), Point(0.5f, 1.75f), Point(1.5f , 1.75f), Point(1.75f, 1.5f)                      // exterior query points
-	//};
 
 		float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
 		int w = proDepth->noDims.x;
@@ -297,7 +290,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 					//it = vInputPoints.erase(it);
 				else
 				{
-					currTri.stat[j] = true;
+		//			currTri.stat[j] = true;
 					fout << "stroke" << endl;
 					float evalue = err / 50;
 					if (evalue > 1)
@@ -306,7 +299,7 @@ void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
 					fout << nx-2 << " " << ny << " 2	0	360	arc" << endl;
 					fout << "stroke" << endl;
 					fout << nx << " " << ny << "  moveto" << endl;
-					fout << "(" << (int)err << ") show" << endl;
+					fout << "(" << (int)(dz-ed) << ") show" << endl;
 
 			//		cout << "depth err" << err << endl;
 					//it++;
