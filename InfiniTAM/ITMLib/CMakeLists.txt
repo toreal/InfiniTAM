@@ -133,6 +133,8 @@ MeshFusion/Tracker.cpp
 MeshFusion/MeshFusion.cpp
 MeshFusion/EstimatePose.cpp
 MeshFusion/MeshUpdate.cpp
+MeshFusion/MFDepthTracker.cpp
+MeshFusion/refinePose.cpp
 )
 
 

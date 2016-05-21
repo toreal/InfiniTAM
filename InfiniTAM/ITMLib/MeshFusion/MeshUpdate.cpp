@@ -202,7 +202,7 @@ void MeshFusion::buildMesh( MyTri * data  )
 }
 
 
-void MeshFusion::meshUpdate(ITMMesh * meshold ,ITMPose *pose ,MyTri * tridata)
+void MeshFusion::meshUpdate(ITMMesh * mesho ,ITMPose *pose ,MyTri * tridata)
 {
 	
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;

@@ -165,6 +165,20 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	mfdata->buildProjDepth();
 
+
+	if (bsence)
+	{
+
+		//// tracking
+		trackingController->Track(trackingState, view);
+
+		//// fusion
+		if (fusionActive) denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);
+
+		//// raycast to renderState_live for tracking and free visualisation
+		trackingController->Prepare(trackingState, view, renderState_live);
+	}
+
 	float mindis;
 	
 	//M
@@ -182,11 +196,11 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	if ( mfdata->mytriData.totalFace==0 || mindis > 400 )
 	{
 		try {
-			mesh->noTotalTriangles = 0;
+		//	mesh->noTotalTriangles = 0;
 			//build silhouette features
 			//mfdata->sortpoint(view->rgb);
 			//update current pose
-			mfdata->estimatePose(this->trackingState->pose_d);
+		//	mfdata->estimatePose(this->trackingState->pose_d);
 
 			sdkStopTimer(&timer_instant);
 			 processedTime_inst = sdkGetTimerValue(&timer_instant);
@@ -202,14 +216,9 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			sdkStartTimer(&timer_instant);
 			if (mindis > 5)
 			{
-
-
-
 				mfdata->MeshFusion_InitTracking();
 				if (view->rgb)
 					mfdata->MeshFusion_Tracking(mindis);
-
-			
 
 			}
 			mfdata->sortpoint(view->rgb);
@@ -222,6 +231,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 				}
 				else
 				{
+					mfdata->estimatePose(trackingState->pose_d);
 					mfdata->refinePose(trackingState->pose_d);
 					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
@@ -244,18 +254,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	
 
 
-	if (bsence)
-	{
 	
-	//// tracking
-	trackingController->Track(trackingState, view);
-
-	//// fusion
-	if (fusionActive) denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);
-
-	//// raycast to renderState_live for tracking and free visualisation
-	trackingController->Prepare(trackingState, view, renderState_live);
-     }
 }
 
 Vector2i ITMMainEngine::GetImageSize(void) const

@@ -1,5 +1,6 @@
 
 #include "MeshFusion.h"
+#include "MFDepthTracker.h"
 #include <CGAL/Barycentric_coordinates_2/Triangle_coordinates_2.h>
 using namespace ITMLib::Objects;
 typedef K::FT      Scalar;
@@ -9,7 +10,7 @@ typedef std::vector<Scalar> Scalar_vector;
 typedef CGAL::Barycentric_coordinates::Triangle_coordinates_2<K> Triangle_coordinates;
 
 
-float  MyTri::findError(MyTri & tridata, std::vector<float> & errList)
+float  MyTri::findError(MyTri & tridata, std::vector<cv::Point3f> & errList)
 {
 	Scalar_vector coordinates;
 	coordinates.reserve(3);
@@ -53,7 +54,7 @@ float  MyTri::findError(MyTri & tridata, std::vector<float> & errList)
 				else
 				{
 					float eval = dz - ed;
-					errList.push_back(eval);
+					errList.push_back(cv::Point3f(nx,ny , eval));
 				
 					ret += eval;
 					nerr++;
@@ -74,6 +75,9 @@ float  MyTri::findError(MyTri & tridata, std::vector<float> & errList)
 
 void  MeshFusion::refinePose(ITMPose * pose)
 {
+	if (tracker == NULL)
+		tracker = new ITMLib::Engine::MFDepthTracker();
+
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 
 	Matrix4f m = pose->GetM();
@@ -84,17 +88,17 @@ void  MeshFusion::refinePose(ITMPose * pose)
 	mytriData.project(&m, intrinRGB);
 	currTri.project(NULL, intrinRGB);
 
-	std::vector<float> ret;
+	std::vector<cv::Point3f> ret;
 	float err=   currTri.findError(mytriData ,ret );
 	Vector3f t=pose->GetT() + Vector3f(0, 0, err);
 	pose->SetT(t);
 	pose->Coerce();
 	m = pose->GetM();
 	mytriData.project(&m, intrinRGB);
-
+	ret.clear();
 	 err = currTri.findError(mytriData, ret);
 
-
+	((ITMLib::Engine::MFDepthTracker *) tracker)->MyTrackCamera(pose,this->mainView);
 	
 
 

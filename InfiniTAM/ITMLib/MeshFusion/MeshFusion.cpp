@@ -141,6 +141,8 @@ void MeshFusion::buildProjDepth()
 	Matrix4f d2rgb = mainView->calib->trafo_rgb_to_depth.calib_inv;
 
 	float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
+	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
+
 	int lens = proDepth->noDims.x * proDepth->noDims.y;
 	memset(dp, 0x00, sizeof(float) *lens);
 
@@ -168,13 +170,22 @@ void MeshFusion::buildProjDepth()
 				int iy = prgb.y * intrinRGB.y / prgb.z + intrinRGB.w;
 				if ( ix >=0 && ix < xlens && iy >=0 && iy < ylens)
 				{  
-					if (dp[ix + iy*xlens] > 0 && fabs(dp[ix + iy*xlens] - prgb.z) > 10)
+
+					Vector4u mask = segimg[ix + iy*xlens];
+
+					if (mask.x > 0 || mask.y > 0)
 					{
-						//cout << ix << "," << iy << ":";
-						//cout << dp[ix + iy*xlens] << "," << prgb.z << endl;
-						prgb.z = (dp[ix + iy*xlens] + prgb.z) / 2;
+						if (dp[ix + iy*xlens] > 0 && fabs(dp[ix + iy*xlens] - prgb.z) > 10)
+						{
+							//cout << ix << "," << iy << ":";
+							//cout << dp[ix + iy*xlens] << "," << prgb.z << endl;
+							prgb.z = (dp[ix + iy*xlens] + prgb.z) / 2;
+						}
+						dp[ix + iy*xlens] = prgb.z;
 					}
-					dp[ix + iy*xlens] = prgb.z;
+					else
+						dd[nx + ny*xlens] = -1;
+
 				}
 			}
 		}
@@ -444,7 +455,7 @@ void insert_with_info(CDT& cdt, InputIterator first, InputIterator last)
 	}
 }
 
-void MeshFusion::constructMesh(ITMMesh * mesh, MyTri * tridata)
+void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 {
 
 	ITMFloatImage * depth_in = proDepth;

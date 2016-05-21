@@ -9,6 +9,7 @@
 #include "../Objects/ITMMesh.h"
 #include "../Objects/ITMView.h"
 #include "../Objects/ITMPose.h"
+#include "../Engine/ITMTracker.h"
 #include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
@@ -48,7 +49,7 @@ namespace ITMLib
 				memcpy(this, data, sizeof(MyTri));
 			}
 		
-			float findError(MyTri &, std::vector<float> &);
+			float findError(MyTri &, std::vector<cv::Point3f> &);
 			void project(Matrix4f * m,Vector4f intrinRGB)
 			{
 				for (int i = 0; i < totalVertex; i++)
@@ -82,6 +83,7 @@ namespace ITMLib
 		{
 		private :
 			Polyhedron mymesh;
+			ITMLib::Engine::ITMTracker * tracker =NULL;
 			//Polyhedron currMesh;
 			//std::vector< cv::Point2f > uvlist;
 			//std::vector<cv::Point3f> meshVertex;
