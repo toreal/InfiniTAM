@@ -221,7 +221,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 					mfdata->MeshFusion_Tracking(mindis);
 
 			}
-			mfdata->sortpoint(view->rgb);
+			    mfdata->sortpoint(view->rgb);
 
 				mfdata->constructMesh(mesh,&mfdata->currTri);
 				if (!mfdata->bmesh)
@@ -233,7 +233,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 				{
 					mfdata->estimatePose(trackingState->pose_d);
 					mfdata->refinePose(trackingState->pose_d);
-					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
+				//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
 			mfdata->Generate3DPoints();
 

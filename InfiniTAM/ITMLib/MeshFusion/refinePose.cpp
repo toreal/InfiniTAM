@@ -62,6 +62,7 @@ float  MyTri::findError(MyTri & tridata,  std::vector<cv::Point3f> * errList,
 				float err = fabs(dz - ed);
 				cv::Point3f vpos(meshVertex[j].x, meshVertex[j].y, meshVertex[j].z);
 				cv::Point3f opos(px,py,pz );
+				cv::Point3f dif = vpos - opos;
 				cv::Point3f vnor(meshVertex[j].nx, meshVertex[j].ny, meshVertex[j].nz);
 
 
