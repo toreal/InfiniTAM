@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../Utils/ITMLibDefines.h"
-
+#include "MyTri.h"
 #include "../Objects/ITMImageHierarchy.h"
 #include "../Objects/ITMTemplatedHierarchyLevel.h"
 #include "../Objects/ITMSceneHierarchyLevel.h"
@@ -30,6 +30,8 @@ namespace ITMLib
 			ITMPose *   pose;
 	//		ITMTrackingState *trackingState; 
 			const ITMView *view;
+			MyTri * currMesh;
+			MyTri * modelMesh;
 
 			int noIterationsPerLevel;
 			int noICPLevel;
@@ -57,9 +59,9 @@ namespace ITMLib
 		    int ComputeGandH(float &f, float *nabla, float *hessian, Matrix4f approxInvPose);
 
 		public:
-			void TrackCamera(ITMTrackingState* tr, const ITMView *view) { MyTrackCamera(tr->pose_d, view); };
+			void TrackCamera(ITMTrackingState* tr, const ITMView *view) { };
 
-			void MyTrackCamera(ITMPose* pose_d, const ITMView *view);
+			void MyTrackCamera(ITMPose* pose_d, const ITMView *view ,MyTri * m1, MyTri *m2 );
 
 			MFDepthTracker();// Vector2i imgSize, TrackerIterationType *trackingRegime, int noHierarchyLevels, int noICPRunTillLevel, float distThresh,
 			//	float terminationThreshold, const ITMLowLevelEngine *lowLevelEngine, MemoryDeviceType memoryType);

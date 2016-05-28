@@ -44,6 +44,8 @@ using namespace cv;
 
 void MeshFusion::MeshFusion_InitTracking( void )
 {
+	m_backup = m_corners;
+	m_backup2 = m_base_corners;
     m_bfirst = true;
     m_pre_corners.clear();
     m_corners.clear();

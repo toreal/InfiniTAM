@@ -36,14 +36,14 @@ void MeshFusion::Generate3DPoints( )
 
 void MeshFusion::estimatePose( ITMPose * aposd)
 {
-	if (m_corners.size() != objectPoints.size()|| m_pre_corners.size()==0)
+	if (m_backup.size() != objectPoints.size())//|| m_pre_corners.size()==0)
 		return;
 
-	m_backup = m_corners;
-	m_backup2 = m_base_corners;
+	//m_backup = m_corners;
+	//m_backup2 = m_base_corners;
 
 	// Read points
-	std::vector<cv::Point2f> imagePoints = m_corners;
+	std::vector<cv::Point2f> imagePoints = m_backup;
 	//std::vector<cv::Point3f> objectPoints = Generate3DPoints( );
 
 	std::cout << "There are " << imagePoints.size() << " imagePoints and " << objectPoints.size() << " objectPoints." << std::endl;
@@ -85,6 +85,7 @@ void MeshFusion::estimatePose( ITMPose * aposd)
 			 cv::Point2f diff = imagePoints[i] - projectedPoints[i];
 			 sumerr += sqrt(diff.dot(diff));
 		   }
+		   sumerr = sumerr / projectedPoints.size();
 
 		   std::cout << "Error" << sumerr << std::endl;
 

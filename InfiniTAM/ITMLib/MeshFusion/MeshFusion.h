@@ -10,14 +10,10 @@
 #include "../Objects/ITMView.h"
 #include "../Objects/ITMPose.h"
 #include "../Engine/ITMTracker.h"
-#include "../Utils/ITMLibDefines.h"
 
 #include "../../ORUtils/MemoryBlock.h"
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Polyhedron_3.h>
+#include "MyTri.h"
 
-typedef CGAL::Simple_cartesian<float> K;
-typedef K::Point_2          Point2;
 typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
 
@@ -27,53 +23,7 @@ namespace ITMLib
 	namespace Objects
 	{
 
-		struct MyVertex
-		{
-			float x, y, z;        //Vertex
-			//float nx, ny, nz;     //Normal
-			float s0, t0;         //Texcoord0
-		};
-
-		class MyTri
-		{ 
-		public:
-			MyVertex meshVertex[2048];
-			ushort  meshTri[2048 * 3];
-			Point2  meshProj[2048];
-			float meshDepth[2048];
-			bool  stat[2048];
-			int totalVertex = 0;
-			int totalFace = 0;
-			void copyFrom(MyTri * data)
-			{
-				memcpy(this, data, sizeof(MyTri));
-			}
 		
-			float findError(MyTri &, std::vector<cv::Point3f> &);
-			void project(Matrix4f * m,Vector4f intrinRGB)
-			{
-				for (int i = 0; i < totalVertex; i++)
-				{
-
-					Vector3f vpos(meshVertex[i].x, meshVertex[i].y,meshVertex[i].z);
-					Vector3f npos;
-					if (m != NULL)
-						npos = (*m)*vpos;
-					else
-						npos = vpos;
-
-
-					float ix = npos.x * intrinRGB.x / npos.z + intrinRGB.z;
-					float iy = npos.y * intrinRGB.y / npos.z + intrinRGB.w;
-					//meshVertex.push_back(cv::Point3f(pos.x(),pos.y(),pos.z()));
-					meshProj[i]=Point2(ix, iy);
-					meshDepth[i]=npos.z;
-				}//end of for 
-
-
-			}
-		};
-
 	/*	struct MyIndices
 		{
 			ushort pindices[3];

@@ -1,7 +1,8 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of InfiniTAM
 
 #include "MFDepthTracker.h"
-#include "../Engine/DeviceAgnostic/ITMDepthTracker.h"
+#include "MFTrackerGH.h"
+#include "MyTri.h"
 #include "../../ORUtils/Cholesky.h"
 
 #include <math.h>
@@ -17,7 +18,8 @@ MFDepthTracker::MFDepthTracker()//Vector2i imgSize, TrackerIterationType *tracki
 	//this->noIterationsPerLevel = new int[noHierarchyLevels];
 	//this->distThresh = new float[noHierarchyLevels];
 	//
-	this->noIterationsPerLevel = 2; //TODO -> make parameter
+	distThresh = 1000;
+	this->noIterationsPerLevel = 6; //TODO -> make parameter
 	//this->noIterationsPerLevel[0] = 2; //TODO -> make parameter
 	//for (int levelId = 1; levelId < noHierarchyLevels; levelId++)
 	//{
@@ -33,7 +35,7 @@ MFDepthTracker::MFDepthTracker()//Vector2i imgSize, TrackerIterationType *tracki
 
 	//this->noICPLevel = noICPRunTillLevel;
 
-	//this->terminationThreshold = terminationThreshold;
+	this->terminationThreshold = 0.01;// terminationThreshold;
 	iterationType = TRACKER_ITERATION_BOTH;
 }
 
@@ -145,10 +147,14 @@ void MFDepthTracker::ApplyDelta(const Matrix4f & para_old, const float *delta, M
 	para_new = Tinc * para_old;
 }
 
-void MFDepthTracker::MyTrackCamera(ITMPose *pose_d, const ITMView *view)
+void MFDepthTracker::MyTrackCamera(ITMPose *pose_m, const ITMView *view , MyTri * m1, MyTri * m2)
 {
-	this->SetEvaluationData(pose_d, view);
-	this->PrepareForEvaluation();
+	currMesh = m1;
+	modelMesh = m2;
+
+	ITMPose pose_d ;
+	this->SetEvaluationData(pose_m, view);
+	//this->PrepareForEvaluation();
 
 	float f_old = 1e10, f_new;
 	int noValidPoints_new;
@@ -162,23 +168,23 @@ void MFDepthTracker::MyTrackCamera(ITMPose *pose_d, const ITMView *view)
 		this->SetEvaluationParams(levelId);
 		//if (iterationType == TRACKER_ITERATION_NONE) continue;
 
-		Matrix4f approxInvPose = pose_d->GetInvM();
-		ITMPose lastKnownGoodPose(*(pose_d));
+		Matrix4f approxPose = pose_d.GetM();
+		ITMPose lastKnownGoodPose((pose_d));
 		f_old = 1e20f;
 		float lambda = 1.0;
 
 		for (int iterNo = 0; iterNo < noIterationsPerLevel; iterNo++)
 		{
 			// evaluate error function and gradients
-			noValidPoints_new = this->ComputeGandH(f_new, nabla_new, hessian_new, approxInvPose);
+			noValidPoints_new = this->ComputeGandH(f_new, nabla_new, hessian_new, approxPose);
 
 			// check if error increased. If so, revert
 			if ((noValidPoints_new <= 0)||(f_new > f_old)) {
-				pose_d->SetFrom(&lastKnownGoodPose);
-				approxInvPose =pose_d->GetInvM();
+				pose_d.SetFrom(&lastKnownGoodPose);
+				approxPose =pose_d.GetM();
 				lambda *= 10.0f;
 			} else {
-				lastKnownGoodPose.SetFrom(pose_d);
+				lastKnownGoodPose.SetFrom(&pose_d);
 				f_old = f_new;
 
 				for (int i = 0; i < 6*6; ++i) hessian_good[i] = hessian_new[i] / noValidPoints_new;
@@ -190,20 +196,23 @@ void MFDepthTracker::MyTrackCamera(ITMPose *pose_d, const ITMView *view)
 
 			// compute a new step and make sure we've got an SE3
 			ComputeDelta(step, nabla_good, A, iterationType != TRACKER_ITERATION_BOTH);
-			ApplyDelta(approxInvPose, step, approxInvPose);
-			pose_d->SetInvM(approxInvPose);
-			pose_d->Coerce();
-			approxInvPose = pose_d->GetInvM();
+			ApplyDelta(approxPose, step, approxPose);
+			pose_d.SetM(approxPose);
+			pose_d.Coerce();
+			approxPose = pose_d.GetM();
 
 			// if step is small, assume it's going to decrease the error and finish
 			if (HasConverged(step)) break;
 		}
 	}
+
+	pose_m->MultiplyWith(&pose_d);
+	pose_m->Coerce();
 }
 
 
 
-int MFDepthTracker::ComputeGandH(float &f, float *nabla, float *hessian, Matrix4f approxInvPose)
+int MFDepthTracker::ComputeGandH(float &f, float *nabla, float *hessian, Matrix4f approxPose)
 {
 	Vector4f *pointsMap =NULL;//;// = sceneHierarchyLevel->pointsMap->GetData(MEMORYDEVICE_CPU);
 	Vector4f *normalsMap =NULL;// = sceneHierarchyLevel->normalsMap->GetData(MEMORYDEVICE_CPU);
@@ -225,33 +234,52 @@ int MFDepthTracker::ComputeGandH(float &f, float *nabla, float *hessian, Matrix4
 	memset(sumHessian, 0, sizeof(float) * noParaSQ);
 	memset(sumNabla, 0, sizeof(float) * noPara);
 
-	for (int y = 0; y < viewImageSize.y; y++) for (int x = 0; x < viewImageSize.x; x++)
+	std::vector<cv::Point3f> curr;
+	std::vector<cv::Point3f> currNormal;
+	std::vector<cv::Point3f> diff;
+	Vector4f intrinRGB = view->calib->intrinsics_rgb.projectionParamsSimple.all;
+
+	currMesh->project(NULL, intrinRGB);
+
+	Matrix4f newpos = pose->GetM();
+	newpos = approxPose*newpos;
+	
+
+	modelMesh->project(&newpos, intrinRGB);
+	float err = currMesh->findError(*modelMesh, &diff,&curr,&currNormal );
+
+
+//	for (int y = 0; y < viewImageSize.y; y++) 
+	//	for (int x = 0; x < viewImageSize.x; x++)
+	for ( int idx =0 ; idx < curr.size(); idx++)
 	{
 		float localHessian[6 + 5 + 4 + 3 + 2 + 1], localNabla[6], localF = 0;
 
 		for (int i = 0; i < noPara; i++) localNabla[i] = 0.0f;
 		for (int i = 0; i < noParaSQ; i++) localHessian[i] = 0.0f;
 
-		bool isValidPoint;
 
-		switch (iterationType)
-		{
-		case TRACKER_ITERATION_ROTATION:
-			isValidPoint = computePerPointGH_Depth<true, true>(localNabla, localHessian, localF, x, y, depth[x + y * viewImageSize.x], viewImageSize,
-				viewIntrinsics, sceneImageSize, sceneIntrinsics, approxInvPose, scenePose, pointsMap, normalsMap, distThresh);
-			break;
-		case TRACKER_ITERATION_TRANSLATION:
-			isValidPoint = computePerPointGH_Depth<true, false>(localNabla, localHessian, localF, x, y, depth[x + y * viewImageSize.x], viewImageSize,
-				viewIntrinsics, sceneImageSize, sceneIntrinsics, approxInvPose, scenePose, pointsMap, normalsMap, distThresh);
-			break;
-		case TRACKER_ITERATION_BOTH:
-			isValidPoint = computePerPointGH_Depth<false, false>(localNabla, localHessian, localF, x, y, 0, viewImageSize,
-				viewIntrinsics, sceneImageSize, sceneIntrinsics, approxInvPose, scenePose, pointsMap, normalsMap, distThresh);
-			break;
-		default:
-			isValidPoint = false;
-			break;
-		}
+		bool isValidPoint;
+		isValidPoint = computePerPointGH_Depth<false, false>(localNabla, localHessian, localF, idx, diff, curr, currNormal,distThresh );
+
+		//switch (iterationType)
+		//{
+		//case TRACKER_ITERATION_ROTATION:
+		//	//	x, y, depth[x + y * viewImageSize.x], viewImageSize,
+		//	//	viewIntrinsics, sceneImageSize, sceneIntrinsics, approxPose, scenePose, pointsMap, normalsMap, distThresh);
+		//	break;
+		//case TRACKER_ITERATION_TRANSLATION:
+		//	isValidPoint = computePerPointGH_Depth<true, false>(localNabla, localHessian, localF, x, y, depth[x + y * viewImageSize.x], viewImageSize,
+		//		viewIntrinsics, sceneImageSize, sceneIntrinsics, approxPose, scenePose, pointsMap, normalsMap, distThresh);
+		//	break;
+		//case TRACKER_ITERATION_BOTH:
+		//	isValidPoint = computePerPointGH_Depth<false, false>(localNabla, localHessian, localF, x, y, 0, viewImageSize,
+		//		viewIntrinsics, sceneImageSize, sceneIntrinsics, approxPose, scenePose, pointsMap, normalsMap, distThresh);
+		//	break;
+		//default:
+		//	isValidPoint = false;
+		//	break;
+		//}
 
 		if (isValidPoint)
 		{
@@ -265,7 +293,7 @@ int MFDepthTracker::ComputeGandH(float &f, float *nabla, float *hessian, Matrix4
 	for (int r = 0; r < noPara; ++r) for (int c = r + 1; c < noPara; c++) hessian[r + c * 6] = hessian[c + r * 6];
 
 	memcpy(nabla, sumNabla, noPara * sizeof(float));
-	f = (noValidPoints > 100) ? sqrt(sumF) / noValidPoints : 1e5f;
+	f = (noValidPoints > 20) ? sqrt(sumF) / noValidPoints : 1e5f;
 
 	return noValidPoints;
 }

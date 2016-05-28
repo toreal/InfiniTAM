@@ -45,6 +45,10 @@ template<typename T> _CPU_AND_GPU_CODE_ inline Vector4f interpolateBilinear_with
 	Vector2s p; Vector2f delta;
 
 	p.x = (short)floor(position.x); p.y = (short)floor(position.y);
+
+	if (p.y > 478)
+		return result;
+
 	delta.x = position.x - (float)p.x; delta.y = position.y - (float)p.y;
 
 	a = source[p.x + p.y * imgSize.x];

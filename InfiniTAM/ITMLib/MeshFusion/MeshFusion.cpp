@@ -2,7 +2,7 @@
 
 
 #include "MeshFusion.h"
-
+#include "../Engine/DeviceAgnostic/ITMPixelUtils.h"
 
 #include <algorithm>
 #include <vector> 
@@ -459,6 +459,8 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 {
 
 	ITMFloatImage * depth_in = proDepth;
+	Vector4f* normalsMap = mainView->depthNormal->GetData(MEMORYDEVICE_CPU);
+
 	Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 
 
@@ -569,7 +571,7 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 
 
 		Vector4u p = mask[idx];
-
+		Vector4f corr3Dnormal;
 		if (p.x >0 || p.y > 0 || p.z > 0)
 		{
 			fout << p0 << "  moveto" << endl;
@@ -588,6 +590,12 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 				tridata->meshVertex[v0].z = estivalue(depthData_in, Vector2i(p0.x(), p0.y()), Vector2i(c2.x(), c2.y()));
 				tridata->meshVertex[v0].x = tridata->meshVertex[v0].z * (p0.x() - intrinparam.z) / intrinparam.x;
 				tridata->meshVertex[v0].y = tridata->meshVertex[v0].z * (p0.y() - intrinparam.w) / intrinparam.y;
+				corr3Dnormal = interpolateBilinear_withHoles(normalsMap, Vector2f(p0.x(), p0.y()), imgDims);
+
+				tridata->meshVertex[v0].nx = corr3Dnormal.x;
+				tridata->meshVertex[v0].ny = corr3Dnormal.y;
+				tridata->meshVertex[v0].nz = corr3Dnormal.z;
+
 				tridata->meshVertex[v0].s0 = p0.x() / w;
 				tridata->meshVertex[v0].t0 = p0.y() / h;
 				tridata->meshVertex[v0].z = tridata->meshVertex[v0].z  -center;
@@ -600,6 +608,12 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 				tridata->meshVertex[v1].s0 = p1.x() / w;
 				tridata->meshVertex[v1].t0 = p1.y() / h;
 				tridata->meshVertex[v1].z = tridata->meshVertex[v1].z -center;
+				corr3Dnormal = interpolateBilinear_withHoles(normalsMap, Vector2f(p1.x(), p1.y()), imgDims);
+
+				tridata->meshVertex[v1].nx = corr3Dnormal.x;
+				tridata->meshVertex[v1].ny = corr3Dnormal.y;
+				tridata->meshVertex[v1].nz = corr3Dnormal.z;
+
 			}
 			if (tridata->meshVertex[v2].z < 0)
 			{
@@ -609,6 +623,12 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 				tridata->meshVertex[v2].s0 = p2.x() / w;
 				tridata->meshVertex[v2].t0 = p2.y() / h;
 				tridata->meshVertex[v2].z = tridata->meshVertex[v2].z -center;
+				corr3Dnormal = interpolateBilinear_withHoles(normalsMap, Vector2f(p2.x(), p2.y()), imgDims);
+
+				tridata->meshVertex[v2].nx = corr3Dnormal.x;
+				tridata->meshVertex[v2].ny = corr3Dnormal.y;
+				tridata->meshVertex[v2].nz = corr3Dnormal.z;
+
 			}
 
 			tridata->meshTri[nface] = v0;
