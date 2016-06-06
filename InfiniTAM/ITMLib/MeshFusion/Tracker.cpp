@@ -63,7 +63,7 @@ void MeshFusion::MeshFusion_InitTracking( void )
 {
 	m_backup = m_corners;
 	m_backup2 = m_base_corners;
-    m_err_backup = m_err;
+
     m_bfirst = true;
     m_pre_corners.clear();
     m_corners.clear();
@@ -252,11 +252,16 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
             
         }
 
-        m_err = _err;
-        m_corners     = __corners;
-        m_pre_corners = __pre_corners;
-        m_base_corners = _base_corners;
-        objectPoints = objpos;
+        m_err               = _err;
+        m_corners           = __corners;
+        m_pre_corners       = __pre_corners;
+        m_base_corners      = _base_corners;
+        m_latest_paired_corners_base    = _base_corners;
+        m_latest_paired_corners_prev    = __pre_corners;
+        m_latest_paired_corners_curr    = __corners;
+        m_latest_paired_corners_err     = _err;
+        
+        objectPoints    = objpos;
 		
     }
     
@@ -336,8 +341,11 @@ void MeshFusion::OutputDebugText(const char *str)
 
 void MeshFusion::MeshFusion_DebugTracking( void )
 {
+#define CurrCorner m_latest_paired_corners_curr
+#define BaseCorner m_latest_paired_corners_base
     
-    if (m_backup.size()!=0)
+    
+    if (CurrCorner.size()!=0)
     {
         std::vector <cv::Scalar> colors = boost::assign::list_of
             (cv::Scalar(0,0,255,200))(cv::Scalar(0,255,0,200)) (cv::Scalar(255,0,0,200))
@@ -364,25 +372,25 @@ void MeshFusion::MeshFusion_DebugTracking( void )
         img_now.copyTo(m_matDebugVector(Rect(img_pre.cols,0,img_now.cols,img_now.rows)));
 
         acc myAccumulator( tag::density::num_bins = 20, tag::density::cache_size = 10);
-        for (size_t i=0;i<m_err_backup.size();i++)
-            myAccumulator(m_err_backup[i]);
+        for (size_t i=0;i<m_latest_paired_corners_err.size();i++)
+            myAccumulator(m_latest_paired_corners_err[i]);
         histogram_type hist = density(myAccumulator);
         
         const int cBlockSize = 7;
         int nColorIdx = 0;
-        for (int i=0;i<(int)m_backup.size();i++)
+        for (int i=0;i<(int)CurrCorner.size();i++)
         {
-            cv::Point pt_txt1(               m_backup2[i].x/NDIV - cBlockSize, m_backup2[i].y - cBlockSize - 5);
-            cv::Point pt_txt2(img_now.cols + m_backup[i].x/NDIV - cBlockSize, m_backup[i].y - cBlockSize - 5);
-            cv::Point pt_pre (               m_backup2[i].x/NDIV , m_backup2[i].y);
-            cv::Point pt_now (img_now.cols + m_backup[i].x/NDIV , m_backup[i].y);
+            cv::Point pt_txt1(               BaseCorner[i].x/NDIV - cBlockSize, BaseCorner[i].y - cBlockSize - 5);
+            cv::Point pt_txt2(img_now.cols + CurrCorner[i].x/NDIV - cBlockSize, CurrCorner[i].y - cBlockSize - 5);
+            cv::Point pt_pre (               BaseCorner[i].x/NDIV , BaseCorner[i].y);
+            cv::Point pt_now (img_now.cols + CurrCorner[i].x/NDIV , CurrCorner[i].y);
             if (m_nDebugVectorIdx<0 || m_nDebugVectorIdx==i)
             {
 
                 size_t j=0;
                 for (;j<hist.size();j++)
                 {
-                    if (hist[j].first>m_err_backup[i])
+                    if (hist[j].first>m_latest_paired_corners_err[i])
                         break;
                 }
                 cv::Scalar _color1 = colors[nColorIdx];
@@ -390,7 +398,7 @@ void MeshFusion::MeshFusion_DebugTracking( void )
 
                 std::stringstream ssout1,ssout2;
                 ssout1 << i;
-                ssout2 << "[" << j << "/22]" << m_err_backup[i];
+                ssout2 << "[" << j << "/22]" << m_latest_paired_corners_err[i];
                 cv::putText(m_matDebugVector,ssout1.str(),pt_txt1, CV_FONT_HERSHEY_SIMPLEX, 0.3, _color1,1,LINE_AA,false);
                 cv::putText(m_matDebugVector,ssout2.str(),pt_txt2, CV_FONT_HERSHEY_SIMPLEX, 0.3, _color1,1,LINE_AA,false);
                 
@@ -432,17 +440,17 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
     }
     glEnd();
 
-    // Draw green vector from m_backup to m_backup2
-    if (m_backup.size()!=0)
+    // Draw green vector from m_latest_paired_corners_curr to m_latest_paired_corners_base
+    if (m_latest_paired_corners_base.size()!=0)
     {
         glColor3f(0.0f, 0.0f, 1.0f);
         glBegin(GL_LINES); {
-            for (int i=0;i<(int)m_backup.size();i++)
+            for (int i=0;i<(int)m_latest_paired_corners_base.size();i++)
             {
-                float x1 = m_backup[i].x/m_image.cols;
-                float y1 = 1-m_backup[i].y/m_image.rows;
-                float x2 = m_backup2[i].x/m_image.cols;
-                float y2 = 1-m_backup2[i].y/m_image.rows;
+                float x1 = m_latest_paired_corners_base[i].x/m_image.cols;
+                float y1 = 1-m_latest_paired_corners_base[i].y/m_image.rows;
+                float x2 = m_latest_paired_corners_curr[i].x/m_image.cols;
+                float y2 = 1-m_latest_paired_corners_curr[i].y/m_image.rows;
                 glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
                 glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
             }

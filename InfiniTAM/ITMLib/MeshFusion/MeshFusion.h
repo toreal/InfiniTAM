@@ -108,6 +108,8 @@ namespace ITMLib
 
 			// For Tracker
 			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup,m_backup2;
+            std::vector< cv::Point2f > m_latest_paired_corners_base, m_latest_paired_corners_prev, m_latest_paired_corners_curr;  //M record lastest paired corners for visualize only
+            std::vector<float>  m_latest_paired_corners_err;
 			std::vector<cv::Point3f> objectPoints;
             cv::Mat             m_image, m_pre_image, m_base_image;
 #ifdef CV_PYRAMID
@@ -116,7 +118,7 @@ namespace ITMLib
             static cv::Mat      m_Debug;
             
             std::vector<uchar>  m_status;
-			std::vector<float>  m_err, m_err_backup;
+            std::vector<float>  m_err;
 			bool                m_bfirst = true;
 			std::vector<Point2> vInputPoints;
             static int          m_nDebugX,m_nDebugY;
@@ -181,8 +183,8 @@ namespace ITMLib
 			void Generate3DPoints();
 
             void DebugVectorIdxAll( void ) { m_nDebugVectorIdx = -1; }
-            void DebugVectorIdxInc( void ) {if (m_backup.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+1) % m_backup.size(); }
-            void DebugVectorIdxDec( void ) {if (m_backup.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+m_backup.size()-1) % m_backup.size(); }
+            void DebugVectorIdxInc( void ) {if (m_latest_paired_corners_base.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+1) % m_latest_paired_corners_base.size(); }
+            void DebugVectorIdxDec( void ) {if (m_latest_paired_corners_base.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+m_latest_paired_corners_base.size()-1) % m_latest_paired_corners_base.size(); }
             
 //            static std::stringstream _ssDebug;
             static DebugLog _ssDebug;
