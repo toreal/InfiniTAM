@@ -16,6 +16,12 @@
 
 typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
+//#define DEBUG_OUTPUT_STREAM std::cout
+#define DEBUG_OUTPUT_STREAM (MeshFusion::GetDebugStream())
+//#define DEBUG_ENDL          "\n"
+#define DEBUG_ENDL          std::endl
+
+#define CV_PYRAMID
 
 
 namespace ITMLib
@@ -29,9 +35,67 @@ namespace ITMLib
 			ushort pindices[3];
 		}*/
 
+        
 		class MeshFusion
 		{
-		private :
+            class DebugLog
+            {
+            public:
+                
+                static std::stringstream ssOut;
+
+                template <class T>
+                DebugLog &operator<<(const T &v)
+                {
+                    ssOut << v;
+                    
+                    return *this;
+                }
+                // function that takes a custom stream, and returns it
+                typedef DebugLog& (*DebugLogManipulator)(DebugLog&);
+                
+                // take in a function with the custom signature
+                DebugLog& operator<<(DebugLogManipulator manip)
+                {
+                    // call the function, and return it's value
+                    return manip(*this);
+                }
+                // define the custom endl for this stream.
+                // note how it matches the `MyStreamManipulator`
+                // function signature
+                static DebugLog& endl(DebugLog& stream)
+                {
+                    // print a new line
+                    ssOut << std::endl;
+                    
+                    // do other stuff with the stream
+                    // std::cout, for example, will flush the stream
+                    stream << "Called DebugLog::endl!" << std::endl;
+                    
+                    return stream;
+                }
+                
+                // this is the type of std::cout
+                typedef std::basic_ostream<char, std::char_traits<char> > CoutType;
+                
+                // this is the function signature of std::endl
+                typedef CoutType& (*StandardEndLine)(CoutType&);
+                
+                // define an operator<< to take in std::endl
+                DebugLog& operator<<(StandardEndLine manip)
+                {
+                    // call the function, but we cannot return it's value
+                    manip(ssOut);
+
+                    OutputDebugText(ssOut.str().c_str());
+                    ssOut.str("");
+                    ssOut.clear();
+                    
+                    return *this;
+                }
+            };
+
+        private :
 			Polyhedron mymesh;
 			ITMLib::Engine::ITMTracker * tracker =NULL;
 			//Polyhedron currMesh;
@@ -45,11 +109,18 @@ namespace ITMLib
 			// For Tracker
 			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup,m_backup2;
 			std::vector<cv::Point3f> objectPoints;
-			cv::Mat             m_image, m_pre_image;
-			std::vector<uchar>  m_status;
-			std::vector<float>  m_err;
+            cv::Mat             m_image, m_pre_image, m_base_image;
+#ifdef CV_PYRAMID
+            std::vector<cv::Mat> m_prevPyr, m_currPyr;
+#endif
+            static cv::Mat      m_Debug;
+            
+            std::vector<uchar>  m_status;
+			std::vector<float>  m_err, m_err_backup;
 			bool                m_bfirst = true;
 			std::vector<Point2> vInputPoints;
+            static int          m_nDebugX,m_nDebugY;
+            static int          m_nDebugVectorIdx;
 				
 			float estivalue(const float * data, Vector2i ,Vector2i);
 			
@@ -103,9 +174,28 @@ namespace ITMLib
 			int MeshFusion_Tracking(float & maxdis );
             //ui codes. opengl code inside for drawing motion vectors. Typically, call this func in glutDisplayFunction
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
+            void MeshFusion_DebugTracking( void );
+            
 			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight, bool getImageType, ITMPose *pose, ITMIntrinsics *intrinsics);
 			void writeMesh(char *);
 			void Generate3DPoints();
+
+            void DebugVectorIdxAll( void ) { m_nDebugVectorIdx = -1; }
+            void DebugVectorIdxInc( void ) {if (m_backup.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+1) % m_backup.size(); }
+            void DebugVectorIdxDec( void ) {if (m_backup.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+m_backup.size()-1) % m_backup.size(); }
+            
+//            static std::stringstream _ssDebug;
+            static DebugLog _ssDebug;
+            static cv::Mat      m_matDebugVector;
+            
+            //static inline std::stringstream & GetDebugStream() { return _ssDebug; }
+            
+            static inline DebugLog& GetDebugStream() { return _ssDebug; }
+
+            static void ClearDebugWindow(void);
+            static void ShowDebugWindow(void);
+            static void OutputDebugText(const char *str);
+            static void OutputDebugPlot(const int nX, const int nY, const std::vector<float> & plotdata);
 
 		};
 	}
