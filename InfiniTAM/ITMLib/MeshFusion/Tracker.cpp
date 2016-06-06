@@ -260,6 +260,9 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
         m_latest_paired_corners_prev    = __pre_corners;
         m_latest_paired_corners_curr    = __corners;
         m_latest_paired_corners_err     = _err;
+        m_latest_paired_base_image      =   m_base_image.clone();
+        m_latest_paired_prev_image      =   m_pre_image.clone();
+        m_latest_paired_curr_image      =   m_image.clone();
         
         objectPoints    = objpos;
 		
@@ -342,8 +345,9 @@ void MeshFusion::OutputDebugText(const char *str)
 void MeshFusion::MeshFusion_DebugTracking( void )
 {
 #define CurrCorner m_latest_paired_corners_curr
-#define BaseCorner m_latest_paired_corners_base
-    
+#define PrevCorner m_latest_paired_corners_base
+#define CurrImage m_latest_paired_curr_image
+#define PrevImage m_latest_paired_base_image
     
     if (CurrCorner.size()!=0)
     {
@@ -355,16 +359,16 @@ void MeshFusion::MeshFusion_DebugTracking( void )
 #if 1
 #define NDIV    1
         Mat img_now, img_pre;
-        cvtColor(m_image,img_now,COLOR_GRAY2BGR);
-        cvtColor(m_pre_image,img_pre,COLOR_GRAY2BGR);
+        cvtColor(CurrImage,img_now,COLOR_GRAY2BGR);
+        cvtColor(PrevImage,img_pre,COLOR_GRAY2BGR);
 #else
 #define NDIV    2
         Mat img_now, img_pre, img_tmp;
 
-        cvtColor(m_image,img_tmp,COLOR_GRAY2BGRA);
-        cv::resize(img_tmp, img_now,cv::Size(m_image.cols/2,m_image.rows));
-        cvtColor(m_pre_image,img_tmp,COLOR_GRAY2BGR);
-        cv::resize(img_tmp, img_pre,cv::Size(m_image.cols/2,m_image.rows));
+        cvtColor(CurrImage,img_tmp,COLOR_GRAY2BGRA);
+        cv::resize(img_tmp, img_now,cv::Size(CurrImage.cols/2,CurrImage.rows));
+        cvtColor(PrevImage,img_tmp,COLOR_GRAY2BGR);
+        cv::resize(img_tmp, img_pre,cv::Size(CurrImage.cols/2,CurrImage.rows));
 #endif
         m_matDebugVector = cv::Mat::zeros(img_now.rows,img_now.cols*2,CV_8UC3);
         
@@ -380,9 +384,9 @@ void MeshFusion::MeshFusion_DebugTracking( void )
         int nColorIdx = 0;
         for (int i=0;i<(int)CurrCorner.size();i++)
         {
-            cv::Point pt_txt1(               BaseCorner[i].x/NDIV - cBlockSize, BaseCorner[i].y - cBlockSize - 5);
+            cv::Point pt_txt1(               PrevCorner[i].x/NDIV - cBlockSize, PrevCorner[i].y - cBlockSize - 5);
             cv::Point pt_txt2(img_now.cols + CurrCorner[i].x/NDIV - cBlockSize, CurrCorner[i].y - cBlockSize - 5);
-            cv::Point pt_pre (               BaseCorner[i].x/NDIV , BaseCorner[i].y);
+            cv::Point pt_pre (               PrevCorner[i].x/NDIV , PrevCorner[i].y);
             cv::Point pt_now (img_now.cols + CurrCorner[i].x/NDIV , CurrCorner[i].y);
             if (m_nDebugVectorIdx<0 || m_nDebugVectorIdx==i)
             {
