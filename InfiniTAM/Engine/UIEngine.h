@@ -48,6 +48,7 @@ namespace InfiniTAM
 			Vector4f winReg[NUM_WIN]; // (x1, y1, x2, y2)
 			Vector2i winSize;
 			uint textureId[NUM_WIN];
+            uint textureDebugId[2];
 			ITMUChar4Image *outImage[NUM_WIN];
 			ITMMainEngine::GetImageType outImageType[NUM_WIN];
 
@@ -55,6 +56,7 @@ namespace InfiniTAM
 			ITMIMUMeasurement *inputIMUMeasurement;
 			MeshFusion * mfdata;
 
+            bool bDebugVectorActive; //M
 			bool freeviewActive;
 			bool intergrationActive;
 			ITMPose freeviewPose;
@@ -71,6 +73,7 @@ namespace InfiniTAM
 			}
 
 			static void glutDisplayFunction();
+            static void glutDisplayFunction_DebugVector();
 			static void glutIdleFunction();
 			static void glutKeyUpFunction(unsigned char key, int x, int y);
 			static void glutMouseButtonFunction(int button, int state, int x, int y);

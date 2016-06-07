@@ -25,6 +25,9 @@
 using namespace InfiniTAM::Engine;
 UIEngine* UIEngine::instance;
 
+//M
+int nWindow1,nWindow2;
+
 void init(void)
 {
 	GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -40,6 +43,7 @@ void init(void)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
+    
 }
 
 
@@ -99,9 +103,8 @@ void UIEngine::glutDisplayFunction()
 	
 	//M Display Motion Vector Here
 	uiEngine->mfdata->MeshFusion_DrawVector(winReg[2][0], winReg[2][1], winReg[2][2] - winReg[2][0], winReg[2][3] - winReg[2][1]);
-
-	glPopMatrix();
-
+    
+    
 	bool buser = uiEngine->outImageType[0] != ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST;
 	if (buser)
 	{
@@ -113,8 +116,9 @@ void UIEngine::glutDisplayFunction()
 		uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
 			true, uiEngine->mainEngine->GetTrackingState()->pose_d, &uiEngine->freeviewIntrinsics);
 	}
-	//glMatrixMode(GL_PROJECTION);
-	
+    
+	glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 
 	glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(0.85f, -0.962f);
 
@@ -128,12 +132,62 @@ void UIEngine::glutDisplayFunction()
 	}
 	else
 	{
-		sprintf(str, "n - next frame \t b - all frames \t e/esc - exit \t f - free viewpoint \t t - turn fusion %s", uiEngine->intergrationActive ? "off" : "on");
+		sprintf(str, "n - next frame \t b - all frames \t e/esc - exit \t f - free viewpoint \t m - Show Correstpondence [,] [.] to highlight \t t - turn fusion %s", uiEngine->intergrationActive ? "off" : "on");
 	}
 	safe_glutBitmapString(GLUT_BITMAP_HELVETICA_12, (const char*)str);
 
 	glutSwapBuffers();
 	uiEngine->needsRefresh = false;
+}
+
+void UIEngine::glutDisplayFunction_DebugVector()
+{
+    
+    
+    UIEngine *uiEngine = UIEngine::Instance();
+    
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glEnable(GL_TEXTURE_2D);
+    
+    glMatrixMode(GL_PROJECTION);
+    
+    if (!MeshFusion::m_matDebugVector.empty() && MeshFusion::m_matDebugVector.data!=NULL)
+    {
+        glPushMatrix();
+        {
+            glLoadIdentity();
+            glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+            
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            {
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, uiEngine->textureDebugId[0]);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MeshFusion::m_matDebugVector.cols, MeshFusion::m_matDebugVector.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, MeshFusion::m_matDebugVector.data);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glBegin(GL_QUADS); {
+                    glTexCoord2f(0, 1); glVertex2f(0, 0);
+                    glTexCoord2f(1, 1); glVertex2f(1, 0);
+                    glTexCoord2f(1, 0); glVertex2f(1, 1);
+                    glTexCoord2f(0, 0); glVertex2f(0, 1);
+                }
+                glEnd();
+                glDisable(GL_TEXTURE_2D);
+            }
+            glPopMatrix();
+        }
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+    }
+    else
+    {
+        glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(-0.9f, 0.8f);
+        safe_glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, "No data yet!!!");
+    }
+    glutSwapBuffers();
+    
 }
 
 void UIEngine::glutIdleFunction()
@@ -180,7 +234,13 @@ void UIEngine::glutIdleFunction()
 	}
 
 	if (uiEngine->needsRefresh) {
-		glutPostRedisplay();
+        glutSetWindow(nWindow1);
+        glutPostRedisplay();
+        if (uiEngine->bDebugVectorActive)
+        {
+            glutSetWindow(nWindow2);
+            glutPostRedisplay();
+        }
 	}
 }
 
@@ -198,13 +258,54 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 		uiEngine->mfdata->shift -= 5;
 		uiEngine->needsRefresh = true;
 		break;
+    case ',':
+        uiEngine->mfdata->DebugVectorIdxDec() ;
+        uiEngine->mfdata->MeshFusion_DebugTracking();
+        uiEngine->needsRefresh = true;
+        break;
+    case '.':
+        uiEngine->mfdata->DebugVectorIdxInc();
+        uiEngine->mfdata->MeshFusion_DebugTracking();
+        uiEngine->needsRefresh = true;
+        break;
+    case '/':
+        uiEngine->mfdata->DebugVectorIdxAll();
+        uiEngine->mfdata->MeshFusion_DebugTracking();
+        uiEngine->needsRefresh = true;
+        break;
+            
+    case 'm':
+        if (uiEngine->bDebugVectorActive)
+        {
+            uiEngine->bDebugVectorActive = false;
+            glDeleteTextures(2, uiEngine->textureDebugId);
+            glutDestroyWindow(nWindow2);
+        }
+        else
+        {
+            //M Create Debug Window
+            glutInitWindowSize(uiEngine->imageSource->getRGBImageSize().x*2, uiEngine->imageSource->getRGBImageSize().y);
+            nWindow2=glutCreateWindow("Debug-Vector");
+            glutDisplayFunc(UIEngine::glutDisplayFunction_DebugVector);
+            glutKeyboardUpFunc(UIEngine::glutKeyUpFunction);
+            
+            glGenTextures(2, uiEngine->textureDebugId);
+            //M End
+      
+            uiEngine->bDebugVectorActive = true;
+            uiEngine->mfdata->MeshFusion_DebugTracking();
+        }
+        uiEngine->needsRefresh = true;
+        break;
 	case 'n':
 		printf("processing one frame ...\n");
 		uiEngine->mainLoopAction = UIEngine::PROCESS_FRAME;
+        uiEngine->needsRefresh = true;
 		break;
 	case 'b':
 		printf("processing input source ...\n");
 		uiEngine->mainLoopAction = UIEngine::PROCESS_VIDEO;
+        uiEngine->needsRefresh = true;
 		break;
 	case 's':
 		if (uiEngine->isRecording)
@@ -377,6 +478,7 @@ void UIEngine::glutMouseWheelFunction(int button, int dir, int x, int y)
 void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSource, IMUSourceEngine *imuSource, ITMMainEngine *mainEngine,
 	const char *outFolder, ITMLibSettings::DeviceType deviceType)
 {
+    this->bDebugVectorActive = false;
 	this->freeviewActive = false;
 	this->intergrationActive = true;
 	this->currentColourMode = 0;
@@ -416,13 +518,13 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 
 	this->isRecording = false;
 	this->currentFrameNo = 0;
-	glewInit();
+	//glewInit();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(winSize.x, winSize.y);
-	glutCreateWindow("InfiniTAM");
+	nWindow1=glutCreateWindow("InfiniTAM");
 	glGenTextures(NUM_WIN, textureId);
-
+    
 	//init();
 
 	glutDisplayFunc(UIEngine::glutDisplayFunction);
@@ -435,7 +537,7 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 	glutMouseWheelFunc(UIEngine::glutMouseWheelFunction);
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, 1);
 #endif
-
+    
 	bool allocateGPU = false;
 	if (deviceType == ITMLibSettings::DEVICE_CUDA) allocateGPU = true;
 
@@ -472,6 +574,12 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 	sdkResetTimer(&timer_average);
 
 	printf("initialised.\n");
+
+    //M Test Debug
+    MeshFusion::ClearDebugWindow();
+    MeshFusion::OutputDebugText("Initialised.");
+    MeshFusion::ShowDebugWindow();
+    
 }
 
 void UIEngine::SaveScreenshot(const char *filename) const
@@ -493,14 +601,22 @@ void UIEngine::GetScreenshot(ITMUChar4Image *dest) const
 
 void UIEngine::ProcessFrame()
 {
-	if (!imageSource->hasMoreImages()) return;
+    MeshFusion::ClearDebugWindow();
+    
+    std::stringstream ssDebug;
+    ssDebug << "FrameNO: " << currentFrameNo << "\n----------\n";
+    MeshFusion::OutputDebugText(ssDebug.str().c_str());
+
+    
+    if (!imageSource->hasMoreImages()) return;
 	imageSource->getImagesMF(inputRGBImage, inputRawDepthImage,mfdata);
 
 	if (imuSource != NULL) {
 		if (!imuSource->hasMoreMeasurements()) return;
 		else imuSource->getMeasurement(inputIMUMeasurement);
 	}
-
+    
+    
 	if (isRecording)
 	{
 		char str[250];
@@ -540,7 +656,7 @@ void UIEngine::ProcessFrame()
 
 
 	}
-
+    
 	sdkResetTimer(&timer_instant);
 	sdkStartTimer(&timer_instant); sdkStartTimer(&timer_average);
 
@@ -549,6 +665,14 @@ void UIEngine::ProcessFrame()
 	//actual processing on the mailEngine
 	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
 	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
+    
+    //M
+    if (bDebugVectorActive)
+    {
+        this->mfdata->DebugVectorIdxAll();
+        this->mfdata->MeshFusion_DebugTracking();
+    }
+    //M End
 
 #ifndef COMPILE_WITHOUT_CUDA
 	ITMSafeCall(cudaThreadSynchronize());
@@ -559,6 +683,8 @@ void UIEngine::ProcessFrame()
 	processedTime = sdkGetAverageTimerValue(&timer_average);
 
 	currentFrameNo++;
+    
+    MeshFusion::ShowDebugWindow();
 }
 
 void UIEngine::Run() { glutMainLoop(); }
@@ -569,7 +695,7 @@ void UIEngine::Shutdown()
 
 	for (int w = 0; w < NUM_WIN; w++)
 		delete outImage[w];
-
+    
 	delete inputRGBImage;
 	delete inputRawDepthImage;
 	delete inputIMUMeasurement;

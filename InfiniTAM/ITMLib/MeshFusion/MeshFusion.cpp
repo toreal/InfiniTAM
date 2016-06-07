@@ -89,7 +89,7 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 		
 	psimpl::simplify_douglas_peucker_n<2>(begin, end, count,std::back_inserter(result) );
 	
-	std::cout <<result.size() << std::endl;
+	DEBUG_OUTPUT_STREAM <<result.size() << std::endl;
 
 	if (draw == NULL)
 		return;
@@ -100,7 +100,7 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 		int x = *it;
 		++it;
 		int y = *it;
-		//cout << x <<"," << y << endl;
+		//DEBUG_OUTPUT_STREAM << x <<"," << y << endl;
 		
 		this->sellist[i].x = x;
 		this->sellist[i].y = y;
@@ -450,7 +450,7 @@ void insert_with_info(CDT& cdt, InputIterator first, InputIterator last)
 		}
 		else
 		{
-			cout << "wrong";
+			DEBUG_OUTPUT_STREAM << "wrong";
 		}
 	}
 }

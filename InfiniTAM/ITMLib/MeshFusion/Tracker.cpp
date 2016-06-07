@@ -26,15 +26,32 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/video/tracking.hpp"
+#include <boost/assign/list_of.hpp>
 
-#define TEST_CGAL
-#ifdef TEST_CGAL
-#include <CGAL/Simple_cartesian.h>
-#endif
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/density.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+
+using namespace boost;
+using namespace boost::accumulators;
+
+typedef accumulator_set<double, features<tag::density> > acc;
+typedef iterator_range<std::vector<std::pair<double, double> >::iterator > histogram_type;
 
 //using namespace std;
 using namespace ITMLib::Objects;
 using namespace cv;
+
+cv::Mat MeshFusion::m_Debug;
+cv::Mat MeshFusion::m_matDebugVector;
+
+int     MeshFusion::m_nDebugX = 0;
+int     MeshFusion::m_nDebugY = 0;
+int     MeshFusion::m_nDebugVectorIdx = -1;
+//std::stringstream MeshFusion::_ssDebug;
+MeshFusion::DebugLog MeshFusion::_ssDebug;
+std::stringstream    MeshFusion::DebugLog::ssOut;
+
 
 #define SQR(x) ((x)*(x))
 
@@ -46,12 +63,12 @@ void MeshFusion::MeshFusion_InitTracking( void )
 {
 	m_backup = m_corners;
 	m_backup2 = m_base_corners;
+
     m_bfirst = true;
     m_pre_corners.clear();
     m_corners.clear();
     m_base_corners.clear();
 }
-
 
 int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 {
@@ -93,14 +110,16 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
     // For example, if the best corner has the quality measure = 1500,
     // and the qualityLevel=0.01 , then all the corners which quality measure is
     // less than 15 will be rejected.
-    double qualityLevel = 0.01;
+    
+    const int cOriginalPara = 1; //1: for Original Parameters. 0: for new/dense Parameters.
+    double qualityLevel = cOriginalPara? 0.01 : 0.03;
     
     // minDistance – The minimum possible Euclidean distance between the returned corners
-    double minDistance = 20.;
+    double minDistance = cOriginalPara? 20.: 10.;
     
     // blockSize – Size of the averaging block for computing derivative covariation
     // matrix over each pixel neighborhood, see cornerEigenValsAndVecs()
-    int blockSize = 3;
+    int blockSize = cOriginalPara? 3 : 7 ;
     
     // useHarrisDetector – Indicates, whether to use operator or cornerMinEigenVal()
     bool useHarrisDetector = false;
@@ -108,18 +127,73 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
     // k – Free parameter of Harris detector
     double k = 0.04;
     
+    cv::Size winSize=cv::Size(21,21);
+    
+    int maxLevel=3;
+    
     if (m_bfirst)
 	{
 		m_bfirst = false;
 		cv::goodFeaturesToTrack(m_image, m_corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
+
+#ifdef CV_PYRAMID
+        cv::buildOpticalFlowPyramid(m_image, m_prevPyr, winSize, maxLevel, true);
+#endif
+        
         m_base_corners = m_corners;
+        m_base_image = m_image.clone();
 	}
       else
     {
-  
         m_pre_corners = m_corners;
 
-        calcOpticalFlowPyrLK(m_pre_image, m_image, m_pre_corners, m_corners, m_status, m_err);
+#ifdef CV_PYRAMID
+        cv::buildOpticalFlowPyramid(m_image, m_currPyr, winSize, maxLevel, true);
+        calcOpticalFlowPyrLK(m_prevPyr, m_currPyr, m_pre_corners, m_corners, m_status, m_err, winSize, maxLevel);
+        
+        // Reverse Check
+        std::vector< cv::Point2f > _rpre_corners;
+        std::vector< uchar > _rstatus;
+        std::vector<float> _rerr;
+        calcOpticalFlowPyrLK(m_currPyr, m_prevPyr, m_corners, _rpre_corners, _rstatus, _rerr, winSize, maxLevel);
+        
+        assert(_rpre_corners.size()==m_pre_corners.size());
+        
+        bool bRCheckFirst=true;
+        for (size_t i=0;i<m_pre_corners.size();i++)
+        {
+            if (m_status[i] == 1)
+            {
+                if (_rstatus[i]==1)
+                {
+                    float fdistsqr = SQR(m_pre_corners[i].x - _rpre_corners[i].x) + SQR(m_pre_corners[i].y - _rpre_corners[i].y);;
+                    
+                    if (fdistsqr>1)
+                    {
+                        m_status[i]=0;
+                        if (bRCheckFirst)
+                            DEBUG_OUTPUT_STREAM << "Corner "<< i , bRCheckFirst=false;
+                        else
+                            DEBUG_OUTPUT_STREAM << ", " << i;
+                    }
+                }
+                else
+                {
+                    m_status[i]=_rstatus[i];
+                    if (bRCheckFirst)
+                        DEBUG_OUTPUT_STREAM << "Corner *"<< i , bRCheckFirst=false;
+                    else
+                        DEBUG_OUTPUT_STREAM << ", *" << i;
+                }
+            }
+        }
+        if (!bRCheckFirst)
+            DEBUG_OUTPUT_STREAM << " Removed!" << DEBUG_ENDL;
+        
+        m_prevPyr.swap(m_currPyr);
+#else
+        calcOpticalFlowPyrLK(m_pre_image, m_image, m_pre_corners, m_corners, m_status, m_err, winSize, maxLevel);
+#endif
 
         // Calculate max and average SQR of motion vector distance
         maxdis = 0;
@@ -147,7 +221,9 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
         //Delete fail to track features & distance too large or too small
         std::vector< cv::Point2f > __corners, __pre_corners,_base_corners;
         std::vector<cv::Point3f> objpos;
+        std::vector<float> _err;
 
+        
         if (k>0)
         {
 
@@ -166,6 +242,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
                         __corners.push_back(m_corners[i]);
                         __pre_corners.push_back(m_pre_corners[i]);
                         _base_corners.push_back(m_base_corners[i]);
+                        _err.push_back(m_err[i]);
                         objpos.push_back(objectPoints[i]);
                         k++;
                     }
@@ -175,64 +252,189 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
             
         }
 
-        m_corners     = __corners;
-        m_pre_corners = __pre_corners;
-        m_base_corners = _base_corners;
-        objectPoints = objpos;
+        m_err               = _err;
+        m_corners           = __corners;
+        m_pre_corners       = __pre_corners;
+        m_base_corners      = _base_corners;
+        m_latest_paired_corners_base    = _base_corners;
+        m_latest_paired_corners_prev    = __pre_corners;
+        m_latest_paired_corners_curr    = __corners;
+        m_latest_paired_corners_err     = _err;
+        m_latest_paired_base_image      =   m_base_image.clone();
+        m_latest_paired_prev_image      =   m_pre_image.clone();
+        m_latest_paired_curr_image      =   m_image.clone();
+        
+        objectPoints    = objpos;
 		
     }
     
     return EXIT_SUCCESS;
 }
 
-#ifdef TEST_CGAL
-typedef CGAL::Simple_cartesian<double> Kernel;
-typedef Kernel::Point_2 Point_2;
-typedef Kernel::Segment_2 Segment_2;
-
-void testcgal()
+void MeshFusion::ClearDebugWindow(void)
 {
+    m_Debug = cv::Mat::zeros(800,600,CV_8UC3);
+
+    m_nDebugX=15;
+    m_nDebugY=15;
+}
+
+void MeshFusion::ShowDebugWindow(void)
+{
+    OutputDebugText(MeshFusion::DebugLog::ssOut.str().c_str());
+    MeshFusion::DebugLog::ssOut.str("");
+    MeshFusion::DebugLog::ssOut.clear();
+    
+    cv::namedWindow( "Debug", CV_WINDOW_NORMAL );
+    cv::imshow( "Debug", m_Debug );
+}
+
+void MeshFusion::OutputDebugPlot(const int nX, const int nY, const std::vector<float> & plotdata)
+{
+
+    cv::rectangle(m_Debug, cv::Point2f(m_nDebugX,m_nDebugY), cv::Point2f(m_nDebugX + nX, m_nDebugY + nY), Scalar(64,64,64));
+
+    if (plotdata.size()<2)
+        return;
+    
+    std::vector< cv::Point> cvplot;
+    
+    for (size_t i=0;i<plotdata.size();i++)
     {
-        Point_2 p(1,1), q(10,10);
-        std::cout << "p = " << p << std::endl;
-        std::cout << "q = " << q.x() << " " << q.y() << std::endl;
-        std::cout << "sqdist(p,q) = "
-        << CGAL::squared_distance(p,q) << std::endl;
+        cvplot.push_back(cv::Point2f(m_nDebugX+nX*i/(plotdata.size()-1),m_nDebugY+nY*(1-plotdata[i])));
+    }
+    
+    auto current = cvplot.begin();
+    auto next = std::next(current, 1);
+    for (; next != cvplot.end(); current++, next++)
+    {
+        cv::line(m_Debug, *current, *next, cv::Scalar(0,0,255),1,cv::LINE_AA);
+    }
+    m_nDebugY += nY+15+5;
+}
+
+void MeshFusion::OutputDebugText(const char *str)
+{
+    
+    if (str==NULL) return;
+    
+    cv::String cvStr(str);
+    
+    size_t nS  = 0;
+    size_t nNewL = cvStr.find('\n',0);
+
+    
+    while (nNewL!=cv::String::npos)
+    {
+        cv::String strout = cvStr.substr(nS,nNewL-nS);
+        cv::putText(m_Debug, strout,cv::Point(m_nDebugX,m_nDebugY), 0?CV_FONT_HERSHEY_PLAIN:CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,255),1,LINE_AA,false);
+        m_nDebugY+=15;
         
-        Segment_2 s(p,q);
-        Point_2 m(5, 9);
-        
-        std::cout << "m = " << m << std::endl;
-        std::cout << "sqdist(Segment_2(p,q), m) = "
-        << CGAL::squared_distance(s,m) << std::endl;
-        std::cout << "p, q, and m ";
-        switch (CGAL::orientation(p,q,m)){
-            case CGAL::COLLINEAR:
-                std::cout << "are collinear\n";
-                break;
-            case CGAL::LEFT_TURN:
-                std::cout << "make a left turn\n";
-                break;
-            case CGAL::RIGHT_TURN:
-                std::cout << "make a right turn\n";
-                break;
-        }
-        std::cout << " midpoint(p,q) = " << CGAL::midpoint(p,q) << std::endl;
-        
+        nS = nNewL+1;
+        nNewL = cvStr.find('\n',nS);
+    }
+
+    if (nS<cvStr.size())
+    {
+        cv::String strout = cvStr.substr(nS);
+        cv::putText(m_Debug, strout,cv::Point(m_nDebugX,m_nDebugY), 0?CV_FONT_HERSHEY_PLAIN:CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,255),1,LINE_AA,false);
+        m_nDebugY+=15;
     }
 }
+
+void MeshFusion::MeshFusion_DebugTracking( void )
+{
+#define CurrCorner m_latest_paired_corners_curr
+#define PrevCorner m_latest_paired_corners_base
+#define CurrImage m_latest_paired_curr_image
+#define PrevImage m_latest_paired_base_image
+    
+    if (CurrCorner.size()!=0)
+    {
+        std::vector <cv::Scalar> colors = boost::assign::list_of
+            (cv::Scalar(0,0,255,200))(cv::Scalar(0,255,0,200)) (cv::Scalar(255,0,0,200))
+            (cv::Scalar(0,255,255,200))(cv::Scalar(255,0,255,200))(cv::Scalar(255,255,0,200));
+        
+
+#if 1
+#define NDIV    1
+        Mat img_now, img_pre;
+        cvtColor(CurrImage,img_now,COLOR_GRAY2BGR);
+        cvtColor(PrevImage,img_pre,COLOR_GRAY2BGR);
+#else
+#define NDIV    2
+        Mat img_now, img_pre, img_tmp;
+
+        cvtColor(CurrImage,img_tmp,COLOR_GRAY2BGRA);
+        cv::resize(img_tmp, img_now,cv::Size(CurrImage.cols/2,CurrImage.rows));
+        cvtColor(PrevImage,img_tmp,COLOR_GRAY2BGR);
+        cv::resize(img_tmp, img_pre,cv::Size(CurrImage.cols/2,CurrImage.rows));
 #endif
+        m_matDebugVector = cv::Mat::zeros(img_now.rows,img_now.cols*2,CV_8UC3);
+        
+        img_pre.copyTo(m_matDebugVector(Rect(0,0,img_pre.cols,img_pre.rows)));
+        img_now.copyTo(m_matDebugVector(Rect(img_pre.cols,0,img_now.cols,img_now.rows)));
+
+        acc myAccumulator( tag::density::num_bins = 20, tag::density::cache_size = 10);
+        for (size_t i=0;i<m_latest_paired_corners_err.size();i++)
+            myAccumulator(m_latest_paired_corners_err[i]);
+        histogram_type hist = density(myAccumulator);
+        
+        const int cBlockSize = 7;
+        int nColorIdx = 0;
+        for (int i=0;i<(int)CurrCorner.size();i++)
+        {
+            cv::Point pt_txt1(               PrevCorner[i].x/NDIV - cBlockSize, PrevCorner[i].y - cBlockSize - 5);
+            cv::Point pt_txt2(img_now.cols + CurrCorner[i].x/NDIV - cBlockSize, CurrCorner[i].y - cBlockSize - 5);
+            cv::Point pt_pre (               PrevCorner[i].x/NDIV , PrevCorner[i].y);
+            cv::Point pt_now (img_now.cols + CurrCorner[i].x/NDIV , CurrCorner[i].y);
+            if (m_nDebugVectorIdx<0 || m_nDebugVectorIdx==i)
+            {
+
+                size_t j=0;
+                for (;j<hist.size();j++)
+                {
+                    if (hist[j].first>m_latest_paired_corners_err[i])
+                        break;
+                }
+                cv::Scalar _color1 = colors[nColorIdx];
+                cv::Scalar _color2 = _color1 * ((40-j)/40.0);
+
+                std::stringstream ssout1,ssout2;
+                ssout1 << i;
+                ssout2 << "[" << j << "/22]" << m_latest_paired_corners_err[i];
+                cv::putText(m_matDebugVector,ssout1.str(),pt_txt1, CV_FONT_HERSHEY_SIMPLEX, 0.3, _color1,1,LINE_AA,false);
+                cv::putText(m_matDebugVector,ssout2.str(),pt_txt2, CV_FONT_HERSHEY_SIMPLEX, 0.3, _color1,1,LINE_AA,false);
+                
+                cv::line(m_matDebugVector, cv::Point(pt_pre.x+cBlockSize,pt_pre.y), cv::Point(pt_now.x-cBlockSize,pt_now.y), _color2,1,cv::LINE_AA);
+
+                cv::rectangle(m_matDebugVector, cv::Rect(pt_pre.x - cBlockSize , pt_pre.y - cBlockSize,cBlockSize*2+1,cBlockSize*2+1), _color2);
+                cv::rectangle(m_matDebugVector, cv::Rect(pt_now.x - cBlockSize , pt_now.y - cBlockSize,cBlockSize*2+1,cBlockSize*2+1), _color2);
+            }
+            nColorIdx = (nColorIdx+1)%colors.size();
+        }
+        
+        //cv::namedWindow( "DebugTracking", CV_WINDOW_NORMAL );
+        //imshow("DebugTracking", m_matDebugVector);
+        
+    }
+    
+}
 
 void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight)
 {
+    
     glColor3f(1.0f, 1.0f, 0.0f);
     
     glPointSize(0.4f);
     glBegin(GL_POINTS);
     for (int i=0;i<(int)m_corners.size();i++)
     {
-        if (m_pre_corners.size()!=0 && m_status[i]==0)
-            glColor3f(1.0f, 0.0f, 0.0f);
+        if (m_pre_corners.size()!=0)
+            if (m_status[i]==0)
+                glColor3f(1.0f, 0.0f, 0.0f);
+            else
+                glColor3f(0.0f, 1.0f, 0.0f);
         else
             glColor3f(1.0f, 1.0f, 0.0f);
 
@@ -242,49 +444,47 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
     }
     glEnd();
 
-    if (m_backup.size()!=0)
+    // Draw green vector from m_latest_paired_corners_curr to m_latest_paired_corners_base
+    if (m_latest_paired_corners_base.size()!=0)
     {
-        // Draw yellow vector from pre_corner to _corner
-       glColor3f(0.0f, 1.0f, 0.0f);
+        glColor3f(0.0f, 0.0f, 1.0f);
         glBegin(GL_LINES); {
-            for (int i=0;i<(int)m_backup.size();i++)
+            for (int i=0;i<(int)m_latest_paired_corners_base.size();i++)
             {
-                //if (m_status[i]==1)
-                {
-                    float x1 = m_backup[i].x/m_image.cols;
-                    float y1 = 1-m_backup[i].y/m_image.rows;
-                    float x2 = m_backup2[i].x/m_image.cols;
-                    float y2 = 1-m_backup2[i].y/m_image.rows;
-                    glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
-                    glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
-
-                }
+                float x1 = m_latest_paired_corners_base[i].x/m_image.cols;
+                float y1 = 1-m_latest_paired_corners_base[i].y/m_image.rows;
+                float x2 = m_latest_paired_corners_curr[i].x/m_image.cols;
+                float y2 = 1-m_latest_paired_corners_curr[i].y/m_image.rows;
+                glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
+                glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
             }
         }
         glEnd();
-
-        //// Draw green vector from base_corner to _corner
-        //glColor3f(0.0f, 1.0f, 0.0f);
-        //glBegin(GL_LINES); {
-        //    for (int i=0;i<(int)m_corners.size();i++)
-        //    {
-        //        if (m_status[i]==1)
-        //        {
-        //            float x1 = m_corners[i].x/m_image.cols;
-        //            float y1 = 1-m_corners[i].y/m_image.rows;
-        //            float x2 = m_base_corners[i].x/m_image.cols;
-        //            float y2 = 1-m_base_corners[i].y/m_image.rows;
-        //            glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
-        //            glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
-        //            
-        //        }
-        //    }
-        //}
-        //glEnd();
-        //
     }
 
-	if ( false)// proDepth != NULL)
+//    // Draw green vector from m_base_corner to m_corner
+//    if (m_pre_corners.size()!=0)
+//    {
+//        glColor3f(0.0f, 1.0f, 0.0f);
+//        glBegin(GL_LINES); {
+//            for (int i=0;i<(int)m_corners.size();i++)
+//            {
+//                if (m_status[i]==1)
+//                {
+//                    float x1 = m_corners[i].x/m_image.cols;
+//                    float y1 = 1-m_corners[i].y/m_image.rows;
+//                    float x2 = m_base_corners[i].x/m_image.cols;
+//                    float y2 = 1-m_base_corners[i].y/m_image.rows;
+//                    glVertex2f(fstartx+x1*fwidth, fstarty+y1*fheight);
+//                    glVertex2f(fstartx+x2*fwidth, fstarty+y2*fheight);
+//                    
+//                }
+//            }
+//        }
+//        glEnd();
+//    }
+
+    if ( false)// proDepth != NULL)
 	{
 		glBegin(GL_POINTS);
 		glColor3f(0, 1.0f, 0.0f);
@@ -305,9 +505,4 @@ void MeshFusion::MeshFusion_DrawVector(float fstartx, float fstarty, float fwidt
 			}
 		glEnd();
 	}
-    
-#ifdef TEST_CGAL
-    //test cgal
-  //  testcgal();
-#endif
 }
