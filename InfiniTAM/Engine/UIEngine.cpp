@@ -26,7 +26,7 @@ using namespace InfiniTAM::Engine;
 UIEngine* UIEngine::instance;
 
 //M
-int nWindow1,nWindow2;
+int nWindow1,nWindow2,nWindow3;
 
 void init(void)
 {
@@ -142,8 +142,6 @@ void UIEngine::glutDisplayFunction()
 
 void UIEngine::glutDisplayFunction_DebugVector()
 {
-    
-    
     UIEngine *uiEngine = UIEngine::Instance();
     
     glClear(GL_COLOR_BUFFER_BIT);
@@ -164,7 +162,7 @@ void UIEngine::glutDisplayFunction_DebugVector()
             {
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, uiEngine->textureDebugId[0]);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MeshFusion::m_matDebugVector.cols, MeshFusion::m_matDebugVector.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, MeshFusion::m_matDebugVector.data);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MeshFusion::m_matDebugVector.cols, MeshFusion::m_matDebugVector.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, MeshFusion::m_matDebugVector.data);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glBegin(GL_QUADS); {
@@ -185,6 +183,49 @@ void UIEngine::glutDisplayFunction_DebugVector()
     {
         glColor3f(1.0f, 0.0f, 0.0f); glRasterPos2f(-0.9f, 0.8f);
         safe_glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, "No data yet!!!");
+    }
+    glutSwapBuffers();
+    
+}
+
+void UIEngine::glutDisplayFunction_DebugConsole()
+{
+    UIEngine *uiEngine = UIEngine::Instance();
+    
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glEnable(GL_TEXTURE_2D);
+    
+    glMatrixMode(GL_PROJECTION);
+    
+    if (!MeshFusion::m_matDebugConsole.empty() && MeshFusion::m_matDebugConsole.data!=NULL)
+    {
+        glPushMatrix();
+        {
+            glLoadIdentity();
+            glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+            
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            {
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, uiEngine->textureDebug2Id[0]);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, MeshFusion::m_matDebugConsole.cols, MeshFusion::m_matDebugConsole.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, MeshFusion::m_matDebugConsole.data);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glBegin(GL_QUADS); {
+                    glTexCoord2f(0, 1); glVertex2f(0, 0);
+                    glTexCoord2f(1, 1); glVertex2f(1, 0);
+                    glTexCoord2f(1, 0); glVertex2f(1, 1);
+                    glTexCoord2f(0, 0); glVertex2f(0, 1);
+                }
+                glEnd();
+                glDisable(GL_TEXTURE_2D);
+            }
+            glPopMatrix();
+        }
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
     }
     glutSwapBuffers();
     
@@ -241,7 +282,9 @@ void UIEngine::glutIdleFunction()
             glutSetWindow(nWindow2);
             glutPostRedisplay();
         }
-	}
+        glutSetWindow(nWindow3);
+        glutPostRedisplay();
+    }
 }
 
 void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
@@ -289,7 +332,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
             glutDisplayFunc(UIEngine::glutDisplayFunction_DebugVector);
             glutKeyboardUpFunc(UIEngine::glutKeyUpFunction);
             
-            glGenTextures(2, uiEngine->textureDebugId);
+            glGenTextures(1, uiEngine->textureDebugId);
             //M End
       
             uiEngine->bDebugVectorActive = true;
@@ -521,6 +564,14 @@ void UIEngine::Initialise(int & argc, char** argv, ImageSourceEngine *imageSourc
 	//glewInit();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+
+    //M Debug Window
+    glutInitWindowSize(600,800);
+    nWindow3=glutCreateWindow("InfiniTAM - Debug");
+    glGenTextures(1, textureDebug2Id);
+    glutDisplayFunc(UIEngine::glutDisplayFunction_DebugConsole);
+    glutKeyboardUpFunc(UIEngine::glutKeyUpFunction);
+    
 	glutInitWindowSize(winSize.x, winSize.y);
 	nWindow1=glutCreateWindow("InfiniTAM");
 	glGenTextures(NUM_WIN, textureId);

@@ -116,7 +116,6 @@ namespace ITMLib
 #ifdef CV_PYRAMID
             std::vector<cv::Mat> m_prevPyr, m_currPyr;
 #endif
-            static cv::Mat      m_Debug;
             
             std::vector<uchar>  m_status;
             std::vector<float>  m_err;
@@ -152,6 +151,7 @@ namespace ITMLib
 				segImage = NULL;
 				pointlist = new Vector2i[MAXNODE];
 				sellist = new Vector2i[MAXNODE];
+                MeshFusion_InitTracking();
 			};
 			~MeshFusion() {  
 				if (segImage != NULL)
@@ -190,6 +190,7 @@ namespace ITMLib
 //            static std::stringstream _ssDebug;
             static DebugLog _ssDebug;
             static cv::Mat      m_matDebugVector;
+            static cv::Mat      m_matDebugConsole;
             
             //static inline std::stringstream & GetDebugStream() { return _ssDebug; }
             

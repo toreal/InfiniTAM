@@ -42,7 +42,7 @@ typedef iterator_range<std::vector<std::pair<double, double> >::iterator > histo
 using namespace ITMLib::Objects;
 using namespace cv;
 
-cv::Mat MeshFusion::m_Debug;
+cv::Mat MeshFusion::m_matDebugConsole;
 cv::Mat MeshFusion::m_matDebugVector;
 
 int     MeshFusion::m_nDebugX = 0;
@@ -273,7 +273,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 
 void MeshFusion::ClearDebugWindow(void)
 {
-    m_Debug = cv::Mat::zeros(800,600,CV_8UC3);
+    m_matDebugConsole = cv::Mat::zeros(800,600,CV_8UC3);
 
     m_nDebugX=15;
     m_nDebugY=15;
@@ -285,14 +285,15 @@ void MeshFusion::ShowDebugWindow(void)
     MeshFusion::DebugLog::ssOut.str("");
     MeshFusion::DebugLog::ssOut.clear();
     
-    cv::namedWindow( "Debug", CV_WINDOW_NORMAL );
-    cv::imshow( "Debug", m_Debug );
+    //M need refresh?
+    //cv::namedWindow( "Debug", CV_WINDOW_NORMAL );
+    //cv::imshow( "Debug", m_matDebugConsole );
 }
 
 void MeshFusion::OutputDebugPlot(const int nX, const int nY, const std::vector<float> & plotdata)
 {
 
-    cv::rectangle(m_Debug, cv::Point2f(m_nDebugX,m_nDebugY), cv::Point2f(m_nDebugX + nX, m_nDebugY + nY), Scalar(64,64,64));
+    cv::rectangle(m_matDebugConsole, cv::Point2f(m_nDebugX,m_nDebugY), cv::Point2f(m_nDebugX + nX, m_nDebugY + nY), Scalar(64,64,64));
 
     if (plotdata.size()<2)
         return;
@@ -308,9 +309,11 @@ void MeshFusion::OutputDebugPlot(const int nX, const int nY, const std::vector<f
     auto next = std::next(current, 1);
     for (; next != cvplot.end(); current++, next++)
     {
-        cv::line(m_Debug, *current, *next, cv::Scalar(0,0,255),1,cv::LINE_AA);
+        cv::line(m_matDebugConsole, *current, *next, cv::Scalar(0,0,255),1,cv::LINE_AA);
     }
     m_nDebugY += nY+15+5;
+    
+    //M need refresh?
 }
 
 void MeshFusion::OutputDebugText(const char *str)
@@ -327,7 +330,7 @@ void MeshFusion::OutputDebugText(const char *str)
     while (nNewL!=cv::String::npos)
     {
         cv::String strout = cvStr.substr(nS,nNewL-nS);
-        cv::putText(m_Debug, strout,cv::Point(m_nDebugX,m_nDebugY), 0?CV_FONT_HERSHEY_PLAIN:CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,255),1,LINE_AA,false);
+        cv::putText(m_matDebugConsole, strout,cv::Point(m_nDebugX,m_nDebugY), 0?CV_FONT_HERSHEY_PLAIN:CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,255),1,LINE_AA,false);
         m_nDebugY+=15;
         
         nS = nNewL+1;
@@ -337,9 +340,10 @@ void MeshFusion::OutputDebugText(const char *str)
     if (nS<cvStr.size())
     {
         cv::String strout = cvStr.substr(nS);
-        cv::putText(m_Debug, strout,cv::Point(m_nDebugX,m_nDebugY), 0?CV_FONT_HERSHEY_PLAIN:CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,255),1,LINE_AA,false);
+        cv::putText(m_matDebugConsole, strout,cv::Point(m_nDebugX,m_nDebugY), 0?CV_FONT_HERSHEY_PLAIN:CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,255),1,LINE_AA,false);
         m_nDebugY+=15;
     }
+    //M need refresh?
 }
 
 void MeshFusion::MeshFusion_DebugTracking( void )
