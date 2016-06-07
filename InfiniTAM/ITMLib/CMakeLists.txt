@@ -140,6 +140,9 @@ MeshFusion/refinePose.cpp
 
 set(ITMLIB_MESHFUSION_HEADERS
 MeshFusion/MeshFusion.h
+MeshFusion/MFDepthTracker.h
+MeshFusion/MFTrackerGH.h
+
 )
 
 

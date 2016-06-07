@@ -171,17 +171,19 @@ void MFDepthTracker::MyTrackCamera(ITMPose *pose_m, const ITMView *view , MyTri 
 		Matrix4f approxPose = pose_d.GetM();
 		ITMPose lastKnownGoodPose((pose_d));
 		f_old = 1e20f;
-		float lambda = 1.0;
+		float lambda = 1;
 
 		for (int iterNo = 0; iterNo < noIterationsPerLevel; iterNo++)
 		{
 			// evaluate error function and gradients
 			noValidPoints_new = this->ComputeGandH(f_new, nabla_new, hessian_new, approxPose);
 
+			std::cout << f_new << std::endl;
+
 			// check if error increased. If so, revert
 			if ((noValidPoints_new <= 0)||(f_new > f_old)) {
 				pose_d.SetFrom(&lastKnownGoodPose);
-				approxPose =pose_d.GetM();
+				approxPose =pose_d.GetInvM();
 				lambda *= 10.0f;
 			} else {
 				lastKnownGoodPose.SetFrom(&pose_d);
@@ -197,16 +199,22 @@ void MFDepthTracker::MyTrackCamera(ITMPose *pose_m, const ITMView *view , MyTri 
 			// compute a new step and make sure we've got an SE3
 			ComputeDelta(step, nabla_good, A, iterationType != TRACKER_ITERATION_BOTH);
 			ApplyDelta(approxPose, step, approxPose);
-			pose_d.SetM(approxPose);
+			ITMPose localp;
+			localp.SetInvM(approxPose);
+			localp.Coerce();
+			pose_d.MultiplyWith(&localp);
 			pose_d.Coerce();
-			approxPose = pose_d.GetM();
+			approxPose = pose_d.GetInvM();
 
 			// if step is small, assume it's going to decrease the error and finish
 			if (HasConverged(step)) break;
 		}
 	}
 
-	pose_m->MultiplyWith(&pose_d);
+	ITMPose  modelp;
+	modelp.SetM(pose_d.GetInvM());
+	modelp.Coerce();
+	pose_m->MultiplyWith(&modelp);
 	pose_m->Coerce();
 }
 
@@ -241,11 +249,16 @@ int MFDepthTracker::ComputeGandH(float &f, float *nabla, float *hessian, Matrix4
 
 	currMesh->project(NULL, intrinRGB);
 
-	Matrix4f newpos = pose->GetM();
-	newpos = approxPose*newpos;
+	ITMPose localpose, adpose(approxPose);
+	localpose.SetFrom(pose);
+	localpose.MultiplyWith(&adpose);
+	localpose.Coerce();
+	Matrix4f newpos = localpose.GetM();
+	//newpos = approxPose*newpos;
 	
 
 	modelMesh->project(&newpos, intrinRGB);
+	std::cout << approxPose << std::endl;
 	float err = currMesh->findError(*modelMesh, &diff,&curr,&currNormal );
 
 
