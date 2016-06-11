@@ -1,0 +1,4 @@
+set PATH=%PATH%;%RMANTREE%bin\
+set PATH=%PATH%;%RMSTREE%bin\
+set PYTHONPATH=%RMANTREE%bin
+
