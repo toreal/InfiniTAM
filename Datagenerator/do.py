@@ -5,7 +5,7 @@ def gen( val,fn,channel ):
     render='trans.rib'
     ri.Begin(render)
     ri.Display(fn, "tiff", channel)
-    ri.Translate(0,0,5)
+    ri.Translate(0,-10,600)
     ri.Rotate(-30,1,0,0)
     ri.Rotate(val,0,1,0)
     ri.End()

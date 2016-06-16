@@ -477,7 +477,7 @@ void MeshFusion::MeshFusion_Model(float fstartx, float fstarty, float fwidth, fl
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		float aspect = viewport[2] * fwidth/ (viewport[3] * fheight);
-		gluPerspective(60.0f, aspect, 0.1, 10000.0f);
+		gluPerspective(60.0f, aspect, 100, 10000.0f);
 		//glLoadMatrixf(projmatrix);
 
 		//glOrtho(-640 / 2, 640 / 2, -480 / 2, 480 / 2, 200, 500);
