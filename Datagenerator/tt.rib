@@ -1,0 +1,69 @@
+##RenderMan RIB
+#Created by RenderMan for Maya 20.9 (@1602511 Apr 25 2016)
+#Thu Jun 16 U 06:46:21 ????? 2016
+#bbox: -75.50316889 -75 -75.03817687 74.49683111 75 74.96182313 
+version 3.04
+ScopedCoordinateSystem "world_ref"
+AttributeBegin 
+	Attribute "identifier" "string name" ["groundPlane_transform"]
+	ConcatTransform [ 12 0 0 0  0 2.66454e-015 12 0  0 -1 2.22045e-016 0  0 0 0 1 ]
+	AttributeBegin 
+	AttributeEnd 
+AttributeEnd 
+AttributeBegin 
+	Attribute "identifier" "string name" ["Manipulator1"]
+	ConcatTransform [ 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 ]
+AttributeEnd 
+AttributeBegin 
+	Attribute "identifier" "string name" ["UniversalManip"]
+	ConcatTransform [ 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 ]
+AttributeEnd 
+AttributeBegin 
+AttributeEnd 
+AttributeBegin 
+AttributeEnd 
+AttributeBegin 
+AttributeEnd 
+AttributeBegin 
+AttributeEnd 
+AttributeBegin 
+	Attribute "identifier" "string name" ["camera1"]
+	Attribute "identifier" "float id" [1]
+	ConcatTransform [ 1 0 0 0  0 1 0 0  0 0 1 0  0 0 300 1 ]
+	AttributeBegin 
+	AttributeEnd 
+AttributeEnd 
+AttributeBegin 
+	Attribute "identifier" "string name" ["pCube1"]
+	Attribute "identifier" "float id" [3]
+	ConcatTransform [ 1 0 0 0  0 1 0 0  0 0 1 0  -0.503169 0 -0.0381769 1 ]
+	AttributeBegin 
+		AttributeBegin 
+			Attribute "identifier" "string name" ["pCubeShape1"]
+			Attribute "identifier" "float id" [7]
+			Sides 2
+			ShadingInterpolation "smooth"
+			Attribute "user" "int receivesShadows" [1]
+			Attribute "visibility" "int camera" [1] "int indirect" [1] "int transmission" [1]
+			Attribute "shade" "string transmissionhitmode" ["shader"]
+			Attribute "grouping" "string membership" ["+reflection,refraction,shadow"]
+			##RLF Inject SurfaceShading -attribute sets@,initialShadingGroup,
+			TransformBegin 
+				PointsGeneralPolygons [1 1 1 1 1 1] [4 4 4 4 4 4] [0
+					1 3 2 2 3 5 4 4 5 7 6 6 7 1 0 1 7 5 3 6 0 2 4] "P" [-75 -75 75 75 -75 75 -75 75 75 75 75 75
+					-75 75 -75 75 75 -75 -75 -75 -75 75 -75 -75] "facevarying normal N" [0 0 1 0 0 1 0 0 1 0 0 1
+					0 1 0 0 1 0 0 1 0 0 1 0
+					0 0 -1 0 0 -1 0 0 -1 0 0 -1
+					0 -1 0 0 -1 0 0 -1 0 0 -1 0
+					1 0 0 1 0 0 1 0 0 1 0 0
+					-1 0 0 -1 0 0 -1 0 0 -1 0 0] "facevarying float s" [0.375 0.625 0.625 0.375 0.375 0.625 0.625 0.375 0.375 0.625 0.625 0.375
+					0.375 0.625 0.625 0.375 0.625 0.875 0.875 0.625 0.125 0.375 0.375 0.125] "facevarying float t" [0 0 0.25 0.25 0.25 0.25 0.5 0.5 0.5 0.5 0.75 0.75
+					0.75 0.75 1 1 0 0 0.25 0.25 0 0 0.25 0.25] "constant string primtype" ["mesh"]
+			TransformEnd 
+		AttributeEnd 
+	AttributeEnd 
+AttributeEnd 
+AttributeBegin 
+	Attribute "identifier" "string name" ["CubeCompass"]
+	ConcatTransform [ 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 ]
+AttributeEnd 

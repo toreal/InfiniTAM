@@ -5,19 +5,19 @@ def gen( val,fn,channel ):
     render='trans.rib'
     ri.Begin(render)
     ri.Display(fn, "tiff", channel)
-    ri.Translate(0,-10,600)
+    ri.Translate(0,-10,300)
     ri.Rotate(-30,1,0,0)
     ri.Rotate(val,0,1,0)
     ri.End()
     
 
 
-for i in range(5):
+for i in range(37):
     cmd='prman -t:4  test.rib'
-    fn='ttd_'+str(i)+'.tif'
+    fn='000'+str(i)+'.tif'
     gen(i*10,fn ,"z")
     os.system(cmd)
-    fn2='ttrgb_'+str(i)+'.tif'
+    fn2='c000'+str(i)+'.tif'
     gen(i*10,fn2,"rgba")	
     os.system(cmd)
     print(i)
