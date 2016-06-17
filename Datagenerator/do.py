@@ -14,10 +14,10 @@ def gen( val,fn,channel ):
 
 for i in range(37):
     cmd='prman -t:4  test.rib'
-    fn='000'+str(i)+'.tif'
+    fn='00'+str(i)+'.tif'
     gen(i*10,fn ,"z")
     os.system(cmd)
-    fn2='c000'+str(i)+'.tif'
+    fn2='c00'+str(i)+'.tif'
     gen(i*10,fn2,"rgba")	
     os.system(cmd)
     print(i)

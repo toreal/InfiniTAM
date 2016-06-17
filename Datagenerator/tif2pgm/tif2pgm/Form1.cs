@@ -25,78 +25,108 @@ namespace tif2pgm
             openFileDialog1.ShowDialog();
             Bitmap bmp = null;
             int width, height;
-            UInt16[] outputImageData;
-
+           
             foreach (string fn in openFileDialog1.FileNames)
             {
                 using (var inputImage = Tiff.Open(fn, "r"))
                 {
+                    byte[] inputImageData;
                     width = inputImage.GetField(TiffTag.IMAGEWIDTH)[0].ToInt();
                     height = inputImage.GetField(TiffTag.IMAGELENGTH)[0].ToInt();
-
-
-                    int ns = inputImage.StripSize();
-
-                    int bytePerPixel = 4;
-                    byte[] inputImageData = new byte[width * height * bytePerPixel];
                     var offset = 0;
                     int nstrip = inputImage.NumberOfStrips();
+                    int ns = inputImage.StripSize();
+                    int bytePerPixel = 4;
+
+                    inputImageData = new byte[width * height * bytePerPixel];
+                    
+
                     for (int i = 0; i < nstrip; i++)
                     {
                         offset += inputImage.ReadEncodedStrip(i, inputImageData, offset, ns);
                     }
 
-                    float[] refv = new float[2];
-                    refv[0] = -1;
-                    refv[1] = -1;
-                    byte[] buf = new byte[8];
-                    Buffer.BlockCopy(refv, 0, buf, 0, 8);
 
-
-
-                    float maxv = -1;
-                   outputImageData = new UInt16[inputImageData.Length / 4];
-
-                    bmp = new Bitmap(width, height);
-
-                    UInt16 val = UInt16.MaxValue;
-
-                    for (var i = 0; i < outputImageData.Length; i++)
-                    {
-                        float myFloat = System.BitConverter.ToSingle(inputImageData, i * 4);
-
-                        if (myFloat > UInt16.MaxValue)
-                            val = 0;
-                        else
-                        {
-                            val = (UInt16)(myFloat );
-
-                        }
-
-                        outputImageData[i] = val;
-                    }
                     FileInfo fi = new FileInfo(fn);
-                    string outn=fi.Name.Replace(fi.Extension,".pgm");
-
-                    PGMSave.Save(outputImageData, outn);
-                }
-                Color c = Color.FromArgb(0, 0, 0);
-                for (int i = 0; i < width; i++)
-                    for (int j = 0; j < height; j++)
+                   
+                    if (fi.Name.StartsWith("c"))
                     {
-                        float v = outputImageData[i + j * 640];
+                        string outn = fi.Name.Replace(fi.Extension, ".ppm");
+                        outn = outn.Substring(1);
+                        if (outn.Length == 7)
+                            outn = "0" + outn;
+                        byte[] outdata = new byte[width*height*3];
 
-                        if (v < 6)
-                        {
-                            int ci = (int)(255.0 * v / 6.0);
-                            c = Color.FromArgb(ci, ci, ci);
-                        }
-                        else
-                            c = Color.FromArgb(0, 0, 0);
+                        for ( int j = 0; j < height;j++)
+                        for(int i = 0; i < width; i++)
+                            {
+                                   outdata[(j * width + i)*3   +0] = inputImageData[(j * width + i) * 4 + 0];
+                                   outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + i) * 4 + 1];
+                                   outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + i) * 4 + 2];
 
-                        bmp.SetPixel(i, j, c);
+                            }
+
+
+                        PGMSave.Save(outdata, outn);
+
 
                     }
+                    else
+                    {
+                        string outn = fi.Name.Replace(fi.Extension, ".pgm");
+
+                        if (outn.Length == 7)
+                            outn = "0" + outn;
+                        string outn2 = "M" + outn;
+
+                        float maxv = -1;
+                        ushort[] outputImageData = new ushort[inputImageData.Length / 4];
+                        byte[] outputImageData2 = new byte[width*height*4];
+
+                        bmp = new Bitmap(width, height);
+
+                        ushort val = ushort.MaxValue;
+                        byte val2 = 0;
+
+
+                        for (var i = 0; i < outputImageData.Length; i++)
+                        {
+                            float myFloat = System.BitConverter.ToSingle(inputImageData, i * 4);
+
+                            if (myFloat > ushort.MaxValue)
+                                val = 0;
+                            else
+                            {
+                                val = (ushort)(myFloat);
+                                val2 = 255;
+                            }
+
+                            outputImageData[i] = val;
+
+                            for(int k=0; k< 4;k++)
+                            outputImageData2[i*4+k] = val2;
+                        }
+                        PGMSave.Save(outputImageData, outn);
+                        PGMSave.Save(outputImageData2, outn2);
+                    }
+                }
+                //Color c = Color.FromArgb(0, 0, 0);
+                //for (int i = 0; i < width; i++)
+                //    for (int j = 0; j < height; j++)
+                //    {
+                //        float v = outputImageData[i + j * 640];
+
+                //        if (v < 6)
+                //        {
+                //            int ci = (int)(255.0 * v / 6.0);
+                //            c = Color.FromArgb(ci, ci, ci);
+                //        }
+                //        else
+                //            c = Color.FromArgb(0, 0, 0);
+
+                //        bmp.SetPixel(i, j, c);
+
+                //    }
 
 
             }

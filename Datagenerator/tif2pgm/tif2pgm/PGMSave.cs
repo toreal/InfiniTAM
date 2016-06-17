@@ -9,8 +9,26 @@ namespace tif2pgm
 {
    public  class PGMSave
     {
+        static public void Save(byte[] data, String fn)
+        {
+            FileStream sw = File.Open(fn, FileMode.Create);
 
-        static public void Save(UInt16 [] data,String fn)
+            BinaryWriter bw = new BinaryWriter(sw);
+
+            bw.Write(Encoding.UTF8.GetBytes("P6\n"));
+            bw.Write(Encoding.UTF8.GetBytes("640 480\n"));
+            bw.Write(Encoding.UTF8.GetBytes("255\n"));
+
+            bw.Write(data);
+            
+            bw.Close();
+            sw.Close();
+
+        }
+
+
+
+        static public void Save(ushort [] data,String fn)
         {
             FileStream sw = File.Open(fn,FileMode.Create);
             
@@ -20,7 +38,7 @@ namespace tif2pgm
             bw.Write(Encoding.UTF8.GetBytes("640 480\n"));
             bw.Write(Encoding.UTF8.GetBytes("65535\n"));
 
-            foreach (UInt16 v in data)
+            foreach (ushort v in data)
             {
                 byte[] byteArray = BitConverter.GetBytes(v);
                 

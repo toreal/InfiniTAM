@@ -1,6 +1,6 @@
 ##RenderMan RIB
 version 3.04
-Display "c00036.tif" "tiff" "rgba" 
+Display "c0036.tif" "tiff" "rgba" 
 Translate 0 -10 300
 Rotate -30 1 0 0
 Rotate 360 0 1 0
