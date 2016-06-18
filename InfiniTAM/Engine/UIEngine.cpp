@@ -709,7 +709,8 @@ void UIEngine::ProcessFrame()
 	}
     
 	sdkResetTimer(&timer_instant);
-	sdkStartTimer(&timer_instant); sdkStartTimer(&timer_average);
+	sdkStartTimer(&timer_instant); 
+	sdkStartTimer(&timer_average);
 
 	mainEngine->mfdata = mfdata;
 

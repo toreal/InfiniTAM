@@ -80,12 +80,12 @@ namespace tif2pgm
                         string outn2 = "M" + outn;
 
                         float maxv = -1;
-                        ushort[] outputImageData = new ushort[inputImageData.Length / 4];
-                        byte[] outputImageData2 = new byte[width*height*4];
+                        short[] outputImageData = new short[inputImageData.Length / 4];
+                        byte[] outputImageData2 = new byte[width*height*3];
 
                         bmp = new Bitmap(width, height);
 
-                        ushort val = ushort.MaxValue;
+                        short val = short.MaxValue;
                         byte val2 = 0;
 
 
@@ -93,18 +93,21 @@ namespace tif2pgm
                         {
                             float myFloat = System.BitConverter.ToSingle(inputImageData, i * 4);
 
-                            if (myFloat > ushort.MaxValue)
-                                val = 0;
+                            if (myFloat > short.MaxValue)
+                            {
+                                val = -1;
+                                val2 = 0;
+                            }
                             else
                             {
-                                val = (ushort)(myFloat);
+                                val = (short)(myFloat);
                                 val2 = 255;
                             }
 
                             outputImageData[i] = val;
 
-                            for(int k=0; k< 4;k++)
-                            outputImageData2[i*4+k] = val2;
+                            for(int k=0; k< 3;k++)
+                            outputImageData2[i*3+k] = val2;
                         }
                         PGMSave.Save(outputImageData, outn);
                         PGMSave.Save(outputImageData2, outn2);

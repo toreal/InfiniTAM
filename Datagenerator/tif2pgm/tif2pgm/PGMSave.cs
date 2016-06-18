@@ -28,7 +28,7 @@ namespace tif2pgm
 
 
 
-        static public void Save(ushort [] data,String fn)
+        static public void Save(short [] data,String fn)
         {
             FileStream sw = File.Open(fn,FileMode.Create);
             
@@ -38,10 +38,13 @@ namespace tif2pgm
             bw.Write(Encoding.UTF8.GetBytes("640 480\n"));
             bw.Write(Encoding.UTF8.GetBytes("65535\n"));
 
-            foreach (ushort v in data)
+            foreach (short v in data)
             {
                 byte[] byteArray = BitConverter.GetBytes(v);
-                
+                byte tmp = byteArray[0];
+                byteArray[0] = byteArray[1];
+                byteArray[1] = tmp;
+                    
                 bw.Write(byteArray);
             }
             bw.Close();
