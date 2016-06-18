@@ -118,21 +118,35 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 
 			int np,x,y;
 			FILE *fp = fopen(str, "r");
-			fscanf(fp, "%d", &np);
-			if (np < mfdata->MAXNODE)
+
+			if (fp != NULL)
 			{
-				mfdata->npoint = np;
-				for (int i = 0; i < np; i++)
+				fscanf(fp, "%d", &np);
+				if (np < mfdata->MAXNODE)
 				{
-					fscanf(fp, "%d %d", &x, &y);
-					mfdata->pointlist[i].x = x;
-					mfdata->pointlist[i].y = y;
+					mfdata->npoint = np;
+					for (int i = 0; i < np; i++)
+					{
+						fscanf(fp, "%d %d", &x, &y);
+						mfdata->pointlist[i].x = x;
+						mfdata->pointlist[i].y = y;
+					}
 				}
+				fclose(fp);
 			}
-			fclose(fp);
+			else
+			{
+
+				mfdata->genContour(str);
+			
+			}
+
 		}
 		catch (std::exception em)
 		{
+
+
+
 			printf("error reading file '%s'\n", str);
 		}
 
