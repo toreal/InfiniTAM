@@ -3,6 +3,9 @@
 
 #include "MeshFusion.h"
 #include "../Engine/DeviceAgnostic/ITMPixelUtils.h"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
 
 #include <algorithm>
 #include <vector> 
@@ -48,6 +51,7 @@ using namespace ITMLib::Objects;
 using namespace ITMLib::Engine;
 
 using namespace std;
+using namespace cv;
 
 
 void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
@@ -67,6 +71,47 @@ void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
 
 }
 
+
+void MeshFusion::genContour(char * fn)
+{
+	Mat canny_output;
+	Mat src_gray;
+	int thresh = 100;
+
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+//	 segImage
+
+	int w = segImage->noDims.x;
+	int h = segImage->noDims.y;
+	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
+	cv::Mat seginput(h, w, CV_8UC4, segimg);
+
+	cvtColor(seginput, src_gray, CV_BGR2GRAY);
+
+	/// Detect edges using canny
+	Canny(src_gray, canny_output, thresh, thresh * 2, 3);
+	/// Find contours
+	findContours(canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	vector<Point> contour = contours[0];
+	npoint = contour.size();
+
+	FILE* fp = fopen(fn, "w");
+	fprintf(fp, "%d\n", npoint);
+	
+
+	for (int i = 0; i < contour.size(); i++)
+	{
+		
+	    Point p=	contour[i];
+		pointlist[i].x = p.x;
+		pointlist[i].y = p.y;
+
+		fprintf(fp, "%d %d\n", pointlist[i].x, pointlist[i].y);
+	}
+	fclose(fp);
+}
 
 void MeshFusion::sortpoint(ITMUChar4Image * draw)
 {

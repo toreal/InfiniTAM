@@ -168,6 +168,7 @@ namespace ITMLib
 			void buildProjDepth();
 			void estimatePose(ITMPose * posd);
 			void refinePose(ITMPose * posd);
+			void genContour(char * str);
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
 			void buildMesh( MyTri *);
