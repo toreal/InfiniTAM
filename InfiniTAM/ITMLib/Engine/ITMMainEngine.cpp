@@ -231,11 +231,33 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 				}
 				else
 				{
+					mfdata->Generate3DPoints(mfdata->m_backup, mfdata->newPoints);
+
+					FILE * fw = fopen("result1.txt", "w");
+					for (int i = 0; i < mfdata->objectPoints.size(); i++)
+					{
+						cv::Point3f p = mfdata->objectPoints[i];
+						fprintf(fw, "%f, %f, %f\n", p.x, p.y, p.z);
+
+					}
+					fclose(fw);
+
+
+					 fw = fopen("result2.txt", "w");
+					for (int i = 0; i < mfdata->newPoints.size(); i++)
+					{
+						cv::Point3f p = mfdata->newPoints[i];
+						fprintf(fw, "%f, %f, %f\n", p.x, p.y, p.z);
+
+					}
+					fclose(fw);
+
+
 					mfdata->estimatePose(trackingState->pose_d);
 					mfdata->refinePose(trackingState->pose_d);
 					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
-			mfdata->Generate3DPoints();
+			mfdata->Generate3DPoints(mfdata->m_base_corners,mfdata->objectPoints );
 
 			sdkStopTimer(&timer_instant);
 			 processedTime_inst = sdkGetTimerValue(&timer_instant);

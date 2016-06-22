@@ -16,18 +16,18 @@ typedef accumulator_set<double, features<tag::density> > acc;
 typedef iterator_range<std::vector<std::pair<double, double> >::iterator > histogram_type;
 
 
-void MeshFusion::Generate3DPoints( )
+void MeshFusion::Generate3DPoints(std::vector<cv::Point2f> & imp, std::vector<cv::Point3f> &d3p)
 {
-	objectPoints.clear();
+	d3p.clear();
 	//std::vector<cv::Point3f> ret;
 	Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 	float* dd = proDepth->GetData(MEMORYDEVICE_CPU);
 	int xlens = proDepth->noDims.x;
 	int ylens = proDepth->noDims.y;
 
-	for (int i = 0; i < (int)m_base_corners.size(); i++)
+	for (int i = 0; i < (int)imp.size(); i++)
 	{
-		cv::Point2f p = m_base_corners[i];
+		cv::Point2f p =imp[i];
 		
 		cv::Point3f retp;
 		bool ret = false;// find3DPos(p, retp);
@@ -40,7 +40,7 @@ void MeshFusion::Generate3DPoints( )
 			retp = cv::Point3f(x, y, z);
 
 		}
-		objectPoints.push_back(retp);// cv::Point3f(x, y, z));
+		d3p.push_back(retp);// cv::Point3f(x, y, z));
 	}
 	//return ret;
 }

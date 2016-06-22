@@ -107,11 +107,10 @@ namespace ITMLib
 			//std::vector<cv::Point3i> meshTri;
 
 			// For Tracker
-			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup;
-            std::vector< cv::Point2f > m_latest_paired_corners_base, m_latest_paired_corners_prev, m_latest_paired_corners_curr;  //M record lastest paired corners for visualize only
+		    std::vector< cv::Point2f > m_latest_paired_corners_base, m_latest_paired_corners_prev, m_latest_paired_corners_curr;  //M record lastest paired corners for visualize only
             std::vector<float>  m_latest_paired_corners_err;
             cv::Mat             m_latest_paired_curr_image, m_latest_paired_prev_image, m_latest_paired_base_image;
-			std::vector<cv::Point3f> objectPoints;
+		
             cv::Mat             m_image, m_pre_image, m_base_image;
 #ifdef CV_PYRAMID
             std::vector<cv::Mat> m_prevPyr, m_currPyr;
@@ -129,6 +128,10 @@ namespace ITMLib
 
 		public:
 
+			std::vector< cv::Point2f > m_corners, m_pre_corners, m_base_corners, m_backup;
+
+			std::vector<cv::Point3f> objectPoints;
+			std::vector<cv::Point3f> newPoints;
 			MyTri mytriData;
 			MyTri currTri;
 			bool bmesh = false;
@@ -182,7 +185,7 @@ namespace ITMLib
             
 			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight, bool getImageType, ITMPose *pose, ITMIntrinsics *intrinsics);
 			void writeMesh(char *);
-			void Generate3DPoints();
+			void Generate3DPoints(std::vector<cv::Point2f> &imp, std::vector<cv::Point3f> &d3p );
 
             void DebugVectorIdxAll( void ) { m_nDebugVectorIdx = -1; }
             void DebugVectorIdxInc( void ) {if (m_latest_paired_corners_base.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+1) % m_latest_paired_corners_base.size(); }

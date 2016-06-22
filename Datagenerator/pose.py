@@ -1,8 +1,47 @@
-import numpy as np
-import math
+from numpy import *
+from math import sqrt,pi
 import pylab as pl
-from numpy import cross, eye, dot
-from scipy.linalg import expm3, norm
+import numpy as np
+
+# Input: expects Nx3 matrix of points
+# Returns R,t
+# R = 3x3 rotation matrix
+# t = 3x1 column vector
+
+def rigid_transform_3D(A, B):
+    assert len(A) == len(B)
+
+    N =len(A)# A.shape[0]; # total points
+    print( A.shape,B.shape )
+
+    centroid_A = mean(A, axis=0)
+    centroid_B = mean(B, axis=0)
+    
+    # centre the points
+    AA = A - tile(centroid_A, (N, 1))
+    BB = B - tile(centroid_B, (N, 1))
+
+    # dot is matrix multiplication for array
+    H = transpose(AA) * BB
+
+    U, S, Vt = linalg.svd(H)
+
+    R = Vt.T * U.T
+
+    # special reflection case
+    if linalg.det(R) < 0:
+       print ("Reflection detected")
+       Vt[2,:] *= -1
+       R = Vt.T * U.T
+
+    t = -R*centroid_A.T + centroid_B.T
+
+    print (t)
+
+    return R, t
+
+# Test with random data
+
 
 def rotationToVtk(R):
     '''
@@ -56,76 +95,79 @@ def rotationToVtk(R):
         if frame:
             ax, az = az, ax
         return ax, ay, az
-    r_yxz = pl.array(euler_from_matrix(R))*180/math.pi
+    r_yxz = pl.array(euler_from_matrix(R))*180/pi
     r_xyz = r_yxz[[1, 0, 2]]
     return r_xyz
 
 
 
 
-def M(axis, theta):
-    return expm3(cross(eye(3), axis/norm(axis)*theta))
 
-yaxis, theta =  [0,1,0], math.pi*0/180
-M0 = M(yaxis, theta)
+# Random rotation and translation
+R = mat(random.rand(3,3))
+t = mat(random.rand(3,1))
 
-a1 =   math.pi*10/180
-M1 = M(yaxis, a1)
+# make R a proper rotation matrix, force orthonormal
+U, S, Vt = linalg.svd(R)
+R = U*Vt
 
-a2 =   math.pi*20/180
-M2 = M(yaxis, a2)
+# remove reflection
+if linalg.det(R) < 0:
+   Vt[2,:] *= -1
+   R = U*Vt
 
+# number of points
+n = 10
 
-xaxis,a=[1,0,0], math.pi*-30/180
-Mx = M(xaxis, a)
-
-R0=np.mat(Mx)*np.mat(M0)
-
-R1=np.mat(Mx)*np.mat(M1)
-
-R2=np.mat(Mx)*np.mat(M2)
-
-
-t=[0,0,300] #C
-
-R0inv = np.asarray(R0).T.tolist() #R'
-t0inv = -dot(R0inv,t) #-RC
-print('t0:', t0inv)
-
-R1inv = np.asarray(R1).T.tolist()
-t1inv = -dot(R1inv,t) #-RC
-print('t1:', t1inv)
+A = mat(random.rand(n,3));
+B = R*A.T + tile(t, (1, n))
+B = B.T;
 
 
-R2inv = np.asarray(R2).T.tolist()
-t2inv = -dot(R2inv,t) #-RC
-print('t2', t2inv)
+
+f = open ( 'result1.txt' , 'r')
+A1 = mat([list( map(float,line.split(','))) for line in f ])
+print (A1)
+
+n=len(A1)
+
+f = open ( 'result2.txt' , 'r')
+B1 = mat([list( map(float,line.split(','))) for line in f ])
+print (B1)
 
 
-print (t1inv - t0inv)
-print( t2inv - t1inv )
+# recover the transformation
+ret_R, ret_t = rigid_transform_3D(A1, B1)
 
+print(ret_R, ret_t)
 
-print('------------')
+A2 = (ret_R*A1.T) + tile(ret_t, (1, n))
+A2 = A2.T
 
-print(rotationToVtk(R0inv))
-print(rotationToVtk(R1inv))
-print(rotationToVtk(R2inv))
+# Find the error
+err = A2 - B1
 
+err = multiply(err, err)
+err = sum(err)
+rmse = sqrt(err/n);
 
-v0=[1,0,0]
-v1 = dot(M0,v0)
-v2=dot(M1,v1)
-v3 = dot(R1,v0)
+print ("Points A")
+print (A1)
+print ("")
 
+print ("Points B")
+print (B1)
+print ("")
 
-MM=[[0.9947,-00.911,0.04],[0.0911,0.9958,0.00288],[ -0.046,0.00138,0.9989]]
-print('***************')
-print(MM)
-print(rotationToVtk(MM))
-print(M0)
-print(M1)
-print(v1)
-print(v2)
+print ("Rotation")
+print (ret_R)
+print ("")
 
-print(v3)
+print ("Translation")
+print (ret_t)
+print ("")
+
+print ("RMSE:", rmse)
+print ("If RMSE is near zero, the function is correct!")
+
+print(rotationToVtk(ret_R))
