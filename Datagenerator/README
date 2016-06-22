@@ -1,0 +1,24 @@
+
+
+prman dino.rib
+
+This is a simple example of a more complex scene that includes
+some elements used in an actual production setting.
+
+The model is a hierarchical subdivision surface that uses 
+a Mari texture atlas to add displacement, color and roughness.
+
+Note that the output of the PxrTextureAtlas pattern is used to
+feed into the diffuseColor and the roughness of the Disney BXDF.
+
+Interestingly, the roughness texture is color texure, and the
+roughness parameter for the BXDF wants a float. This is where
+we use the "alphaindex" parameter to specify that we want to
+lookup channel 0 as the "alpha". In this case we are using the
+name "alpha" to represent a single float result.  We then pass 
+that "alpha" (single float) result to the BXDF.
+
+For faster results, reduce the maxsamples parameter on the Hider
+parameter list. For less noisy results increase the maxsamples
+parameter. Ideally with adaptive sampling, the minsamples
+parameter is the square root of the maxsamples parameter.

@@ -36,7 +36,7 @@ namespace tif2pgm
                     var offset = 0;
                     int nstrip = inputImage.NumberOfStrips();
                     int ns = inputImage.StripSize();
-                    int bytePerPixel = 4;
+                    int bytePerPixel = 4;// 16;
 
                     inputImageData = new byte[width * height * bytePerPixel];
                     
@@ -57,12 +57,19 @@ namespace tif2pgm
                             outn = "0" + outn;
                         byte[] outdata = new byte[width*height*3];
 
-                        for ( int j = 0; j < height;j++)
+                        for (int j = 0; j < height; j++)
                         for(int i = 0; i < width; i++)
                             {
-                                   outdata[(j * width + i)*3   +0] = inputImageData[(j * width + i) * 4 + 0];
-                                   outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + i) * 4 + 1];
-                                   outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + i) * 4 + 2];
+                                outdata[(j * width + i) * 3 + 0] = inputImageData[(j * width + i) * bytePerPixel + 0];
+                                outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + i) * bytePerPixel + 1];
+                                outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + i) * bytePerPixel + 2];
+
+                                //    int i1= inputImageData[(j * width + i) * bytePerPixel + 4];
+                                //    int i2= inputImageData[(j * width + i) * bytePerPixel + 8];
+                                //int i3= inputImageData[(j * width + i) * bytePerPixel + 12];
+                                //outdata[(j * width + i) * 3 + 0] = (byte)i1;
+                                //outdata[(j * width + i) * 3 + 1] = (byte)i2;
+                                //outdata[(j * width + i) * 3 + 2] = (byte)i3;
 
                             }
 
@@ -88,10 +95,11 @@ namespace tif2pgm
                         short val = short.MaxValue;
                         byte val2 = 0;
 
+                        int bitof = offset / (width * height);
 
                         for (var i = 0; i < outputImageData.Length; i++)
                         {
-                            float myFloat = System.BitConverter.ToSingle(inputImageData, i * 4);
+                            float myFloat = System.BitConverter.ToSingle(inputImageData, i * bitof);
 
                             if (myFloat > short.MaxValue)
                             {

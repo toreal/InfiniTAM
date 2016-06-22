@@ -107,7 +107,7 @@ namespace ITMLib
 			//std::vector<cv::Point3i> meshTri;
 
 			// For Tracker
-			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup,m_backup2;
+			std::vector< cv::Point2f > m_corners, m_pre_corners,m_base_corners,m_backup;
             std::vector< cv::Point2f > m_latest_paired_corners_base, m_latest_paired_corners_prev, m_latest_paired_corners_curr;  //M record lastest paired corners for visualize only
             std::vector<float>  m_latest_paired_corners_err;
             cv::Mat             m_latest_paired_curr_image, m_latest_paired_prev_image, m_latest_paired_base_image;
