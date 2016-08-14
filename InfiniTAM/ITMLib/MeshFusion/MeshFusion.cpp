@@ -56,6 +56,7 @@ using namespace cv;
 
 void addvextex(std::vector<Point2> &vInputPoints, Point2 p)
 {
+	int x = p.x();
 	for (int i = 0; i < vInputPoints.size(); i++)
 	{
 		Point2 ap = vInputPoints[i];
@@ -197,7 +198,7 @@ void MeshFusion::buildProjDepth()
 	for (int nx = 0; nx < xlens; nx++)
 		for (int ny = 0; ny < ylens; ny++)
 		{
-			float pz = dd[nx + ny*xlens]*1000;
+			float pz = dd[nx + ny*xlens] *1000;
 
 			if (pz > 0)
 			{
@@ -213,6 +214,8 @@ void MeshFusion::buildProjDepth()
 
 				int ix = prgb.x * intrinRGB.x / prgb.z + intrinRGB.z;
 				int iy = prgb.y * intrinRGB.y / prgb.z + intrinRGB.w;
+
+				
 				if ( ix >=0 && ix < xlens && iy >=0 && iy < ylens)
 				{  
 
@@ -251,7 +254,7 @@ void MeshFusion::buildProjDepth()
 
 	//delete vb;
 
-
+	
 
 }
 	 
@@ -684,6 +687,12 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 	}
 	tridata->totalFace = nface;
 	fout.close();
+
+	//Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+	
+	tridata->project(NULL, intrinparam);
+	edgeRefine(tridata);
+
 
 //	mesh->noTotalTriangles = ti;
 //	bmesh = true;

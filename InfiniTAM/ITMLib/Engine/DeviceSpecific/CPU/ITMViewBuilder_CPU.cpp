@@ -193,6 +193,7 @@ void ITMLib::Engine::ITMViewBuilder_CPU::ComputeNormalAndWeights(ITMFloat4Image 
 	float *sigmaZData_out = sigmaZ_out->GetData(MEMORYDEVICE_CPU);
 	Vector4f *normalData_out = normal_out->GetData(MEMORYDEVICE_CPU);
 
-	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
+	for (int y = 2; y < imgDims.y - 2; y++)
+		for (int x = 2; x < imgDims.x - 2; x++)
 		computeNormalAndWeight(depthData_in, normalData_out, sigmaZData_out, x, y, imgDims, intrinsic);
 }

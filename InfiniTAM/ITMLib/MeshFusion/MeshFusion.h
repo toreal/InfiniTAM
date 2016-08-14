@@ -124,7 +124,7 @@ namespace ITMLib
             static int          m_nDebugVectorIdx;
 				
 			float estivalue(const float * data, Vector2i ,Vector2i);
-			
+			void edgeRefine(MyTri * tridata);
 
 		public:
 

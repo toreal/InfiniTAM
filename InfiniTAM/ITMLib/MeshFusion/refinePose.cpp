@@ -104,7 +104,7 @@ void  MeshFusion::refinePose(ITMPose * pose)
 	Vector4f intrinRGB = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 
 	Matrix4f m = pose->GetM();
-	Matrix4f invm = pose->GetInvM();
+//	Matrix4f invm = pose->GetInvM();
 
 	//meshVertex.clear();
 

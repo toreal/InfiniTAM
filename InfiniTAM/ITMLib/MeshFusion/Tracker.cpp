@@ -73,6 +73,7 @@ void MeshFusion::MeshFusion_InitTracking( void )
 int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 {
 	ITMUChar4Image * draw = mainView->rgb;
+	
 
 	maxdis = 0;
 
@@ -80,12 +81,71 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 	int h = draw->noDims.y;
 	Vector4u* img=draw->GetData(MEMORYDEVICE_CPU);
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
+	float * depbuf = mainView->depth->GetData(MEMORYDEVICE_CPU);
+	Vector4f* normalbuf= mainView->depthNormal->GetData(MEMORYDEVICE_CPU);
+	float * curbuf = mainView->curvature->GetData(MEMORYDEVICE_CPU);
+
+	cv::Mat mtdep(h, w, CV_32F, depbuf);
+	double  fmin, fmax;
+	cv::minMaxLoc(mtdep, &fmin, &fmax);
+
+	BYTE * bbuf = new BYTE[h*w]; //prepare for depth;
+	BYTE * nbuf = new BYTE[h*w]; //prepare for nomral;
+	BYTE * cbuf = new BYTE[h*w];//prepare fo curvature;
+	BYTE * btmp=bbuf;
+	BYTE * ctmp = nbuf;
+	BYTE * atmp = cbuf;
+	float * dtmp = depbuf;
+	Vector4f *ntmp = normalbuf;
+	float * etmp = curbuf;
+
+	for (int i = 0; i < h*w; i++)
+	{
+		if (*dtmp > 0)
+			*btmp = 255 * (1-(fmax - *dtmp) / fmax);
+		else
+			*btmp = 0;
+
+		btmp++;
+		dtmp++;
+		//if (i < (234 * 640 + 234))
+		{
+			*ctmp = (0.333*(ntmp->x+1) + 0.333* (ntmp->y+1) + 0.333*(ntmp->z+1)) * 127;
+		}
+		
+
+		ctmp++;
+		ntmp++;
+		
+
+		*atmp =( *etmp) * 255;
+		etmp++;
+		atmp++;
+
+	}
+
+	cv::Mat mdep(h, w, CV_8U, bbuf);
+	cv::Mat mnor(h, w, CV_8U, nbuf);
+	cv::Mat mcur(h, w, CV_8U, cbuf);
+
+	blur(mnor, mnor, Size(3, 3));
+	Canny(mnor, mnor, 50, 150, 3);
+	
+
+	imwrite("depth.bmp", mdep);
+	imwrite("normal.bmp", mnor);
+	imwrite("curvature.bmp", mcur);
+
+
+
     cv::Mat input(h,w,CV_8UC4,img);
 	cv::Mat seginput(h, w, CV_8UC4, segimg);
 
-    //cv::namedWindow( "input", CV_WINDOW_NORMAL );
-    //cv::imshow( "input", input );
+    cv::namedWindow( "input", CV_WINDOW_NORMAL );
+    cv::imshow( "input", mdep );
     
+	cv::waitKey(1);
+
     if (!m_bfirst && !m_image.empty())
         m_pre_image = m_image.clone();
 	

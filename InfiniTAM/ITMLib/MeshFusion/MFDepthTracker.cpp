@@ -204,7 +204,7 @@ void MFDepthTracker::MyTrackCamera(ITMPose *pose_m, const ITMView *view , MyTri 
 			localp.Coerce();
 			pose_d.MultiplyWith(&localp);
 			pose_d.Coerce();
-			approxPose = pose_d.GetInvM();
+			approxPose = pose_d.GetM();
 
 			// if step is small, assume it's going to decrease the error and finish
 			if (HasConverged(step)) break;

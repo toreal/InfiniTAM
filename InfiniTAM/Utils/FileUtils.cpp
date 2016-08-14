@@ -346,11 +346,26 @@ void SaveImageToFile(const ITMShortImage* image, const char* fileName)
 void SaveImageToFile(const ITMFloatImage* image, const char* fileName)
 {
 	unsigned short *data = new unsigned short[image->dataSize];
+	
+	
 	for (size_t i = 0; i < image->dataSize; i++)
 	{
 		float localData = image->GetData(MEMORYDEVICE_CPU)[i];
-		data[i] = localData >= 0 ? (unsigned short)(localData * 1000.0f) : 0;
+		if (localData > 0)
+		{
+			data[i] = (unsigned short)(localData); //* 1000.0f); for proDepth already x1000
+		}
+		else
+			data[i] = 0;
+		//data[i] = localData >= 0 ? : 0;
 	}
+
+	FILE * fo = fopen("depth.txt", "w");
+	for (size_t i = 0; i < image->dataSize; i++)
+		if (data[i] > 0)
+				fprintf(fo, "%d \n", data[i]);
+
+	fclose(fo);
 
 	FILE *f = fopen(fileName, "wb");
 	if (!pnm_writeheader(f, image->noDims.x, image->noDims.y, MONO_16u)) {

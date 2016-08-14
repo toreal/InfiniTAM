@@ -164,7 +164,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	//SaveImageToFile(view->curvature, "curvature.ppm");
 
 	mfdata->buildProjDepth();
-
+//	SaveImageToFile(mfdata->proDepth, "prodepth.ppm");
 
 	if (bsence)
 	{
@@ -232,7 +232,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 				else
 				{
 					mfdata->Generate3DPoints(mfdata->m_backup, mfdata->newPoints);
-
+#ifdef OUTPUT
 					FILE * fw = fopen("result1.txt", "w");
 					for (int i = 0; i < mfdata->objectPoints.size(); i++)
 					{
@@ -252,7 +252,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 					}
 					fclose(fw);
 
-
+#endif
 					mfdata->estimatePose(trackingState->pose_d);
 					mfdata->refinePose(trackingState->pose_d);
 					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
