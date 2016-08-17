@@ -169,6 +169,9 @@ namespace ITMLib
 			void sortpoint(ITMUChar4Image * draw);
 			void constructMesh(ITMMesh *, MyTri * tridata);
 			void buildProjDepth();
+			void NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise);
+
+			
 			void estimatePose(ITMPose * posd);
 			void refinePose(ITMPose * posd);
 			void genContour(char * str);

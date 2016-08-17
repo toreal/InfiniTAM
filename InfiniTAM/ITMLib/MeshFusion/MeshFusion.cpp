@@ -174,6 +174,148 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 
 }
 
+
+void EstCurvature(ITMFloat4Image * depth_in, ITMFloatImage * curvature)
+{
+	Vector2i imgDims = depth_in->noDims;
+
+	const Vector4f *depthData_in = depth_in->GetData(MEMORYDEVICE_CPU);
+
+	float *curvature_out = curvature->GetData(MEMORYDEVICE_CPU);
+
+	float maxv = -1;
+	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
+	{
+		int idx = x + y * imgDims.x;
+		Vector4f p1 = depthData_in[x + 1 + y * imgDims.x];
+		Vector4f p2 = depthData_in[x - 1 + y * imgDims.x];
+		Vector4f p3 = depthData_in[x + (y + 1) * imgDims.x];
+		Vector4f p4 = depthData_in[x + (y - 1) * imgDims.x];
+
+		if (p1.w < 0 || p2.w < 0 || p3.w < 0 || p4.w < 0)
+		{
+			curvature_out[idx] = 0;
+			continue;
+		}
+		float  thetax = acos(dot(p1, p2) - 1);
+		float  thetay = acos(dot(p3, p4) - 1);
+
+		curvature_out[idx] = abs(thetax) + abs(thetay);
+
+		if (curvature_out[idx] > maxv)
+		{
+			maxv = curvature_out[idx];
+		}
+
+	}
+	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
+	{
+		int idx = x + y * imgDims.x;
+		if ((curvature_out[idx] / maxv) > 0.5)
+		{
+			curvature_out[idx] = ((curvature_out[idx] / maxv) + 1) / 2;
+		}
+		else
+			curvature_out[idx] = curvature_out[idx] / (2 * maxv);
+
+	}
+
+
+
+}
+
+
+_CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *depth_in, DEVICEPTR(Vector4f) *normal_out, DEVICEPTR(float) *sigmaZ_out, int x, int y, Vector2i imgDims, Vector4f intrinparam)
+{
+	Vector3f outNormal;
+
+	int idx = x + y * imgDims.x;
+
+	float z = depth_in[x + y * imgDims.x];
+	if (z < 0.0f)
+	{
+		normal_out[idx].w = -1.0f;
+		sigmaZ_out[idx] = -1;
+		return;
+	}
+
+	// first compute the normal
+	Vector3f xp1_y, xm1_y, x_yp1, x_ym1;
+	Vector3f diff_x(0.0f, 0.0f, 0.0f), diff_y(0.0f, 0.0f, 0.0f);
+
+	xp1_y.z = depth_in[(x + 1) + y * imgDims.x], x_yp1.z = depth_in[x + (y + 1) * imgDims.x];
+	xm1_y.z = depth_in[(x - 1) + y * imgDims.x], x_ym1.z = depth_in[x + (y - 1) * imgDims.x];
+
+	if (xp1_y.z <= 0 || x_yp1.z <= 0 || xm1_y.z <= 0 || x_ym1.z <= 0)
+	{
+		normal_out[idx].w = -1.0f;
+		sigmaZ_out[idx] = -1;
+		return;
+	}
+
+	// unprojected
+	xp1_y.x = xp1_y.z * ((x + 1.0f) - intrinparam.z) / intrinparam.x; xp1_y.y = xp1_y.z * (y - intrinparam.w) / intrinparam.y;
+	xm1_y.x = xm1_y.z * ((x - 1.0f) - intrinparam.z) / intrinparam.x; xm1_y.y = xm1_y.z * (y - intrinparam.w) / intrinparam.y;
+	x_yp1.x = x_yp1.z * (x - intrinparam.z) / intrinparam.x; x_yp1.y = x_yp1.z * ((y + 1.0f) - intrinparam.w) / intrinparam.y;
+	x_ym1.x = x_ym1.z * (x - intrinparam.z) / intrinparam.x; x_ym1.y = x_ym1.z * ((y - 1.0f) - intrinparam.w) / intrinparam.y;
+
+	// gradients x and y
+	diff_x = xp1_y - xm1_y, diff_y = x_yp1 - x_ym1;
+
+	// cross product
+	outNormal.x = (diff_x.y * diff_y.z - diff_x.z*diff_y.y);
+	outNormal.y = (diff_x.z * diff_y.x - diff_x.x*diff_y.z);
+	outNormal.z = (diff_x.x * diff_y.y - diff_x.y*diff_y.x);
+
+	if (outNormal.x == 0.0f && outNormal.y == 0 && outNormal.z == 0)
+	{
+		normal_out[idx].w = -1.0f;
+		sigmaZ_out[idx] = -1;
+		return;
+	}
+
+	float norm = 1.0f / sqrt(outNormal.x * outNormal.x + outNormal.y * outNormal.y + outNormal.z * outNormal.z);
+	outNormal *= norm;
+
+	normal_out[idx].x = outNormal.x; normal_out[idx].y = outNormal.y; normal_out[idx].z = outNormal.z; normal_out[idx].w = 1.0f;
+
+	// now compute weight
+	float theta = acos(outNormal.z);
+	float theta_diff = theta / (PI*0.5f - theta);
+
+	sigmaZ_out[idx] = (0.0012f + 0.0019f * (z - 0.4f) * (z - 0.4f) + 0.0001f / sqrt(z) * theta_diff * theta_diff);
+}
+
+
+void ComputeNormalAndWeights(ITMFloat4Image *normal_out, ITMFloatImage *sigmaZ_out, const ITMFloatImage *depth_in, Vector4f intrinsic)
+{
+	Vector2i imgDims = depth_in->noDims;
+
+	const float *depthData_in = depth_in->GetData(MEMORYDEVICE_CPU);
+
+	float *sigmaZData_out = sigmaZ_out->GetData(MEMORYDEVICE_CPU);
+	Vector4f *normalData_out = normal_out->GetData(MEMORYDEVICE_CPU);
+
+	for (int y = 2; y < imgDims.y - 2; y++)
+		for (int x = 2; x < imgDims.x - 2; x++)
+			computeNormalAndWeight(depthData_in, normalData_out, sigmaZData_out, x, y, imgDims, intrinsic);
+}
+
+
+
+void MeshFusion::NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise)
+{
+	ITMView *view = *view_ptr;
+
+	if (modelSensorNoise)
+	{
+		ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, proDepth, view->calib->intrinsics_rgb.projectionParamsSimple.all);
+		EstCurvature(view->depthNormal, view->curvature);
+	}
+
+}
+
+
 void MeshFusion::buildProjDepth()
 {
 	//ITMFloatImage * floatImage= new ITMFloatImage(mainView->depth->noDims, true, false);

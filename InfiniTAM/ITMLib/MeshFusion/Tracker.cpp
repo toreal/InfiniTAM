@@ -81,7 +81,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 	int h = draw->noDims.y;
 	Vector4u* img=draw->GetData(MEMORYDEVICE_CPU);
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
-	float * depbuf = mainView->depth->GetData(MEMORYDEVICE_CPU);
+	float * depbuf = proDepth->GetData(MEMORYDEVICE_CPU);
 	Vector4f* normalbuf= mainView->depthNormal->GetData(MEMORYDEVICE_CPU);
 	float * curbuf = mainView->curvature->GetData(MEMORYDEVICE_CPU);
 
@@ -128,8 +128,8 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 	cv::Mat mnor(h, w, CV_8U, nbuf);
 	cv::Mat mcur(h, w, CV_8U, cbuf);
 
-	blur(mnor, mnor, Size(3, 3));
-	Canny(mnor, mnor, 50, 150, 3);
+//	blur(mnor, mnor, Size(3, 3));
+//	Canny(mnor, mnor, 50, 150, 3);
 	
 
 	imwrite("depth.bmp", mdep);
