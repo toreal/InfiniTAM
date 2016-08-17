@@ -327,6 +327,7 @@ void MeshFusion::buildProjDepth()
 	Vector4f intrinRGB= mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 
 	Matrix4f d2rgb = mainView->calib->trafo_rgb_to_depth.calib_inv;
+	Matrix4f rgb2d = mainView->calib->trafo_rgb_to_depth.calib;
 
 	float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
@@ -378,6 +379,88 @@ void MeshFusion::buildProjDepth()
 
 				}
 			}
+		}
+
+//to check if a pixel is a null or not?
+
+	for (int nx = 0; nx < xlens; nx++)
+		for (int ny = 0; ny < ylens; ny++)
+		{
+			float pz = dp[nx + ny*xlens] ;
+
+			Vector4u mask = segimg[nx + ny*xlens];
+
+			if ((mask.x > 0 || mask.y > 0) && pz == 0)
+			{ 
+				float minf = 10000, maxf = 0;
+
+				for (int dx = -1; dx <= 1; dx++)
+					for (int dy = -1; dy <= 1; dy++)
+				{
+					float pdz = dp[nx+dx + (ny+dy)*xlens];
+					if (pdz > 0)
+					{
+						if (pdz < minf)
+							minf = pdz;
+						if (pdz > maxf)
+							maxf = pdz;
+
+					}
+				}
+
+				if (minf == maxf)
+				{
+					dp[nx + ny*xlens] = minf;
+
+				}
+				else if (maxf > minf)
+				{
+					Vector4f pp;
+					float maxdiff = 10000;
+					float fz;
+					float delta = maxf - minf;
+
+					for (float inc = 0; inc <= 1; inc = inc + 0.5f)
+					{
+						float estz = minf + inc* delta;
+						pp.x = estz * (nx - intrinRGB.z) / intrinRGB.x;
+						pp.y = estz * (ny - intrinRGB.w) / intrinRGB.y;
+						pp.z = estz;
+						pp.w = 1;
+
+						Vector4f prgb = rgb2d*pp;
+						prgb.homogeneousCoordinatesNormalize();
+
+						int ix = prgb.x * intrinD.x / prgb.z + intrinD.z;
+						int iy = prgb.y * intrinD.y / prgb.z + intrinD.w;
+
+						float npz = dd[ix + iy*xlens]*1000;
+
+						float diff = npz - estz;
+
+						if (fabs(diff) < maxdiff && npz > 0 )
+						{
+							maxdiff = fabs(diff);
+							fz = npz;
+						}
+
+					}//end of for
+					if (maxdiff < 10000)
+					{
+						dp[nx + ny*xlens] = fz;
+
+
+					}
+					else
+						dp[nx + ny*xlens] = (maxf + minf) / 2;
+
+
+				}
+
+			}
+
+
+
 		}
 
 	//bool useBilateralFilter = true;
