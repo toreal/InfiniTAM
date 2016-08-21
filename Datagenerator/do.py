@@ -7,7 +7,12 @@ def gen( val,fn,channel ):
     ri.Display(fn, "tiff", channel)
     if channel == 'rgba':
         ri.Quantize ('rgba',  255,0,255,0.5 )
-    ri.Translate(0,0,300)
+        ri.Translate(0,0,300)		
+    else:
+#        ri.Translate(0,0,300)	
+#        ri.Rotate(-0.003870486249233254,  0.51323804,  0.30595541,  0.80185909)		
+        ri.Translate(-25.7004433,-1.33896589,310)
+    
     ri.Rotate(-30,1,0,0)
     ri.Rotate(val,0,1,0)
     ri.End()
