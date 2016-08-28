@@ -3,10 +3,10 @@ import cv2
 import numpy as np
 
 
-print('w/d:',640/480)
+print('w/d:',640.0/480.0)
 
-focallen=614
-width=308
+focallen=614.0
+width=308.0
 Rad2Deg = 180 / 3.14159
 fov = math.atan(width / focallen ) * 2.0 * Rad2Deg
 print('rgb camera')

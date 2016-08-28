@@ -51,8 +51,8 @@ bool CLIEngine::ProcessFrame()
 	sdkStartTimer(&timer_instant); sdkStartTimer(&timer_average);
 
 	//actual processing on the mailEngine
-	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, inputIMUMeasurement);
-	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage);
+	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage,currentFrameNo, inputIMUMeasurement);
+	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage,currentFrameNo);
 
 #ifndef COMPILE_WITHOUT_CUDA
 	ITMSafeCall(cudaThreadSynchronize());

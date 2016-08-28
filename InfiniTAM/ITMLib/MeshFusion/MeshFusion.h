@@ -181,7 +181,7 @@ namespace ITMLib
             ////////////////////////////
             //  Image feature tracking
             void MeshFusion_InitTracking( void );
-			int MeshFusion_Tracking(float & maxdis );
+			int MeshFusion_Tracking(float & maxdis ,int );
             //ui codes. opengl code inside for drawing motion vectors. Typically, call this func in glutDisplayFunction
 			void MeshFusion_DrawVector(float fstartx, float fstarty, float fwidth, float fheight);
             void MeshFusion_DebugTracking( void );

@@ -140,7 +140,7 @@ void ITMMainEngine::SaveSceneToMesh(const char *objFileName)
 	}
 }
 
-void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ITMIMUMeasurement *imuMeasurement)
+void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage,int currentFrameNo, ITMIMUMeasurement *imuMeasurement)
 {
 	StopWatchInterface *timer_instant;
 	sdkCreateTimer(&timer_instant);
@@ -187,7 +187,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	//M
 	assert(view->rgb != NULL);
 	if (view->rgb)
-		mfdata->MeshFusion_Tracking(mindis);
+		mfdata->MeshFusion_Tracking(mindis, currentFrameNo);
 
 	sdkStopTimer(&timer_instant);
 	 processedTime_inst = sdkGetTimerValue(&timer_instant);
@@ -221,7 +221,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			{
 				mfdata->MeshFusion_InitTracking();
 				if (view->rgb)
-					mfdata->MeshFusion_Tracking(mindis);
+					mfdata->MeshFusion_Tracking(mindis, currentFrameNo);
 
 			}
 			    mfdata->sortpoint(view->rgb);

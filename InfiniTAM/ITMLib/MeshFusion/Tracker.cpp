@@ -70,7 +70,7 @@ void MeshFusion::MeshFusion_InitTracking( void )
     m_base_corners.clear();
 }
 
-int MeshFusion::MeshFusion_Tracking( float & maxdis)//
+int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 {
 	ITMUChar4Image * draw = mainView->rgb;
 	
@@ -131,10 +131,18 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis)//
 //	blur(mnor, mnor, Size(3, 3));
 //	Canny(mnor, mnor, 50, 150, 3);
 	
+	char fn[1024];
+	memset(fn, 0x00, 1024);
+	sprintf(fn, "dump\\depth%d.bmp", currentFrameNo);
+	imwrite(fn, mdep);
+	memset(fn, 0x00, 1024);
+	sprintf(fn, "dump\\normal%d.bmp", currentFrameNo);
 
-	imwrite("depth.bmp", mdep);
-	imwrite("normal.bmp", mnor);
-	imwrite("curvature.bmp", mcur);
+	imwrite(fn, mnor);
+	memset(fn, 0x00, 1024);
+	sprintf(fn, "dump\\curvature%d.bmp", currentFrameNo);
+
+	imwrite(fn, mcur);
 
 
 

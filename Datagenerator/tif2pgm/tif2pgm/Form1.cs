@@ -60,9 +60,9 @@ namespace tif2pgm
                         for (int j = 0; j < height; j++)
                         for(int i = 0; i < width; i++)
                             {
-                                outdata[(j * width + i) * 3 + 0] = inputImageData[(j * width + i) * bytePerPixel + 0];
-                                outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + i) * bytePerPixel + 1];
-                                outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + i) * bytePerPixel + 2];
+                                outdata[(j * width + i) * 3 + 0] = inputImageData[(j * width + width-1-i) * bytePerPixel + 0];
+                                outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + width - 1-i) * bytePerPixel + 1];
+                                outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + width - 1- i) * bytePerPixel + 2];
 
                                 //    int i1= inputImageData[(j * width + i) * bytePerPixel + 4];
                                 //    int i2= inputImageData[(j * width + i) * bytePerPixel + 8];
@@ -84,13 +84,19 @@ namespace tif2pgm
 
                         if (outn.Length == 7)
                             outn = "0" + outn;
-                        string outn2 = "M" + outn;
+                        string outn2 = "M" + outn; //for mask (realsense 是由color image 來,但我們只能從depth 來,到時實作上會有點問題)
+
 
                         float maxv = -1;
                         short[] outputImageData = new short[inputImageData.Length / 4];
                         byte[] outputImageData2 = new byte[width*height*3];
 
-                        bmp = new Bitmap(width, height);
+                        short[] SoutputImageData = new short[inputImageData.Length / 4];
+                        byte[] SoutputImageData2 = new byte[width * height * 3];
+
+
+
+                        //bmp = new Bitmap(width, height);
 
                         short val = short.MaxValue;
                         byte val2 = 0;
@@ -117,8 +123,25 @@ namespace tif2pgm
                             for(int k=0; k< 3;k++)
                             outputImageData2[i*3+k] = val2;
                         }
-                        PGMSave.Save(outputImageData, outn);
-                        PGMSave.Save(outputImageData2, outn2);
+
+                        for (int i = 0; i < width; i++)
+                            for (int j = 0; j < height; j++)
+                            {
+                                short v = outputImageData[width -1 -i + j * 640];
+                                SoutputImageData[i + j * 640] = v;
+
+                                 val2 = outputImageData2[(width-1-i + j * 640)*3];
+                                for (int k = 0; k < 3; k++)
+                                    SoutputImageData2[(i + j * 640) * 3 + k] = val2;
+
+
+                            }
+
+
+
+
+                        PGMSave.Save(SoutputImageData, outn);
+                        PGMSave.Save(SoutputImageData2, outn2);
                     }
                 }
                 //Color c = Color.FromArgb(0, 0, 0);
