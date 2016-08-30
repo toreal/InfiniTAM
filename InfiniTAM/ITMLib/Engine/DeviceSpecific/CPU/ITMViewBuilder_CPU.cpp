@@ -32,6 +32,7 @@ void ITMViewBuilder_CPU::UpdateView(ITMView **view_ptr, ITMUChar4Image *rgbImage
 	}
 	ITMView *view = *view_ptr;
 
+
 	view->rgb->SetFrom(rgbImage, MemoryBlock<Vector4u>::CPU_TO_CPU);
 	this->shortImage->SetFrom(rawDepthImage, MemoryBlock<short>::CPU_TO_CPU);
 
@@ -112,6 +113,7 @@ void ITMViewBuilder_CPU::ConvertDepthAffineToFloat(ITMFloatImage *depth_out, con
 	const short *d_in = depth_in->GetData(MEMORYDEVICE_CPU);
 	float *d_out = depth_out->GetData(MEMORYDEVICE_CPU);
 
+	memset(d_out, 0x00, sizeof(float)* depth_out->noDims.x*depth_out->noDims.y);
 	for (int y = 0; y < imgSize.y; y++) for (int x = 0; x < imgSize.x; x++)
 		convertDepthAffineToFloat(d_out, x, y, d_in, imgSize, depthCalibParams);
 }

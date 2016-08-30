@@ -1,7 +1,8 @@
 ##RenderMan RIB
 version 3.04
-Display "007.tif" "tiff" "z" 
-Translate 25.7004 1.33897 3.75516
+Display "c0036.tif" "tiff" "rgba" 
+Projection "perspective" "uniform float fov" [53.28]
+Quantize "rgba" 255 0 255 0.5
 Translate 0 0 300
 Rotate -30 1 0 0
-Rotate 115 0 1 0
+Rotate 405 0 1 0

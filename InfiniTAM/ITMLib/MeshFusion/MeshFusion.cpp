@@ -227,11 +227,11 @@ void EstCurvature(ITMFloat4Image * depth_in, ITMFloatImage * curvature)
 
 _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *depth_in, DEVICEPTR(Vector4f) *normal_out, DEVICEPTR(float) *sigmaZ_out, int x, int y, Vector2i imgDims, Vector4f intrinparam)
 {
-	Vector3f outNormal;
+	Vector3d outNormal;
 
 	int idx = x + y * imgDims.x;
 
-	float z = depth_in[x + y * imgDims.x];
+	double z = depth_in[x + y * imgDims.x];
 	if (z < 0.0f)
 	{
 		normal_out[idx].w = -1.0f;
@@ -240,11 +240,11 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 	}
 
 	// first compute the normal
-	Vector3f xp1_y, xm1_y, x_yp1, x_ym1;
-	Vector3f diff_x(0.0f, 0.0f, 0.0f), diff_y(0.0f, 0.0f, 0.0f);
+	Vector3d xp1_y, xm1_y, x_yp1, x_ym1;
+	Vector3d diff_x(0.0f, 0.0f, 0.0f), diff_y(0.0f, 0.0f, 0.0f);
 
-	xp1_y.z = depth_in[(x + 1) + y * imgDims.x], x_yp1.z = depth_in[x + (y + 1) * imgDims.x];
-	xm1_y.z = depth_in[(x - 1) + y * imgDims.x], x_ym1.z = depth_in[x + (y - 1) * imgDims.x];
+	xp1_y.z = depth_in[(x + 1) + (y) * imgDims.x], x_yp1.z = depth_in[(x) + (y + 1) * imgDims.x];
+	xm1_y.z = depth_in[(x - 1) + (y) * imgDims.x], x_ym1.z = depth_in[(x) + (y - 1) * imgDims.x];
 
 	if (xp1_y.z <= 0 || x_yp1.z <= 0 || xm1_y.z <= 0 || x_ym1.z <= 0)
 	{
@@ -262,6 +262,13 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 	// gradients x and y
 	diff_x = xp1_y - xm1_y, diff_y = x_yp1 - x_ym1;
 
+	double normx = 1.0 / sqrt(diff_x.x * diff_x.x + diff_x.y * diff_x.y + diff_x.z * diff_x.z);
+	diff_x *= normx;
+
+	double normy = 1.0 / sqrt(diff_y.x * diff_y.x + diff_y.y * diff_y.y + diff_y.z * diff_y.z);
+	diff_y *= normy;
+
+
 	// cross product
 	outNormal.x = (diff_x.y * diff_y.z - diff_x.z*diff_y.y);
 	outNormal.y = (diff_x.z * diff_y.x - diff_x.x*diff_y.z);
@@ -274,7 +281,7 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 		return;
 	}
 
-	float norm = 1.0f / sqrt(outNormal.x * outNormal.x + outNormal.y * outNormal.y + outNormal.z * outNormal.z);
+	double  norm = 1.0 / sqrt(outNormal.x * outNormal.x + outNormal.y * outNormal.y + outNormal.z * outNormal.z);
 	outNormal *= norm;
 
 	normal_out[idx].x = outNormal.x; normal_out[idx].y = outNormal.y; normal_out[idx].z = outNormal.z; normal_out[idx].w = 1.0f;
@@ -295,6 +302,7 @@ void ComputeNormalAndWeights(ITMFloat4Image *normal_out, ITMFloatImage *sigmaZ_o
 
 	float *sigmaZData_out = sigmaZ_out->GetData(MEMORYDEVICE_CPU);
 	Vector4f *normalData_out = normal_out->GetData(MEMORYDEVICE_CPU);
+	memset(normalData_out, 0x00, sizeof(Vector4f)*normal_out->noDims.x*normal_out->noDims.y);
 
 	for (int y = 2; y < imgDims.y - 2; y++)
 		for (int x = 2; x < imgDims.x - 2; x++)

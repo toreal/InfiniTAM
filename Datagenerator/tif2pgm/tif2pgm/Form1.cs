@@ -25,7 +25,9 @@ namespace tif2pgm
             openFileDialog1.ShowDialog();
             Bitmap bmp = null;
             int width, height;
-           
+
+            bool bflip = false;
+
             foreach (string fn in openFileDialog1.FileNames)
             {
                 using (var inputImage = Tiff.Open(fn, "r"))
@@ -60,9 +62,20 @@ namespace tif2pgm
                         for (int j = 0; j < height; j++)
                         for(int i = 0; i < width; i++)
                             {
-                                outdata[(j * width + i) * 3 + 0] = inputImageData[(j * width + width-1-i) * bytePerPixel + 0];
-                                outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + width - 1-i) * bytePerPixel + 1];
-                                outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + width - 1- i) * bytePerPixel + 2];
+                                if ( bflip)
+                                {
+                                    outdata[(j * width + i) * 3 + 0] = inputImageData[(j * width + width - 1 - i) * bytePerPixel + 0];
+                                    outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width + width - 1 - i) * bytePerPixel + 1];
+                                    outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width + width - 1 - i) * bytePerPixel + 2];
+
+                                }else
+                                {
+                                    outdata[(j * width + i) * 3 + 0] = inputImageData[(j * width +  i) * bytePerPixel + 0];
+                                    outdata[(j * width + i) * 3 + 1] = inputImageData[(j * width +  i) * bytePerPixel + 1];
+                                    outdata[(j * width + i) * 3 + 2] = inputImageData[(j * width +  i) * bytePerPixel + 2];
+
+
+                                }
 
                                 //    int i1= inputImageData[(j * width + i) * bytePerPixel + 4];
                                 //    int i2= inputImageData[(j * width + i) * bytePerPixel + 8];
@@ -124,24 +137,32 @@ namespace tif2pgm
                             outputImageData2[i*3+k] = val2;
                         }
 
-                        for (int i = 0; i < width; i++)
-                            for (int j = 0; j < height; j++)
-                            {
-                                short v = outputImageData[width -1 -i + j * 640];
-                                SoutputImageData[i + j * 640] = v;
+                        if (bflip)
+                        {
+                            for (int i = 0; i < width; i++)
+                                for (int j = 0; j < height; j++)
+                                {
+                                    short v= outputImageData[width - 1 - i + j * 640];
+                                    SoutputImageData[i + j * 640] = v;
 
-                                 val2 = outputImageData2[(width-1-i + j * 640)*3];
-                                for (int k = 0; k < 3; k++)
-                                    SoutputImageData2[(i + j * 640) * 3 + k] = val2;
-
-
-                            }
-
+                                    val2 = outputImageData2[(width - 1 - i + j * 640) * 3];
+                                    for (int k = 0; k < 3; k++)
+                                        SoutputImageData2[(i + j * 640) * 3 + k] = val2;
 
 
+                                }
 
-                        PGMSave.Save(SoutputImageData, outn);
-                        PGMSave.Save(SoutputImageData2, outn2);
+
+
+
+                            PGMSave.Save(SoutputImageData, outn);
+                            PGMSave.Save(SoutputImageData2, outn2);
+                        }else
+                        {
+                            PGMSave.Save(outputImageData, outn);
+                            PGMSave.Save(outputImageData2, outn2);
+
+                        }
                     }
                 }
                 //Color c = Color.FromArgb(0, 0, 0);

@@ -5,13 +5,16 @@ def gen( val,fn,channel ):
     render='trans.rib'
     ri.Begin(render)
     ri.Display(fn, "tiff", channel)
+
     if channel == 'rgba':
+        ri.Projection(ri.PERSPECTIVE ,{ri.FOV:53.28})
         ri.Quantize ('rgba',  255,0,255,0.5 )
         ri.Translate(0,0,300)		
     else:
 #        ri.Translate(0,0,300)	
 #        ri.Rotate(-0.003870486249233254,  0.51323804,  0.30595541,  0.80185909)		
-        ri.Translate(25.7004433,1.33896589,3.75516105)
+        ri.Projection(ri.PERSPECTIVE ,{ri.FOV:66.95})
+        ri.Translate(-25.7004433,-1.33896589,-3.75516105)
         ri.Translate(0,0,300)
 		
     

@@ -90,7 +90,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	cv::minMaxLoc(mtdep, &fmin, &fmax);
 
 	BYTE * bbuf = new BYTE[h*w]; //prepare for depth;
-	BYTE * nbuf = new BYTE[h*w]; //prepare for nomral;
+	BYTE * nbuf = new BYTE[h*w*4]; //prepare for nomral;
 	BYTE * cbuf = new BYTE[h*w];//prepare fo curvature;
 	BYTE * btmp=bbuf;
 	BYTE * ctmp = nbuf;
@@ -110,11 +110,13 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 		dtmp++;
 		//if (i < (234 * 640 + 234))
 		{
-			*ctmp = (0.333*(ntmp->x+1) + 0.333* (ntmp->y+1) + 0.333*(ntmp->z+1)) * 127;
+			*ctmp = (ntmp->x + 1)*127;
+			*(ctmp+1)=(ntmp->y + 1)*127;
+			*(ctmp+2)=(ntmp->z + 1) * 127;
 		}
 		
 
-		ctmp++;
+		ctmp=ctmp+4;
 		ntmp++;
 		
 
@@ -125,7 +127,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	}
 
 	cv::Mat mdep(h, w, CV_8U, bbuf);
-	cv::Mat mnor(h, w, CV_8U, nbuf);
+	cv::Mat mnor(h, w, CV_8UC4, nbuf);
 	cv::Mat mcur(h, w, CV_8U, cbuf);
 
 //	blur(mnor, mnor, Size(3, 3));
