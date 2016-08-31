@@ -258,6 +258,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 #endif
 					mfdata->estimatePose(trackingState->pose_d);
 					mfdata->refinePose(trackingState->pose_d);
+					mfdata->goodFeature();
 					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
 			mfdata->Generate3DPoints(mfdata->m_base_corners,mfdata->objectPoints );

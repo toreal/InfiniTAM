@@ -125,6 +125,7 @@ namespace ITMLib
 				
 			float estivalue(const float * data, Vector2i ,Vector2i);
 			void edgeRefine(MyTri * tridata);
+	
 
 		public:
 
@@ -171,7 +172,7 @@ namespace ITMLib
 			void buildProjDepth();
 			void NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise);
 
-			
+			void goodFeature();
 			void estimatePose(ITMPose * posd);
 			void refinePose(ITMPose * posd);
 			void genContour(char * str);
