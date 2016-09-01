@@ -199,7 +199,7 @@ namespace ITMLib
             static DebugLog _ssDebug;
             static cv::Mat      m_matDebugVector;
             static cv::Mat      m_matDebugConsole;
-            
+			static cv::Mat      m_normal;
             //static inline std::stringstream & GetDebugStream() { return _ssDebug; }
             
             static inline DebugLog& GetDebugStream() { return _ssDebug; }

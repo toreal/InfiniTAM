@@ -41,41 +41,51 @@ void MeshFusion::goodFeature()
 		TermCriteria(TermCriteria::EPS + TermCriteria::COUNT, 10, 1.0),
 		3, KMEANS_PP_CENTERS, centers);
 
-	Mat new_image(640,480,CV_8U);
-
+	//Mat new_image(640,480,CV_8U);
+	int cBlockSize = 5;
+	Scalar cc1=cv::Scalar(0, 0, 255, 200);
+	Scalar cc2 = cv::Scalar(0, 255, 0, 200);
+	Scalar cc3 = cv::Scalar(255, 0, 0, 200);
 	for (int y = 0; y < points.rows; y++)
 	{
 		int cluster_idx = labels.at<int>(y, 0);
 		 int nx=points.at<float>(y, 0) ;
 		 int ny=points.at<float>(y, 1) ;
-
-		 new_image.at<unsigned char >(nx, ny) = 100;
-		 new_image.at<unsigned char >(nx-1, ny) =   100;
-		 new_image.at<unsigned char >(nx+1, ny) =   100;
-		 if (cluster_idx > 0)
+		 int len = sizeof(long);
+		 switch (cluster_idx)
 		 {
-			 new_image.at<unsigned char >(nx, ny - 1) =   100;
-			 new_image.at<unsigned char >(nx - 1, ny - 1) =   100;
-			 new_image.at<unsigned char >(nx + 1, ny - 1) =   100;
-			 if (cluster_idx > 1)
-			 {
-				 new_image.at<unsigned char >(nx, ny + 1) =0;
-				 new_image.at<unsigned char >(nx - 1, ny + 1) = 0;
-				 new_image.at<unsigned char >(nx + 1, ny + 1) = 0;
-			 }
-		 }
+		 case 0:
+			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc1);
+			 break;
+		 case 1:
+			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc2);
+			 break;
+		 case 2:
+			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc3);
 
+		 }
+		 //m_normal.data[(nx + ny * 640) * 3] = 254;
+		 //m_normal.at<unsigned char>(nx, ny) = 254;
+		 //m_normal.at<unsigned char >(nx - 1, ny) = 254;
+		 //m_normal.at<unsigned char >(nx+1, ny) = 254;
+		 //m_normal.at<unsigned char >(nx, ny - 1) = 254;
+		 //m_normal.at<unsigned char >(nx - 1, ny - 1) = 254;
+		 //m_normal.at<unsigned char >(nx + 1, ny - 1) = 254;
+		 //m_normal.at<unsigned char >(nx, ny + 1) = 254;
+		 //m_normal.at<unsigned char >(nx - 1, ny + 1) = 254;
+		 //m_normal.at<unsigned char >(nx + 1, ny + 1) = 254;
+		
 	}
 		for (int x = 0; x < points.cols; x++)
 		{
 			int f1 = centers.at<float>(0, x);
 			int f2 = centers.at<float>(1, x);
 		//	float f3 = centers.at<float>(2, x);
-			new_image.at<unsigned char >(f1, f2) = 127;
+			m_normal.at<unsigned char >(f1, f2) = 127;
 		}
 
 
-		imshow("tt", new_image);
+		imshow("tt", m_normal);
 		waitKey(0);
 
 	return;

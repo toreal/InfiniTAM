@@ -44,6 +44,7 @@ using namespace cv;
 
 cv::Mat MeshFusion::m_matDebugConsole;
 cv::Mat MeshFusion::m_matDebugVector;
+cv::Mat MeshFusion::m_normal;
 
 int     MeshFusion::m_nDebugX = 0;
 int     MeshFusion::m_nDebugY = 0;
@@ -89,9 +90,10 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	double  fmin, fmax;
 	cv::minMaxLoc(mtdep, &fmin, &fmax);
 
-	BYTE * bbuf = new BYTE[h*w]; //prepare for depth;
-	BYTE * nbuf = new BYTE[h*w*4]; //prepare for nomral;
-	BYTE * cbuf = new BYTE[h*w];//prepare fo curvature;
+	const int lens =640 * 480;
+	BYTE*  bbuf=new BYTE[lens]; //prepare for depth;
+	BYTE*  nbuf=new BYTE[lens*4]; //prepare for nomral;
+	BYTE*  cbuf= new BYTE[lens];//prepare fo curvature;
 	BYTE * btmp=bbuf;
 	BYTE * ctmp = nbuf;
 	BYTE * atmp = cbuf;
@@ -130,6 +132,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	cv::Mat mnor(h, w, CV_8UC4, nbuf);
 	cv::Mat mcur(h, w, CV_8U, cbuf);
 
+	m_normal = mnor.clone();
 //	blur(mnor, mnor, Size(3, 3));
 //	Canny(mnor, mnor, 50, 150, 3);
 	
@@ -146,7 +149,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 
 	imwrite(fn, mcur);
 
-
+	
 
     cv::Mat input(h,w,CV_8UC4,img);
 	cv::Mat seginput(h, w, CV_8UC4, segimg);
@@ -155,6 +158,12 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
     cv::imshow( "input", mdep );
     
 	cv::waitKey(1);
+
+	delete []bbuf;
+	delete []nbuf;
+	delete []cbuf;
+
+
 
     if (!m_bfirst && !m_image.empty())
         m_pre_image = m_image.clone();
