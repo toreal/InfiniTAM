@@ -1,4 +1,4 @@
-
+﻿
 
 
 #include "MeshFusion.h"
@@ -174,12 +174,12 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 
 }
 
-
-void EstCurvature(ITMFloat4Image * depth_in, ITMFloatImage * curvature)
+///from nomal
+void EstCurvature(ITMFloat4Image * normal_in, ITMFloatImage * curvature)
 {
-	Vector2i imgDims = depth_in->noDims;
+	Vector2i imgDims = normal_in->noDims;
 
-	const Vector4f *depthData_in = depth_in->GetData(MEMORYDEVICE_CPU);
+	const Vector4f *depthData_in = normal_in->GetData(MEMORYDEVICE_CPU);
 
 	float *curvature_out = curvature->GetData(MEMORYDEVICE_CPU);
 
@@ -197,6 +197,10 @@ void EstCurvature(ITMFloat4Image * depth_in, ITMFloatImage * curvature)
 			curvature_out[idx] = 0;
 			continue;
 		}
+
+
+
+
 		float  thetax = acos(dot(p1, p2) - 1);
 		float  thetay = acos(dot(p3, p4) - 1);
 
@@ -211,18 +215,131 @@ void EstCurvature(ITMFloat4Image * depth_in, ITMFloatImage * curvature)
 	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
 	{
 		int idx = x + y * imgDims.x;
-		if ((curvature_out[idx] / maxv) > 0.5)
+		/*if ((curvature_out[idx] / maxv) > 0.5)
 		{
 			curvature_out[idx] = ((curvature_out[idx] / maxv) + 1) / 2;
 		}
-		else
-			curvature_out[idx] = curvature_out[idx] / (2 * maxv);
+		else*/
+			curvature_out[idx] = curvature_out[idx] / ( maxv);
 
 	}
 
 
 
 }
+
+
+///from depth 
+/*import numpy as np
+
+Zy, Zx = np.gradient(Z)
+Zxy, Zxx = np.gradient(Zx)
+Zyy, _ = np.gradient(Zy)
+
+# Mean Curvature - equation(3) from Kurita and Boulanger(1992) paper
+# See also Surface in 3D space, http://en.wikipedia.org/wiki/Mean_curvature
+H = (1 + (Zx ** 2)) * Zyy + (1 + (Zy ** 2)) * Zxx - 2 * Zx * Zy * Zxy      
+H = H / ((2 * (1 + (Zx ** 2) + (Zy ** 2))) ** 1.5)
+
+# Gaussian Curvature - equation(4) from Kurita and Boulanger(1992) paper 
+K = (Zxx * Zyy - (Zxy ** 2)) / ((1 + (Zx ** 2) + (Zy **2)) ** 2)
+
+# Simplified Mean Curvature - equation(3) from Zhao et.al(1996) paper               
+H = Zxx + Zyy                                                              
+
+#  Simplified Gaussian Curvature - equation(3) from Zhao et.al(1996) paper           
+K = Zxx * Zyy - (Zxy ** 2)
+*/
+
+
+void EstCurvatureByDepth(ITMFloatImage * depth_in, ITMFloatImage * curvature)
+{
+	Vector2i imgDims = depth_in->noDims;
+
+	const float *depthData_in = depth_in->GetData(MEMORYDEVICE_CPU);
+
+	float *curvature_out = curvature->GetData(MEMORYDEVICE_CPU);
+	float * zxval = new float[imgDims.x*imgDims.y];
+	float * zyval = new float[imgDims.x*imgDims.y];
+
+	float maxv = -1;
+	int idx;
+	for (int y = 2; y < imgDims.y - 2; y++)
+		for (int x = 2; x < imgDims.x - 2; x++)
+	{
+		 idx = x + y * imgDims.x;
+		float p1 = depthData_in[x + 1 + y * imgDims.x];
+		float p2 = depthData_in[x - 1 + y * imgDims.x];
+		float p3 = depthData_in[x + (y + 1) * imgDims.x];
+		float p4 = depthData_in[x + (y - 1) * imgDims.x];
+
+		if (p1 <= 0 || p2 <= 0 || p3<= 0 || p4 <= 0)
+		{
+			curvature_out[idx] = 0;
+			continue;
+		}
+
+		zxval[idx] = p1 - p2;
+		zyval[idx] = p3 - p4;
+
+	}
+
+	for (int y = 2; y < imgDims.y - 2; y++)
+		for (int x = 2; x < imgDims.x - 2; x++)
+		{
+			idx = x + y * imgDims.x;
+			float zx = zxval[idx];
+			float p1 = zxval[x + 1 + y * imgDims.x];
+			float p2 = zxval[x - 1 + y * imgDims.x];
+			float p3 = zxval[x + (y + 1) * imgDims.x];
+			float p4 = zxval[x + (y - 1) * imgDims.x];
+
+			float zy = zyval[idx];
+			float p5 = zyval[x + 1 + y * imgDims.x];
+			float p6 = zyval[x - 1 + y * imgDims.x];
+			float p7 = zyval[x + (y + 1) * imgDims.x];
+			float p8 = zyval[x + (y - 1) * imgDims.x];
+
+
+
+			float zxx = p1 - p2;
+			float zxy = p3 - p4;
+			float zyx = p5 - p6;
+			float zyy = p7 - p8;
+
+			float		H = (1 + pow(zx , 2)) * zyy + (1 + pow(zy , 2)) * zxx - 2 * zx * zy * zxy;
+			H = H / pow((2 * (1 + pow(zx , 2) + pow(zy , 2))) , 1.5);
+		float	Kv = (zxx * zyy - pow(zxy , 2)) / pow((1 + pow(zx , 2) + pow(zy ,2)) , 2);
+				curvature_out[idx] = H;
+			if (curvature_out[idx] > maxv)
+			{
+				maxv = curvature_out[idx];
+			}
+
+
+		}
+
+
+
+
+
+	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
+	{
+		int idx = x + y * imgDims.x;
+		if (curvature_out[idx]>1)
+		{
+			curvature_out[idx] =((curvature_out[idx] / maxv) + 1) / 2;
+		}
+		else
+			curvature_out[idx] = curvature_out[idx] / ( maxv);
+
+	}
+
+
+
+}
+
+
 
 
 _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *depth_in, DEVICEPTR(Vector4f) *normal_out, DEVICEPTR(float) *sigmaZ_out, int x, int y, Vector2i imgDims, Vector4f intrinparam)
@@ -318,7 +435,8 @@ void MeshFusion::NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise)
 	if (modelSensorNoise)
 	{
 		ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, proDepth, view->calib->intrinsics_rgb.projectionParamsSimple.all);
-		EstCurvature(view->depthNormal, view->curvature);
+		//EstCurvature(view->depthNormal, view->curvature);
+		EstCurvatureByDepth(proDepth, view->curvature);
 	}
 
 }
