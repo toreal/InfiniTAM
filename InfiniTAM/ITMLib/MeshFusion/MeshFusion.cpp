@@ -261,8 +261,8 @@ void EstCurvatureByDepth(ITMFloatImage * depth_in, ITMFloatImage * curvature)
 	float *curvature_out = curvature->GetData(MEMORYDEVICE_CPU);
 	float * zxval = new float[imgDims.x*imgDims.y];
 	float * zyval = new float[imgDims.x*imgDims.y];
-
 	float maxv = -1;
+	float smax = -1;
 	int idx;
 	for (int y = 2; y < imgDims.y - 2; y++)
 		for (int x = 2; x < imgDims.x - 2; x++)
@@ -273,17 +273,49 @@ void EstCurvatureByDepth(ITMFloatImage * depth_in, ITMFloatImage * curvature)
 		float p3 = depthData_in[x + (y + 1) * imgDims.x];
 		float p4 = depthData_in[x + (y - 1) * imgDims.x];
 
-		if (p1 <= 0 || p2 <= 0 || p3<= 0 || p4 <= 0)
+		float p5 = depthData_in[x + 2 + y * imgDims.x];
+		float p6 = depthData_in[x - 2 + y * imgDims.x];
+		float p7 = depthData_in[x + (y + 2) * imgDims.x];
+		float p8 = depthData_in[x + (y - 2) * imgDims.x];
+
+
+		zxval[idx] =( p1 - p2)/2;
+		zyval[idx] =( p3 - p4)/2;
+
+		if (zxval[idx] == 0 && (p5 >0 && p6 >0))
 		{
-			curvature_out[idx] = 0;
-			continue;
+			zxval[idx] = (p5 - p6) / 4;
 		}
 
-		zxval[idx] = p1 - p2;
-		zyval[idx] = p3 - p4;
+		if (zyval[idx] == 0 && p7>0  && p8 >0)
+		{
+			zyval[idx] = (p7 - p8) / 4;
+		}
 
+	
 	}
+/* for debug
+	maxv = 3;
 
+	unsigned char *buf = new 	unsigned char[imgDims.x*imgDims.y];
+	for (int y = 2; y < imgDims.y - 2; y++)
+		for (int x = 2; x < imgDims.x - 2; x++)
+		{
+			idx = x + y * imgDims.x;
+			if (zxval[idx] != 0 && fabs(zxval[idx])<3)
+				buf[idx] = ((zxval[idx] / maxv) + 1.0) * 127;
+			else
+				buf[idx] = 0;
+
+			
+		}
+
+	maxv = -1;
+	cv::Mat m(imgDims.y, imgDims.x, CV_8U, buf);
+	imshow("tmp", m);
+	cvWaitKey(0);
+	delete[] buf;
+*/
 	for (int y = 2; y < imgDims.y - 2; y++)
 		for (int x = 2; x < imgDims.x - 2; x++)
 		{
@@ -301,22 +333,49 @@ void EstCurvatureByDepth(ITMFloatImage * depth_in, ITMFloatImage * curvature)
 			float p8 = zyval[x + (y - 1) * imgDims.x];
 
 
+			float p11 = zxval[x + 2 + y * imgDims.x];
+			float p12 = zxval[x - 2 + y * imgDims.x];
+			float p13 = zxval[x + (y + 2) * imgDims.x];
+			float p14 = zxval[x + (y - 2) * imgDims.x];
 
-			float zxx = p1 - p2;
-			float zxy = p3 - p4;
-			float zyx = p5 - p6;
-			float zyy = p7 - p8;
+			float p15 = zyval[x + 2 + y * imgDims.x];
+			float p16 = zyval[x - 2 + y * imgDims.x];
+			float p17 = zyval[x + (y + 2) * imgDims.x];
+			float p18 = zyval[x + (y - 2) * imgDims.x];
+
+
+
+			float zxx = (p1 - p2)/2;
+			float zxy = (p3 - p4)/2;
+			float zyx = (p5 - p6)/2;
+			float zyy = (p7 - p8)/2;
+
+
+			if ( zxx ==0 )
+				zxx = (p11 - p12) / 4;
+
+			if ( zxy == 0)
+				zxy = (p13 - p14) / 4;
+
+			if (zyy == 0 )
+				zyy = (p17 - p18) / 4;
 
 			float		H = (1 + pow(zx , 2)) * zyy + (1 + pow(zy , 2)) * zxx - 2 * zx * zy * zxy;
 			H = H / pow((2 * (1 + pow(zx , 2) + pow(zy , 2))) , 1.5);
 		float	Kv = (zxx * zyy - pow(zxy , 2)) / pow((1 + pow(zx , 2) + pow(zy ,2)) , 2);
 				curvature_out[idx] = H;
-			if (curvature_out[idx] > maxv)
-			{
-				maxv = curvature_out[idx];
-			}
+				if (H < 100)
+				{
+					if (curvature_out[idx] > maxv)
+					{
+						if (maxv > smax)
+							smax = maxv;
+						maxv = curvature_out[idx];
+					}
+					else if (curvature_out[idx] > smax)
+						smax = curvature_out[idx];
 
-
+				}
 		}
 
 
@@ -326,17 +385,21 @@ void EstCurvatureByDepth(ITMFloatImage * depth_in, ITMFloatImage * curvature)
 	for (int y = 2; y < imgDims.y - 2; y++) for (int x = 2; x < imgDims.x - 2; x++)
 	{
 		int idx = x + y * imgDims.x;
-		if (curvature_out[idx]>1)
+		if (curvature_out[idx]>0.2)
 		{
-			curvature_out[idx] =((curvature_out[idx] / maxv) + 1) / 2;
+			curvature_out[idx] =((curvature_out[idx] / smax) + 1) / 2;
 		}
 		else
-			curvature_out[idx] = curvature_out[idx] / ( maxv);
+			curvature_out[idx] = curvature_out[idx] / ( smax);
 
+
+		if (curvature_out[idx] > 1)
+			curvature_out[idx] = 1;
 	}
 
 
-
+	delete []zxval;
+	delete[] zyval;
 }
 
 
@@ -541,12 +604,16 @@ void MeshFusion::buildProjDepth()
 				}
 				else if (maxf > minf)
 				{
-					Vector4f pp;
+					Vector4f pp,pb;
 					float maxdiff = 10000;
 					float fz;
 					float delta = maxf - minf;
 
-					for (float inc = 0; inc <= 1; inc = inc + 0.5f)
+					float shift = 0.5f;
+					if (delta > 2)
+						shift = 1 / delta;
+
+					for (float inc = 0; inc <= 1; inc = inc + shift)
 					{
 						float estz = minf + inc* delta;
 						pp.x = estz * (nx - intrinRGB.z) / intrinRGB.x;
@@ -562,20 +629,22 @@ void MeshFusion::buildProjDepth()
 
 						float npz = dd[ix + iy*xlens]*1000;
 
-						float diff = npz - estz;
+						float diff = npz - prgb.z;
 
 						if (fabs(diff) < maxdiff && npz > 0 )
 						{
 							maxdiff = fabs(diff);
+							pb = prgb;
 							fz = npz;
 						}
 
 					}//end of for
 					if (maxdiff < 10000)
 					{
-						dp[nx + ny*xlens] = fz;
-
-
+						Vector4f pbr = d2rgb*pb;
+						pbr.homogeneousCoordinatesNormalize();
+						dp[nx + ny*xlens] = pbr.z;
+						
 					}
 					else
 						dp[nx + ny*xlens] = (maxf + minf) / 2;

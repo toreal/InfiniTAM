@@ -21,6 +21,8 @@ void MeshFusion::goodFeature()
 	cout << newPoints.size() << ",";
 	cout << objectPoints.size() << endl;
 
+	float* cur= mainView->curvature->GetData(MEMORYDEVICE_CPU);
+	int w = mainView->curvature->noDims.x;
 
 	int  clusterCount = 3;
 	//int  sampleCount = 20;
@@ -43,6 +45,7 @@ void MeshFusion::goodFeature()
 
 	//Mat new_image(640,480,CV_8U);
 	int cBlockSize = 5;
+	Scalar cc0 = cv::Scalar(0, 0, 0, 200);
 	Scalar cc1=cv::Scalar(0, 0, 255, 200);
 	Scalar cc2 = cv::Scalar(0, 255, 0, 200);
 	Scalar cc3 = cv::Scalar(255, 0, 0, 200);
@@ -51,6 +54,13 @@ void MeshFusion::goodFeature()
 		int cluster_idx = labels.at<int>(y, 0);
 		 int nx=points.at<float>(y, 0) ;
 		 int ny=points.at<float>(y, 1) ;
+		 cv::Point pt_txt1(nx,ny);
+
+		 float cvalue = cur[nx + ny*w];
+		 std::stringstream ssout1;
+		 cout << cluster_idx << ":" << cvalue << endl;
+		 ssout1 << cluster_idx << ":" << cvalue << endl;
+		 cv::putText(m_normal, ssout1.str(), pt_txt1, CV_FONT_HERSHEY_SIMPLEX, 0.3, cc0, 1, LINE_AA, false);
 		 int len = sizeof(long);
 		 switch (cluster_idx)
 		 {
@@ -64,16 +74,6 @@ void MeshFusion::goodFeature()
 			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc3);
 
 		 }
-		 //m_normal.data[(nx + ny * 640) * 3] = 254;
-		 //m_normal.at<unsigned char>(nx, ny) = 254;
-		 //m_normal.at<unsigned char >(nx - 1, ny) = 254;
-		 //m_normal.at<unsigned char >(nx+1, ny) = 254;
-		 //m_normal.at<unsigned char >(nx, ny - 1) = 254;
-		 //m_normal.at<unsigned char >(nx - 1, ny - 1) = 254;
-		 //m_normal.at<unsigned char >(nx + 1, ny - 1) = 254;
-		 //m_normal.at<unsigned char >(nx, ny + 1) = 254;
-		 //m_normal.at<unsigned char >(nx - 1, ny + 1) = 254;
-		 //m_normal.at<unsigned char >(nx + 1, ny + 1) = 254;
 		
 	}
 		for (int x = 0; x < points.cols; x++)
