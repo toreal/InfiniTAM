@@ -136,6 +136,8 @@ MeshFusion/MeshUpdate.cpp
 MeshFusion/MFDepthTracker.cpp
 MeshFusion/refinePose.cpp
 MeshFusion/edgeRefine.cpp
+MeshFusion/goodFeature.cpp
+MeshFusion/rigid_transformPose.cpp
 )
 
 

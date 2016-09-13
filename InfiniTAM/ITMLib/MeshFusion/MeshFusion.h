@@ -194,7 +194,7 @@ namespace ITMLib
             void DebugVectorIdxAll( void ) { m_nDebugVectorIdx = -1; }
             void DebugVectorIdxInc( void ) {if (m_latest_paired_corners_base.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+1) % m_latest_paired_corners_base.size(); }
             void DebugVectorIdxDec( void ) {if (m_latest_paired_corners_base.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx+m_latest_paired_corners_base.size()-1) % m_latest_paired_corners_base.size(); }
-            
+			void rigid_transformPose();
 //            static std::stringstream _ssDebug;
             static DebugLog _ssDebug;
             static cv::Mat      m_matDebugVector;
