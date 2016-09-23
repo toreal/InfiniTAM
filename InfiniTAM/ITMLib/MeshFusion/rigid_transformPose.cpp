@@ -3,135 +3,89 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>  
+#include <cv.h>
 #include <armadillo>
 
 using namespace std;
+using namespace cv;
 using namespace arma;
 
 
-arma::mat ret_R;
-arma::mat ret_t;
-void rigid_transform_3D(arma::mat A, arma::mat B);
 
-
-void MeshFusion::rigid_transformPose()
+cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B)
 {
+	/*cv::Mat A(3, 3, CV_32FC1);
+	cv::Mat B(3, 3, CV_32FC1);
+	for (int i = 0; i < A.rows; i++) {
+		for (int j = 0; j < A.cols; j++) {
+			A.ptr<float>(i)[j] = (float)(i + 5.0*j*0.01);
+			B.ptr<float>(i)[j] = (float)(i + j + 2.0*i*0.01);
+		}
+	}*/
+	/*cout << "A = \n" << A << endl;
+	cout << "B = \n" << B << endl;*/
 
-	arma::mat R = arma::randu<arma::mat>(3, 3) * 1; //²£¥Í3*3ÀH¾÷¯x°}¡A¨C­Ó­Èªº½d³ò¬°0~1
-	arma::mat t = arma::randu<arma::mat>(3, 1) * 1; //¸g´ú¸Õµo²{²£¥ÍªºÀH¾÷­È¦n¹³¬O©T©wªº
-	arma::mat U;
-	arma::colvec S;
-	arma::mat V;
-	arma::mat Vt;
-	svd(U, S, V, R);//¹ï¯x°} R ¶i¦æ©_²§­È¤À¸Ñ 
-	Vt = V.t();
-	/*R.print("R:");
-	U.print("U=\n");
-	S.print("S=\n");
-	V.print("V=\n");
-	Vt.print("Vt=\n");*/
-	R = U*Vt;
-	//R.print("Rotation:");
+	int N = A.rows;
 
-	if (det(R) < 0) {
-		Vt.row(2) *= -1;
-		R = U*Vt;
-	}
+	cv::Mat centroid_A(1, 3, CV_32FC1); 
+	cv::Mat centroid_B(1, 3, CV_32FC1);
 
+	for (int i = 0; i < centroid_A.cols; i++) {
+		centroid_A.at<float>(i) = mean(A.col(i))[0]; //å–æ¯ä¸€åˆ—çš„å¹³å‡å€¼
+	} 
+	centroid_A = centroid_A.t();
+	cv::Mat centroid_A_2 = cv::Mat::ones(1, N, CV_32FC1);
+	cv::Mat centroid_A_3 = centroid_A * centroid_A_2;
+	centroid_A_3 = centroid_A_3.t(); //centroid_A_3 ç­‰æ–¼ python çš„ tile(centroid_A, (N, 1))
 
-	int n = 10;
+	for (int i = 0; i < centroid_B.cols; i++) {
+		centroid_B.at<float>(i) = mean(B.col(i))[0]; //å–æ¯ä¸€åˆ—çš„å¹³å‡å€¼
+	} 
+	centroid_B = centroid_B.t();
+	cv::Mat centroid_B_2 = cv::Mat::ones(1, N, CV_32FC1);
+	cv::Mat centroid_B_3 = centroid_B * centroid_B_2;
+	centroid_B_3 = centroid_B_3.t();//centroid_B_3 ç­‰æ–¼ python çš„ tile(centroid_B, (N, 1))
 
-	arma::mat t2;
-	t2.ones(1, n); //²£¥Ínx1¥ş1¯x°}
-	arma::mat t3 = t * t2; // t3 µ¥©ó python ªº tile(t, (1, n))
-	//t3.print("t3=\n");
+	cv::Mat AA = A - centroid_A_3;
+	cv::Mat BB = B - centroid_B_3;
+	cv::Mat H = AA.t() * BB;
 
-	arma::mat A = arma::randu<arma::mat>(n, 3) * 1;
-	//A.print("A=\n");
-	arma::mat B = R * A.t() + t3; // t3 µ¥©ó python ªº tile(t, (1, n))
-	//t3.print("t3:");
-	B = B.t();
-
-	rigid_transform_3D(A, B);
-
-
-	arma::mat ret_t2;
-	ret_t2.ones(1, n);//²£¥Í1xn¥ş1¯x°}
-	//ret_t2.print("ret_t2:");
-	arma::mat ret_t3 = ret_t * ret_t2;
-	arma::mat A2 = (ret_R*A.t()) + ret_t3;//ret_t3 µ¥©ó tile(ret_t, (1, n))
-
-	A2 = A2.t();
-
-	arma::mat err = A2 - B;
-	
-	err = err % err; //ÂI­¼¿n ,¦P python ªº numpy.multiply()
-	arma::mat c1 = sum(err, 1); //err¦U¦æªºÁ`©M
-	
-	arma::mat r1 = sum(err, 0); //err¦U¦CªºÁ`©M
-	
-	arma::mat r2 = sum(c1, 0);
-	
-	arma::mat c2 = sum(r1, 1);
-	
-	arma::mat err_sum = r2 + c2;
-	//err_sum.print("err_sum:");
-	A.print("Points A:");
-	B.print("Points B:");
-	R.print("Rotation:");
-	t.print("Translation:");
-	arma::mat rmse = sqrt(err_sum / n);
-	rmse.print("rmse:");
-	printf("If RMSE is near zero, the function is correct!\n");
-	//system("pause");
-}
-
-void rigid_transform_3D(arma::mat A, arma::mat B)
-{
-	int N = A.n_rows;
-	//printf("N=%f\n", N);
-	arma::mat centroid_A = mean(A, 0);
-	centroid_A = centroid_A.t(); //ÅÜ¦¨Âà¸m¯x°}«á¤~¯à©Mcentroid_A_2¬Û­¼
-	arma::mat centroid_B = mean(B, 0);
-	centroid_B = centroid_B.t(); //¦Pcentroid_A
-
-	arma::mat centroid_A_2;
-	centroid_A_2.ones(1, N); //²£¥Í1xN¥ş1¯x°}
-	arma::mat centroid_A_3 = centroid_A * centroid_A_2;
-	centroid_A_3 = centroid_A_3.t(); //¦]¬°­è­èÂà¸m«á¤~¬Û­¼¡A©Ò¥H²{¦b­nÂà¸m¦^¨Ó
-									 // centroid_A_3 µ¥©ó python ªº tile(centroid_A, (N, 1))
-
-	arma::mat AA = A - centroid_A_3;
-
-	arma::mat centroid_B_2;
-	centroid_B_2.ones(1, N); //²£¥Í1xN¥ş1¯x°}
-	//centroid_B_2.print("centroid_B_2:");
-	arma::mat centroid_B_3 = centroid_B * centroid_B_2;
-	centroid_B_3 = centroid_B_3.t(); //Âà¸m­ì¦]¦Pcentroid_A_3
-									 // centroid_B_3 µ¥©ó tile(centroid_B, (N, 1))
-
-	arma::mat BB = B - centroid_B_3;
-
-	arma::mat H = AA.t() * BB;
+	//å°‡ cv::Mat H è½‰æ›æˆ arma::mat
+	cv::Mat Ht = H.t();
+	arma::fmat arma_H(Ht.ptr<float>(), Ht.rows, Ht.cols);
+	arma::mat HH = conv_to<mat>::from(arma_H);                   
 
 	arma::mat U;
 	arma::colvec S;
 	arma::mat V;
 	arma::mat Vt;
-	arma::svd(U, S, V, H);
+	arma::svd(U, S, V, HH);
 	Vt = V.t();
+	arma::mat ret_R = Vt.t() * U.t();
 
-	ret_R = Vt.t() * U.t();
-
-	if (det(ret_R) < 0) {
-		printf("%s\n", "Reflection detected\n");
+	
+	if (det(ret_R) < 0) { //å¦‚æœæ˜¯éå¥‡ç•°çŸ©é™£
+		//printf("%s\n", "Reflection detected\n");
 		Vt.row(2) *= -1;
+		//Vt.row(1) *= -1;
 		ret_R = Vt.t() * U.t();
 	}
 
-	//ret_R.print("ret_R1:");
-	//centroid_A.print("centroid_A:");
+	//å°‡centroid_A, centroid_B è½‰æ›æˆ arma::mat
+	arma::fmat farma_centroid_At(centroid_A.ptr<float>(), centroid_A.rows, centroid_A.cols);
+	arma::mat arma_centroid_At = conv_to<mat>::from(farma_centroid_At);
+	arma::fmat farma_centroid_Bt(centroid_B.ptr<float>(), centroid_B.rows, centroid_B.cols);
+	arma::mat arma_centroid_Bt = conv_to<mat>::from(farma_centroid_Bt);
 
-	ret_t = -ret_R * centroid_A + centroid_B; // ¦]¬°¤@¶}©lcentroid_A©Mcentroid_B¦³Âà¸m¤F¡A©Ò¥H³oÃä¤£»İ­n¦AÂà¸m
+	arma::mat ret_t = -ret_R * arma_centroid_At + arma_centroid_Bt; // å› ç‚ºä¸€é–‹å§‹centroid_Aå’Œcentroid_Bæœ‰è½‰ç½®äº†ï¼Œæ‰€ä»¥é€™é‚Šä¸éœ€è¦å†è½‰ç½®
 
+
+	//å°‡ arma::mat ret_t è½‰æ›æˆ cv::Mat
+	arma::fmat TT = conv_to<fmat>::from(ret_t);
+	cv::Mat cv_ret_t(TT.n_cols, TT.n_rows, CV_32FC1, TT.memptr());
+	cv_ret_t = cv_ret_t.t();
+	//cout << "cv_ret_t = \n" << cv_ret_t << endl;
+
+	return cv_ret_t;
 }
+
