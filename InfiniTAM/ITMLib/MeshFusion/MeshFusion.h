@@ -172,7 +172,7 @@ namespace ITMLib
 			void buildProjDepth();
 			void NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise);
 
-			void rigid_transformPose();
+			cv::Mat rigid_transformPose(cv::Mat A, cv::Mat B);
 			void goodFeature();
 			void estimatePose(ITMPose * posd);
 			void refinePose(ITMPose * posd);
