@@ -9,6 +9,8 @@ using namespace ITMLib::Engine;
 
 bool bsence = false;
 
+#define OUTPUT 1
+
 ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
 	// create all the things required for marching cubes and mesh extraction
@@ -257,7 +259,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 #endif
 					mfdata->estimatePose(trackingState->pose_d);
-					mfdata->refinePose(trackingState->pose_d);
+					//mfdata->refinePose(trackingState->pose_d);
 					mfdata->goodFeature();
 					mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}

@@ -1111,7 +1111,7 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 	//Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 	
 	tridata->project(NULL, intrinparam);
-	edgeRefine(tridata);
+	//edgeRefine(tridata);
 
 
 //	mesh->noTotalTriangles = ti;

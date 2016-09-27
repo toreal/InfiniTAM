@@ -360,7 +360,7 @@ void MeshFusion::meshUpdate(ITMMesh * mesho ,ITMPose *pose ,MyTri * tridata)
 			 Vector3f ipos1 = invm *pos1;
 			 Vector3f ipos2 = invm *pos2;
 
-			 if (nnode[n0] <= 0)
+			// if (nnode[n0] <= 0)
 			 {
 				 mytriData.meshVertex[mytriData.totalVertex].x = ipos0.x;
 				 mytriData.meshVertex[mytriData.totalVertex].y = ipos0.y;
@@ -369,7 +369,7 @@ void MeshFusion::meshUpdate(ITMMesh * mesho ,ITMPose *pose ,MyTri * tridata)
 				 mytriData.totalVertex++;
 			 }
 
-			 if (nnode[n1] <= 0)
+			 //if (nnode[n1] <= 0)
 			 {
 				 mytriData.meshVertex[mytriData.totalVertex].x = ipos1.x;
 				 mytriData.meshVertex[mytriData.totalVertex].y = ipos1.y;
@@ -378,7 +378,7 @@ void MeshFusion::meshUpdate(ITMMesh * mesho ,ITMPose *pose ,MyTri * tridata)
 				 mytriData.totalVertex++;
 			 }
 
-			 if (nnode[n2] <= 0)
+			 //if (nnode[n2] <= 0)
 			 {
 				 mytriData.meshVertex[mytriData.totalVertex].x = ipos2.x;
 				 mytriData.meshVertex[mytriData.totalVertex].y = ipos2.y;
