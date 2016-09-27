@@ -12,7 +12,7 @@ using namespace arma;
 
 
 
-cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B)
+cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 {
 	/*cv::Mat A(3, 3, CV_32FC1);
 	cv::Mat B(3, 3, CV_32FC1);
@@ -83,8 +83,26 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B)
 	//將 arma::mat ret_t 轉換成 cv::Mat
 	arma::fmat TT = conv_to<fmat>::from(ret_t);
 	cv::Mat cv_ret_t(TT.n_cols, TT.n_rows, CV_32FC1, TT.memptr());
-	cv_ret_t = cv_ret_t.t();
+	//cv_ret_t = cv_ret_t.t();
 	//cout << "cv_ret_t = \n" << cv_ret_t << endl;
+
+
+	Matrix3f R;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			float v = ret_R.at(i, j);
+			R.m[i + j * 3] = v;
+		}
+
+
+	Vector3f T(TT.at(0), TT.at(1), TT.at(2));
+
+	ITMPose newpos;
+	newpos.SetR(R);
+	newpos.SetT(T);
+	newpos.Coerce();
+	posd->MultiplyWith(&newpos);
 
 	return cv_ret_t;
 }

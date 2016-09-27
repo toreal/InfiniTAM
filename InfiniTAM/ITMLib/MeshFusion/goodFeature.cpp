@@ -12,7 +12,7 @@ using namespace std;
 
 //¥Ø«eªº2d »P3D ÂI:m_backup(m_latest_paired_corners_curr), newPoints
 //¤§«eªº2d »P3D ÂI: m_latest_paired_corners_base ,objectPoints
-void MeshFusion::goodFeature()
+void MeshFusion::goodFeature(ITMPose * posd)
 {
 
 	cout << m_latest_paired_corners_curr.size() << ",";
@@ -149,35 +149,36 @@ void MeshFusion::goodFeature()
 	int count = 0;
 	cv::Mat Transform[100];
 	//從3個顏色區域各取1點做rigid_transformPose
-	for (int i = 0; i < red_num; i++) {
+	for (int i = 0; i < 1; i++) {
 		newPoints_rand.at<float>(0, 0) = newPoints_red.at<float>(i, 0);
 		newPoints_rand.at<float>(0, 1) = newPoints_red.at<float>(i, 1);
 		newPoints_rand.at<float>(0, 2) = newPoints_red.at<float>(i, 2);
 		objectPoints_rand.at<float>(0, 0) = objectPoints_red.at<float>(i, 0);
 		objectPoints_rand.at<float>(0, 1) = objectPoints_red.at<float>(i, 1);
 		objectPoints_rand.at<float>(0, 2) = objectPoints_red.at<float>(i, 2);
-		for (int j = 0; j < green_num; j++) {
+		for (int j = 1; j < 2; j++) {
 			newPoints_rand.at<float>(1, 0) = newPoints_green.at<float>(j, 0);
 			newPoints_rand.at<float>(1, 1) = newPoints_green.at<float>(j, 1);
 			newPoints_rand.at<float>(1, 2) = newPoints_green.at<float>(j, 2);
 			objectPoints_rand.at<float>(1, 0) = objectPoints_green.at<float>(j, 0);
 			objectPoints_rand.at<float>(1, 1) = objectPoints_green.at<float>(j, 1);
 			objectPoints_rand.at<float>(1, 2) = objectPoints_green.at<float>(j, 2);
-			for (int k = 0; k < blue_num; k++) {
+			for (int k = 1; k < 2; k++) {
 				newPoints_rand.at<float>(2, 0) = newPoints_blue.at<float>(k, 0);
 				newPoints_rand.at<float>(2, 1) = newPoints_blue.at<float>(k, 1);
 				newPoints_rand.at<float>(2, 2) = newPoints_blue.at<float>(k, 2);
 				objectPoints_rand.at<float>(2, 0) = objectPoints_blue.at<float>(k, 0);
 				objectPoints_rand.at<float>(2, 1) = objectPoints_blue.at<float>(k, 1);
 				objectPoints_rand.at<float>(2, 2) = objectPoints_blue.at<float>(k, 2);
-				Transform[count] = rigid_transformPose(objectPoints_rand, newPoints_rand);
+				Transform[count] = rigid_transformPose(objectPoints_rand, newPoints_rand,posd);
+				cout << count << ":" << i << "," << j << "," << k << endl;
 				count++;
 			}
 		}
 	}
 
 	for (int i = 0; i < count; i++) {
-		cout << "Transform = \n" << Transform[i] << endl;
+		cout << "Transform"<< i <<" = \n" << Transform[i] << endl;
 	}
 	
 		imshow("tt", m_normal);

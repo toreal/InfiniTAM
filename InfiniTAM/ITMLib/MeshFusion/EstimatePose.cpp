@@ -136,6 +136,6 @@ void MeshFusion::estimatePose( ITMPose * aposd)
 	newpos.SetR(R);
 	newpos.SetT(T);
 	newpos.Coerce();
-	aposd->MultiplyWith(&newpos);
+	//aposd->MultiplyWith(&newpos);
 
 }
