@@ -62,6 +62,7 @@ void MeshFusion::goodFeature(ITMPose * posd)
 	Scalar cc1=cv::Scalar(0, 0, 255, 200);
 	Scalar cc2 = cv::Scalar(0, 255, 0, 200);
 	Scalar cc3 = cv::Scalar(255, 0, 0, 200);
+
 	int red_num = 0, green_num = 0, blue_num = 0; //計算紅色、綠色、藍色區域的3D點個數
 	int points_areanum[20];//紀錄3D點所在的顏色區域
 	for (int y = 0; y < points.rows; y++)
@@ -118,6 +119,15 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		switch (points_areanum[i])
 		{
 		case 0:
+			if (red_num == 0)
+			{
+				int nx = points.at<float>(i, 0);
+				int ny = points.at<float>(i, 1);
+				
+				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize-1, ny - cBlockSize-1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
+
+			}
+
 			newPoints_red.at<float>(red_num, 0) = newPoints3D.at<float>(i, 0);
 			newPoints_red.at<float>(red_num, 1) = newPoints3D.at<float>(i, 1);
 			newPoints_red.at<float>(red_num, 2) = newPoints3D.at<float>(i, 2);
@@ -127,6 +137,14 @@ void MeshFusion::goodFeature(ITMPose * posd)
 			red_num++;
 			break;
 		case 1:
+			if (green_num == 1)
+			{
+				int nx = points.at<float>(i, 0);
+				int ny = points.at<float>(i, 1);
+
+				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
+
+			}
 			newPoints_green.at<float>(green_num, 0) = newPoints3D.at<float>(i, 0);
 			newPoints_green.at<float>(green_num, 1) = newPoints3D.at<float>(i, 1);
 			newPoints_green.at<float>(green_num, 2) = newPoints3D.at<float>(i, 2);
@@ -136,6 +154,14 @@ void MeshFusion::goodFeature(ITMPose * posd)
 			green_num++;
 			break;
 		case 2:
+			if (blue_num == 1)
+			{
+				int nx = points.at<float>(i, 0);
+				int ny = points.at<float>(i, 1);
+
+				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
+
+			}
 			newPoints_blue.at<float>(blue_num, 0) = newPoints3D.at<float>(i, 0);
 			newPoints_blue.at<float>(blue_num, 1) = newPoints3D.at<float>(i, 1);
 			newPoints_blue.at<float>(blue_num, 2) = newPoints3D.at<float>(i, 2);
