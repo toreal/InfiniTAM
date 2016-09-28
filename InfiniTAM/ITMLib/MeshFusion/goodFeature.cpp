@@ -13,15 +13,29 @@ using namespace std;
 //之前的2d 與3D 點: m_latest_paired_corners_base ,objectPoints
 void MeshFusion::goodFeature(ITMPose * posd)
 {
+	int nnode = m_latest_paired_corners_curr.size();
 
-	cout << m_latest_paired_corners_curr.size() << ",";
+
+	cv::Mat newPoints_red(nnode, 3, CV_32FC1); //目前的3D點在紅色區域
+	cv::Mat newPoints_green(nnode, 3, CV_32FC1);//目前的3D點在綠色區域
+	cv::Mat newPoints_blue(nnode, 3, CV_32FC1);//目前的3D點在藍色區域
+	cv::Mat objectPoints_red(nnode, 3, CV_32FC1);//之前的3D點在紅色區域
+	cv::Mat objectPoints_green(nnode, 3, CV_32FC1);//之前的3D點在綠色區域
+	cv::Mat objectPoints_blue(nnode, 3, CV_32FC1);//之前的3D點在藍色區域
+	cv::Mat newPoints_rand(3, 3, CV_32FC1);//從3個區域各取1個目前的3D點
+	cv::Mat objectPoints_rand(3, 3, CV_32FC1);//從3個區域各取1個之前的3D點
+
+	cout << nnode << ",";
 	cout << m_latest_paired_corners_base.size() << endl;
 
 	cout << newPoints.size() << ",";
 	cout << objectPoints.size() << endl;
+	
+	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
 
 	float* cur= mainView->curvature->GetData(MEMORYDEVICE_CPU);
 	int w = mainView->curvature->noDims.x;
+	int h = mainView->curvature->noDims.y;
 
 	int  clusterCount = 3;
 	//int  sampleCount = 20;
@@ -72,12 +86,30 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		 cv::Point pt_txt1(nx,ny);
 
 		 float cvalue = cur[nx + ny*w];
+
+		 for(int wx =0; wx < 5; wx++)
+		 {
+			 for (int wy = -5; wy <= 5; wy++)
+			 {
+				 int wwx = nx + wx;
+				 int wwy = ny + wy;
+				 if ((wwx > 1 && wwx < (w - 1)) && (wwy > 1 && wwy < (h - 1)))
+				 {
+					 Vector4u seg = segimg[wwx + (wwy)*w];
+					 if (seg.a > 128)
+						 continue;
+				 }
+
+
+			 }
+		 }
 		 std::stringstream ssout1;
 		 cout << cluster_idx << ":" << cvalue << endl;
 		 ssout1 << cluster_idx << ":" << cvalue << endl;
 		 cv::putText(m_normal, ssout1.str(), pt_txt1, CV_FONT_HERSHEY_SIMPLEX, 0.3, cc0, 1, LINE_AA, false);
 		 int len = sizeof(long);
 		 points_areanum[y] = cluster_idx;
+		 
 		 switch (cluster_idx)
 		 {
 		 case 0:
@@ -101,17 +133,6 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		//	float f3 = centers.at<float>(2, x);
 			m_normal.at<unsigned char >(f1, f2) = 127;
 		}
-	cv::Mat newPoints_red(red_num, 3, CV_32FC1); //目前的3D點在紅色區域
-	cv::Mat newPoints_green(green_num, 3, CV_32FC1);//目前的3D點在綠色區域
-	cv::Mat newPoints_blue(blue_num, 3, CV_32FC1);//目前的3D點在藍色區域
-	cv::Mat objectPoints_red(red_num, 3, CV_32FC1);//之前的3D點在紅色區域
-	cv::Mat objectPoints_green(green_num, 3, CV_32FC1);//之前的3D點在綠色區域
-	cv::Mat objectPoints_blue(blue_num, 3, CV_32FC1);//之前的3D點在藍色區域
-	cv::Mat newPoints_rand(3, 3, CV_32FC1);//從3個區域各取1個目前的3D點
-	cv::Mat objectPoints_rand(3, 3, CV_32FC1);//從3個區域各取1個之前的3D點
-	red_num = 0;
-	green_num = 0;
-	blue_num = 0;
 	//將目前的3D點和之前的3D點各自對應不同顏色區域
 	for (int i = 0; i < points.rows; i++)
 	{
@@ -171,6 +192,10 @@ void MeshFusion::goodFeature(ITMPose * posd)
 			break;
 		}
 	}
+	
+	
+
+
 	int count = 0;
 	cv::Mat Transform;
 	//從3個顏色區域各取1點做rigid_transformPose
@@ -207,8 +232,8 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		cout << "Transform = \n" << Transform << endl;
 //	}
 	
-		imshow("tt", m_normal);
-		waitKey(0);
+//		imshow("tt", m_normal);
+//		waitKey(0);
 
 	return;
 }
