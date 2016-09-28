@@ -96,7 +96,7 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 		}
 
 
-	Vector3f T(TT.at(0), TT.at(1), TT.at(2));
+	Vector3f T(TT.at(0), TT.at(1), TT.at(2) );
 
 	ITMPose newpos;
 	newpos.SetR(R);
