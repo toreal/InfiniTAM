@@ -6,6 +6,7 @@
 #include "opencv2/imgproc.hpp"
 #include <iostream>
 
+
 using namespace cv;
 using namespace std;
 
@@ -78,6 +79,14 @@ void MeshFusion::goodFeature(ITMPose * posd)
 
 	int red_num = 0, green_num = 0, blue_num = 0; //計算紅色、綠色、藍色區域的3D點個數
 	int points_areanum[20];//紀錄3D點所在的顏色區域
+
+	float curr = -1;
+	float curg = -1;
+	float curb = -1;
+	int curri = 0; 
+	int curgi = 0;
+	int curbi=0;
+
 	for (int y = 0; y < points.rows; y++)
 	{
 		int cluster_idx = labels.at<int>(y, 0);
@@ -87,22 +96,27 @@ void MeshFusion::goodFeature(ITMPose * posd)
 
 		 float cvalue = cur[nx + ny*w];
 
-		 for(int wx =0; wx < 5; wx++)
+		 bool bedge = false;
+		 for(int wx =-5; wx <= 5; wx++)
 		 {
 			 for (int wy = -5; wy <= 5; wy++)
 			 {
+				 
 				 int wwx = nx + wx;
 				 int wwy = ny + wy;
 				 if ((wwx > 1 && wwx < (w - 1)) && (wwy > 1 && wwy < (h - 1)))
 				 {
 					 Vector4u seg = segimg[wwx + (wwy)*w];
-					 if (seg.a > 128)
-						 continue;
+					// cout << wwx << "," << wwy << ":" << seg << endl;
+					 if (seg.x <=0 || seg.y <=0)
+						 bedge = true;
+					
 				 }
-
-
 			 }
 		 }
+		 if (bedge)
+			 continue;
+
 		 std::stringstream ssout1;
 		 cout << cluster_idx << ":" << cvalue << endl;
 		 ssout1 << cluster_idx << ":" << cvalue << endl;
@@ -113,15 +127,38 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		 switch (cluster_idx)
 		 {
 		 case 0:
-			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc1);
+			 if (cvalue > curr)
+			 {
+				 curr = cvalue;
+				 curri = y;
+				 cout << "red:" << red_num << endl;
+
+				 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc1);
+			 }
 			 red_num++;
 			 break;
 		 case 1:
-			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc2);
+			 if (cvalue > curg)
+			 {
+				 curg = cvalue;
+				 curgi = y;
+				 cout << "green:" << green_num << endl;
+
+
+				 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc2);
+			 }
 			 green_num++;
 			 break;
 		 case 2:
-			 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc3);
+			 if (cvalue > curb)
+			 {
+				 curb = cvalue;
+				 curbi = y;
+				 cout << "blue:" << blue_num << endl;
+
+
+				 cv::rectangle(m_normal, cv::Rect(nx - cBlockSize, ny - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc3);
+			 }
 			 blue_num++;
 		 }
 		
@@ -133,45 +170,46 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		//	float f3 = centers.at<float>(2, x);
 			m_normal.at<unsigned char >(f1, f2) = 127;
 		}
-	//將目前的3D點和之前的3D點各自對應不同顏色區域
-	for (int i = 0; i < points.rows; i++)
-	{
-		switch (points_areanum[i])
-		{
-		case 0:
-			if (red_num == 0)
-			{
-				int nx = points.at<float>(i, 0);
-				int ny = points.at<float>(i, 1);
-				
-				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize-1, ny - cBlockSize-1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
 
-			}
-				
-			newPoints_red.at<float>(red_num, 0) = newPoints3D.at<float>(i, 0);
-			newPoints_red.at<float>(red_num, 1) = newPoints3D.at<float>(i, 1);
-			newPoints_red.at<float>(red_num, 2) = newPoints3D.at<float>(i, 2);
-			objectPoints_red.at<float>(red_num, 0) = objectPoints3D.at<float>(i, 0);
-			objectPoints_red.at<float>(red_num, 1) = objectPoints3D.at<float>(i, 1);
-			objectPoints_red.at<float>(red_num, 2) = objectPoints3D.at<float>(i, 2);
-			red_num++;
-			break;
-		case 1:
-			if (green_num == 1)
-			{
-				int nx = points.at<float>(i, 0);
-				int ny = points.at<float>(i, 1);
+	////將目前的3D點和之前的3D點各自對應不同顏色區域
+	//for (int i = 0; i < points.rows; i++)
+	//{
+	//	switch (points_areanum[i])
+	//	{
+	//	case 0:
+	//		if (red_num == 0)
+	//		{
+	//			int nx = points.at<float>(i, 0);
+	//			int ny = points.at<float>(i, 1);
+	//			
+	//			cv::rectangle(m_normal, cv::Rect(nx - cBlockSize-1, ny - cBlockSize-1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
 
-				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
+	//		}
+	//			
+		newPoints_rand.at<float>(0, 0) = newPoints3D.at<float>(curri, 0);
+		newPoints_rand.at<float>(0, 1) = newPoints3D.at<float>(curri, 1);
+		newPoints_rand.at<float>(0, 2) = newPoints3D.at<float>(curri, 2);
+			objectPoints_rand.at<float>(0, 0) = objectPoints3D.at<float>(curri, 0);
+			objectPoints_rand.at<float>(0, 1) = objectPoints3D.at<float>(curri, 1);
+			objectPoints_rand.at<float>(0, 2) = objectPoints3D.at<float>(curri, 2);
+		//	red_num++;
+		//	break;
+		//case 1:
+		//	if (green_num == 1)
+		//	{
+		//		int nx = points.at<float>(i, 0);
+		//		int ny = points.at<float>(i, 1);
 
-			}
-			newPoints_green.at<float>(green_num, 0) = newPoints3D.at<float>(i, 0);
-			newPoints_green.at<float>(green_num, 1) = newPoints3D.at<float>(i, 1);
-			newPoints_green.at<float>(green_num, 2) = newPoints3D.at<float>(i, 2);
-			objectPoints_green.at<float>(green_num, 0) = objectPoints3D.at<float>(i, 0);
-			objectPoints_green.at<float>(green_num, 1) = objectPoints3D.at<float>(i, 1);
-			objectPoints_green.at<float>(green_num, 2) = objectPoints3D.at<float>(i, 2);
-			green_num++;
+		//		cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
+
+		//	}
+			newPoints_rand.at<float>(1, 0) = newPoints3D.at<float>(curgi, 0);
+			newPoints_rand.at<float>(1, 1) = newPoints3D.at<float>(curgi, 1);
+			newPoints_rand.at<float>(1, 2) = newPoints3D.at<float>(curgi, 2);
+			objectPoints_rand.at<float>(1, 0) = objectPoints3D.at<float>(curgi, 0);
+			objectPoints_rand.at<float>(1, 1) = objectPoints3D.at<float>(curgi, 1);
+			objectPoints_rand.at<float>(1, 2) = objectPoints3D.at<float>(curgi, 2);
+			/*green_num++;
 			break;
 		case 2:
 			if (blue_num == 1)
@@ -181,18 +219,18 @@ void MeshFusion::goodFeature(ITMPose * posd)
 
 				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
 
-			}
-			newPoints_blue.at<float>(blue_num, 0) = newPoints3D.at<float>(i, 0);
-			newPoints_blue.at<float>(blue_num, 1) = newPoints3D.at<float>(i, 1);
-			newPoints_blue.at<float>(blue_num, 2) = newPoints3D.at<float>(i, 2);
-			objectPoints_blue.at<float>(blue_num, 0) = objectPoints3D.at<float>(i, 0);
-			objectPoints_blue.at<float>(blue_num, 1) = objectPoints3D.at<float>(i, 1);
-			objectPoints_blue.at<float>(blue_num, 2) = objectPoints3D.at<float>(i, 2);
-			blue_num++;
+			}*/
+			newPoints_rand.at<float>(2, 0) = newPoints3D.at<float>(curbi, 0);
+			newPoints_rand.at<float>(2, 1) = newPoints3D.at<float>(curbi, 1);
+			newPoints_rand.at<float>(2, 2) = newPoints3D.at<float>(curbi, 2);
+			objectPoints_rand.at<float>(2, 0) = objectPoints3D.at<float>(curbi, 0);
+			objectPoints_rand.at<float>(2, 1) = objectPoints3D.at<float>(curbi, 1);
+			objectPoints_rand.at<float>(2, 2) = objectPoints3D.at<float>(curbi, 2);
+	/*		blue_num++;
 			break;
 		}
 	}
-	
+	*/
 	
 
 
@@ -232,8 +270,8 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		cout << "Transform = \n" << Transform << endl;
 //	}
 	
-//		imshow("tt", m_normal);
-//		waitKey(0);
+		imshow("tt", m_normal);
+		waitKey(0);
 
 	return;
 }
