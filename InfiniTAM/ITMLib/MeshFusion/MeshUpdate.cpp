@@ -105,8 +105,9 @@ public:
 		for (int i = 0; i<(int)tris.size(); i += 3) {
 			B.begin_facet();
 			B.add_vertex_to_facet(tris[i + 0]);
-			B.add_vertex_to_facet(tris[i + 1]);
 			B.add_vertex_to_facet(tris[i + 2]);
+			B.add_vertex_to_facet(tris[i + 1]);
+			
 			B.end_facet();
 		}
 
@@ -201,6 +202,11 @@ void MeshFusion::buildMesh( MyTri * data  )
 
 }
 
+//tridata 即mytridata 即目前scan  的成果
+//先將目前已scan 的data 轉到估計的current view
+// 檢查current mesh 中的點是否為新點
+// 將current mesh 依所估計的transform 轉回model view, 並加入新的點
+//目前為完全copy 但實際上要依情況merge
 
 void MeshFusion::meshUpdate(ITMMesh * mesho ,ITMPose *pose ,MyTri * tridata)
 {

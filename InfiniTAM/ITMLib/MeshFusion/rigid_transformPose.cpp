@@ -25,6 +25,8 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 	/*cout << "A = \n" << A << endl;
 	cout << "B = \n" << B << endl;*/
 
+	try
+	{
 	int N = A.rows;
 
 	cv::Mat centroid_A(1, 3, CV_32FC1); 
@@ -97,13 +99,20 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 
 
 	Vector3f T(TT.at(0), TT.at(1), TT.at(2) );
+	
+		ITMPose newpos;
+		newpos.SetR(R);
+		newpos.SetT(T);
+		newpos.Coerce();
+		posd->MultiplyWith(&newpos);
+	
 
-	ITMPose newpos;
-	newpos.SetR(R);
-	newpos.SetT(T);
-	newpos.Coerce();
-	posd->MultiplyWith(&newpos);
-
-	return cv_ret_t;
+		return		cv_ret_t;
+	}
+	catch (exception e)
+	{
+		cout << e.what();
+	}
+	
 }
 

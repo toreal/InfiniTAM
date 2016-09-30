@@ -97,9 +97,10 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		 float cvalue = cur[nx + ny*w];
 
 		 bool bedge = false;
-		 for(int wx =-5; wx <= 5; wx++)
+		 const int winsize = 3;
+		 for(int wx =-winsize; wx <= winsize; wx++)
 		 {
-			 for (int wy = -5; wy <= 5; wy++)
+			 for (int wy = -winsize; wy <= winsize; wy++)
 			 {
 				 
 				 int wwx = nx + wx;
