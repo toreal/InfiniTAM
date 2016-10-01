@@ -23,6 +23,7 @@ void MeshFusion::goodFeature(ITMPose * posd)
 	cv::Mat objectPoints_red(nnode, 3, CV_32FC1);//之前的3D點在紅色區域
 	cv::Mat objectPoints_green(nnode, 3, CV_32FC1);//之前的3D點在綠色區域
 	cv::Mat objectPoints_blue(nnode, 3, CV_32FC1);//之前的3D點在藍色區域
+
 	cv::Mat newPoints_rand(3, 3, CV_32FC1);//從3個區域各取1個目前的3D點
 	cv::Mat objectPoints_rand(3, 3, CV_32FC1);//從3個區域各取1個之前的3D點
 
@@ -31,6 +32,11 @@ void MeshFusion::goodFeature(ITMPose * posd)
 
 	cout << newPoints.size() << ",";
 	cout << objectPoints.size() << endl;
+
+	if (newPoints.size() != nnode)
+		return;
+	if (objectPoints.size() != nnode)
+		return;
 	
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
 
@@ -44,23 +50,23 @@ void MeshFusion::goodFeature(ITMPose * posd)
 	Mat centers;
 //	Mat points2 = Mat(newPoints);
 
-	cv::Mat points(m_latest_paired_corners_curr.size(),2, CV_32FC1);
-	cv::Mat newPoints3D(newPoints.size(), 3, CV_32FC1);//存目前的3D點
-	cv::Mat objectPoints3D(objectPoints.size(), 3, CV_32FC1);//存之前的3D點
+	cv::Mat points(nnode,2, CV_32FC1);
+	cv::Mat newPoints3D(nnode, 3, CV_32FC1);//存目前的3D點
+	cv::Mat objectPoints3D(nnode, 3, CV_32FC1);//存之前的3D點
 	
-	for (size_t i = 0, end = m_latest_paired_corners_curr.size(); i < end; ++i) {
+	for (size_t i = 0, end = nnode; i < end; ++i) {
 		points.at<float>(i, 0) = m_latest_paired_corners_curr[i].x;
 		points.at<float>(i, 1) = m_latest_paired_corners_curr[i].y;
 	//	points.at<float>(i, 2) = newPoints[i].z;
 	}
 
-	for (size_t i = 0, end = newPoints.size(); i < end; i++) {
+	for (size_t i = 0, end = nnode; i < end; i++) {
 		newPoints3D.at<float>(i, 0) = newPoints[i].x;
 		newPoints3D.at<float>(i, 1) = newPoints[i].y;
 		newPoints3D.at<float>(i, 2) = newPoints[i].z;
 	}
 
-	for (size_t i = 0, end = objectPoints.size(); i < end; i++) {
+	for (size_t i = 0, end = nnode; i < end; i++) {
 		objectPoints3D.at<float>(i, 0) = objectPoints[i].x;
 		objectPoints3D.at<float>(i, 1) = objectPoints[i].y;
 		objectPoints3D.at<float>(i, 2) = objectPoints[i].z;
@@ -123,7 +129,7 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		 ssout1 << cluster_idx << ":" << cvalue << endl;
 		 cv::putText(m_normal, ssout1.str(), pt_txt1, CV_FONT_HERSHEY_SIMPLEX, 0.3, cc0, 1, LINE_AA, false);
 		 int len = sizeof(long);
-		 points_areanum[y] = cluster_idx;
+		 //points_areanum[y] = cluster_idx;
 		 
 		 switch (cluster_idx)
 		 {
@@ -164,115 +170,39 @@ void MeshFusion::goodFeature(ITMPose * posd)
 		 }
 		
 	}
-		for (int x = 0; x < points.cols; x++)
-		{
-			int f1 = centers.at<float>(0, x);
-			int f2 = centers.at<float>(1, x);
-		//	float f3 = centers.at<float>(2, x);
-			m_normal.at<unsigned char >(f1, f2) = 127;
-		}
 
-	////將目前的3D點和之前的3D點各自對應不同顏色區域
-	//for (int i = 0; i < points.rows; i++)
-	//{
-	//	switch (points_areanum[i])
-	//	{
-	//	case 0:
-	//		if (red_num == 0)
-	//		{
-	//			int nx = points.at<float>(i, 0);
-	//			int ny = points.at<float>(i, 1);
-	//			
-	//			cv::rectangle(m_normal, cv::Rect(nx - cBlockSize-1, ny - cBlockSize-1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
-
-	//		}
-	//			
-		newPoints_rand.at<float>(0, 0) = newPoints3D.at<float>(curri, 0);
+	newPoints_rand.at<float>(0, 0) = newPoints3D.at<float>(curri, 0);
 		newPoints_rand.at<float>(0, 1) = newPoints3D.at<float>(curri, 1);
 		newPoints_rand.at<float>(0, 2) = newPoints3D.at<float>(curri, 2);
 			objectPoints_rand.at<float>(0, 0) = objectPoints3D.at<float>(curri, 0);
 			objectPoints_rand.at<float>(0, 1) = objectPoints3D.at<float>(curri, 1);
 			objectPoints_rand.at<float>(0, 2) = objectPoints3D.at<float>(curri, 2);
-		//	red_num++;
-		//	break;
-		//case 1:
-		//	if (green_num == 1)
-		//	{
-		//		int nx = points.at<float>(i, 0);
-		//		int ny = points.at<float>(i, 1);
 
-		//		cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
-
-		//	}
 			newPoints_rand.at<float>(1, 0) = newPoints3D.at<float>(curgi, 0);
 			newPoints_rand.at<float>(1, 1) = newPoints3D.at<float>(curgi, 1);
 			newPoints_rand.at<float>(1, 2) = newPoints3D.at<float>(curgi, 2);
 			objectPoints_rand.at<float>(1, 0) = objectPoints3D.at<float>(curgi, 0);
 			objectPoints_rand.at<float>(1, 1) = objectPoints3D.at<float>(curgi, 1);
 			objectPoints_rand.at<float>(1, 2) = objectPoints3D.at<float>(curgi, 2);
-			/*green_num++;
-			break;
-		case 2:
-			if (blue_num == 1)
-			{
-				int nx = points.at<float>(i, 0);
-				int ny = points.at<float>(i, 1);
 
-				cv::rectangle(m_normal, cv::Rect(nx - cBlockSize - 1, ny - cBlockSize - 1, cBlockSize * 2 + 3, cBlockSize * 2 + 3), cc0);
-
-			}*/
 			newPoints_rand.at<float>(2, 0) = newPoints3D.at<float>(curbi, 0);
 			newPoints_rand.at<float>(2, 1) = newPoints3D.at<float>(curbi, 1);
 			newPoints_rand.at<float>(2, 2) = newPoints3D.at<float>(curbi, 2);
 			objectPoints_rand.at<float>(2, 0) = objectPoints3D.at<float>(curbi, 0);
 			objectPoints_rand.at<float>(2, 1) = objectPoints3D.at<float>(curbi, 1);
 			objectPoints_rand.at<float>(2, 2) = objectPoints3D.at<float>(curbi, 2);
-	/*		blue_num++;
-			break;
-		}
-	}
-	*/
 	
 
 
 	int count = 0;
 	cv::Mat Transform;
-	//從3個顏色區域各取1點做rigid_transformPose
-	//for (int i = 0; i < 1; i++) {
-	//	newPoints_rand.at<float>(0, 0) = newPoints_red.at<float>(i, 0);
-	//	newPoints_rand.at<float>(0, 1) = newPoints_red.at<float>(i, 1);
-	//	newPoints_rand.at<float>(0, 2) = newPoints_red.at<float>(i, 2);
-	//	objectPoints_rand.at<float>(0, 0) = objectPoints_red.at<float>(i, 0);
-	//	objectPoints_rand.at<float>(0, 1) = objectPoints_red.at<float>(i, 1);
-	//	objectPoints_rand.at<float>(0, 2) = objectPoints_red.at<float>(i, 2);
-	//	for (int j = 1; j < 2; j++) {
-	//		newPoints_rand.at<float>(1, 0) = newPoints_green.at<float>(j, 0);
-	//		newPoints_rand.at<float>(1, 1) = newPoints_green.at<float>(j, 1);
-	//		newPoints_rand.at<float>(1, 2) = newPoints_green.at<float>(j, 2);
-	//		objectPoints_rand.at<float>(1, 0) = objectPoints_green.at<float>(j, 0);
-	//		objectPoints_rand.at<float>(1, 1) = objectPoints_green.at<float>(j, 1);
-	//		objectPoints_rand.at<float>(1, 2) = objectPoints_green.at<float>(j, 2);
-	//		for (int k = 1; k < 2; k++) {
-	//			newPoints_rand.at<float>(2, 0) = newPoints_blue.at<float>(k, 0);
-	//			newPoints_rand.at<float>(2, 1) = newPoints_blue.at<float>(k, 1);
-	//			newPoints_rand.at<float>(2, 2) = newPoints_blue.at<float>(k, 2);
-	//			objectPoints_rand.at<float>(2, 0) = objectPoints_blue.at<float>(k, 0);
-	//			objectPoints_rand.at<float>(2, 1) = objectPoints_blue.at<float>(k, 1);
-	//			objectPoints_rand.at<float>(2, 2) = objectPoints_blue.at<float>(k, 2);
-	//			Transform[count] = rigid_transformPose(objectPoints_rand, newPoints_rand,posd);
-	//			cout << count << ":" << i << "," << j << "," << k << endl;
-	//			count++;
-	//		}
-	//	}
-	//}
-
 	Transform = rigid_transformPose(objectPoints_rand, newPoints_rand, posd);
-//	for (int i = 0; i < count; i++) {
-		cout << "Transform = \n" << Transform << endl;
-//	}
+
 	
-		imshow("tt", m_normal);
-		waitKey(0);
+		cout << "Transform = \n" << Transform << endl;
+	
+	//	imshow("tt", m_normal);
+	//	waitKey(0);
 
 	return;
 }

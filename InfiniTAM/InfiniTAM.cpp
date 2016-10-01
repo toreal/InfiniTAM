@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
 try
 {
-
+	//afxMemDF |= checkAlwaysMemDF;
 
 	const char *arg1 = "";
 	const char *arg2 = NULL;
