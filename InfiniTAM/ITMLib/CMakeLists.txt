@@ -138,6 +138,8 @@ MeshFusion/refinePose.cpp
 MeshFusion/edgeRefine.cpp
 MeshFusion/goodFeature.cpp
 MeshFusion/rigid_transformPose.cpp
+MeshFusion/MyTri.cpp
+
 )
 
 
@@ -145,6 +147,7 @@ set(ITMLIB_MESHFUSION_HEADERS
 MeshFusion/MeshFusion.h
 MeshFusion/MFDepthTracker.h
 MeshFusion/MFTrackerGH.h
+MeshFusion/MyTri.h
 
 )
 
