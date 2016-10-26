@@ -168,7 +168,13 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 		addvextex(vInputPoints, Point2(m_corners[i].x, m_corners[i].y));
 
 	}
+	
+	ncon = vInputPoints.size();
+	for (int i = 0; i<(int)d_corners.size(); i++)
+	{
+		addvextex(vInputPoints, Point2(d_corners[i].x, d_corners[i].y));
 
+	}
 
 
 
