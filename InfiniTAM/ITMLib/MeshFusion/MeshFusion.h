@@ -116,8 +116,8 @@ namespace ITMLib
             std::vector<cv::Mat> m_prevPyr, m_currPyr;
 #endif
             
-            std::vector<uchar>  m_status,d_status;
-            std::vector<float>  m_err,d_err;
+            std::vector<uchar>  m_status;
+            std::vector<float>  m_err;
 			bool                m_bfirst = true;
 			std::vector<Point2> vInputPoints;
             static int          m_nDebugX,m_nDebugY;
