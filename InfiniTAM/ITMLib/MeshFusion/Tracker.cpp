@@ -86,7 +86,7 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	float * curbuf = mainView->curvature->GetData(MEMORYDEVICE_CPU);
 
 	cv::Mat mtdep(h, w, CV_32F, depbuf);
-	double  fmin, fmax, d_min, d_max;
+	double  fmin, fmax;
 	cv::minMaxLoc(mtdep, &fmin, &fmax);
 
 	const int lens =640 * 480;
