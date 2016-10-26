@@ -111,8 +111,16 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 		else
 			*btmp = 0;
 		
+		if (*dtmp2 > 0)
+			*btmp2 = 255 * (1 - (fmax - *dtmp2) / fmax);
+		else
+			*btmp2 = 255;
+		
 		btmp++;
 		dtmp++;
+		btmp2++;
+		dtmp2++;
+		
 		//if (i < (234 * 640 + 234))
 		{
 			*ctmp = (ntmp->x + 1)*127;
@@ -161,15 +169,6 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	delete []nbuf;
 	delete []cbuf;
 
-	
-	for (int i = 0; i < h*w; i++) {
-		if (*dtmp2 > 0)
-			*btmp2 = 255 * (1 - (fmax - *dtmp2) / fmax);
-		else
-			*btmp2 = 255;
-		btmp2++;
-		dtmp2++;
-	}
 	cv::Mat mdep2(h, w, CV_8U, bbuf2);
 	cv::Mat d_mdep, dst1;
 	cv::normalize(mdep2, d_mdep, 0, 255, NORM_MINMAX);
