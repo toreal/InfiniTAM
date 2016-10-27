@@ -68,19 +68,18 @@ void MeshFusion::MeshFusion_InitTracking( void )
     m_bfirst = true;
     m_pre_corners.clear();
     m_corners.clear();
+	d_corners.clear();
     m_base_corners.clear();
 }
 
 int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 {
 	ITMUChar4Image * draw = mainView->rgb;
-	
 
 	maxdis = 0;
-
 	int w = draw->noDims.x;
 	int h = draw->noDims.y;
-	Vector4u* img=draw->GetData(MEMORYDEVICE_CPU);
+	Vector4u* img = draw->GetData(MEMORYDEVICE_CPU);
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
 	float * depbuf = proDepth->GetData(MEMORYDEVICE_CPU);
 	Vector4f* normalbuf= mainView->depthNormal->GetData(MEMORYDEVICE_CPU);
@@ -92,24 +91,36 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 
 	const int lens =640 * 480;
 	BYTE*  bbuf=new BYTE[lens]; //prepare for depth;
+	BYTE*  bbuf2 = new BYTE[lens]; //feature of depth;
 	BYTE*  nbuf=new BYTE[lens*4]; //prepare for nomral;
-	BYTE*  cbuf= new BYTE[lens];//prepare fo curvature;
+	BYTE*  cbuf= new BYTE[lens];//prepare for curvature;
 	BYTE * btmp=bbuf;
+	BYTE * btmp2 = bbuf2;
 	BYTE * ctmp = nbuf;
 	BYTE * atmp = cbuf;
 	float * dtmp = depbuf;
+	float * dtmp2 = depbuf;
 	Vector4f *ntmp = normalbuf;
 	float * etmp = curbuf;
-
+	
 	for (int i = 0; i < h*w; i++)
 	{
 		if (*dtmp > 0)
+			//*btmp = 255 * (*dtmp-fmin) / (fmax-fmin);
 			*btmp = 255 * (1-(fmax - *dtmp) / fmax);
 		else
 			*btmp = 0;
-
+		
+		if (*dtmp2 > 0)
+			*btmp2 = 255 * (1 - (fmax - *dtmp2) / fmax);
+		else
+			*btmp2 = 255;
+		
 		btmp++;
 		dtmp++;
+		btmp2++;
+		dtmp2++;
+		
 		//if (i < (234 * 640 + 234))
 		{
 			*ctmp = (ntmp->x + 1)*127;
@@ -131,7 +142,6 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	cv::Mat mdep(h, w, CV_8U, bbuf);
 	cv::Mat mnor(h, w, CV_8UC4, nbuf);
 	cv::Mat mcur(h, w, CV_8U, cbuf);
-
 	m_normal = mnor.clone();
 //	blur(mnor, mnor, Size(3, 3));
 //	Canny(mnor, mnor, 50, 150, 3);
@@ -142,14 +152,11 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
 	imwrite(fn, mdep);
 	memset(fn, 0x00, 1024);
 	sprintf(fn, "dump\\normal%d.bmp", currentFrameNo);
-
 	imwrite(fn, mnor);
 	memset(fn, 0x00, 1024);
 	sprintf(fn, "dump\\curvature%d.bmp", currentFrameNo);
 
 	imwrite(fn, mcur);
-
-	
 
     cv::Mat input(h,w,CV_8UC4,img);
 	cv::Mat seginput(h, w, CV_8UC4, segimg);
@@ -158,25 +165,42 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
     cv::imshow( "input", mdep );
     
 	cv::waitKey(1);
-
 	delete []bbuf;
 	delete []nbuf;
 	delete []cbuf;
 
+	cv::Mat mdep2(h, w, CV_8U, bbuf2);
+	cv::Mat d_mdep, dst1;
+	cv::normalize(mdep2, d_mdep, 0, 255, NORM_MINMAX);
+	cv::convertScaleAbs(d_mdep, dst1);
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+			if (dst1.at<uchar>(i, j) == 255)dst1.at<uchar>(i, j) = 0;
+		}
+	}
 
+	//delete[]bbuf2;
 
     if (!m_bfirst && !m_image.empty())
         m_pre_image = m_image.clone();
-	
-    
 	// mask – The optional region of interest. If the image is not empty (then it
 	// needs to have the type CV_8UC1 and the same size as image ), it will specify
 	// the region in which the corners are detected
-	cv::Mat mask;
+	cv::Mat mask, d_mask;
 
+	d_image = dst1;
     cvtColor(input,m_image,COLOR_BGR2GRAY);
 	cvtColor(seginput, mask, COLOR_BGR2GRAY);
-    
+
+	//將d_mask邊緣往內縮
+	int rate = 2;
+	cvtColor(seginput, d_mask, COLOR_BGR2GRAY);
+	for (int i = rate; i < h- rate; i++) {
+		for (int j = rate; j < w- rate; j++) {
+			if (mask.at<uchar>(i + rate, j) == 0 || mask.at<uchar>(i - rate, j) == 0 || mask.at<uchar>(i, j + rate) == 0 || mask.at<uchar>(i, j - rate) == 0)d_mask.at<uchar>(i, j) = 0;
+		}
+	}//end
+
     // maxCorners – The maximum number of corners to return. If there are more corners
     // than that will be found, the strongest of them will be returned
     int maxCorners = 500;
@@ -209,12 +233,12 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
     cv::Size winSize=cv::Size(21,21);
     
     int maxLevel=3;
-    
     if (m_bfirst)
 	{
 		m_bfirst = false;
 		cv::goodFeaturesToTrack(m_image, m_corners, maxCorners, qualityLevel, minDistance, mask, blockSize, useHarrisDetector, k);
-
+		cv::goodFeaturesToTrack(d_image, d_corners, maxCorners, qualityLevel, minDistance, d_mask, blockSize, useHarrisDetector, k);
+		
 #ifdef CV_PYRAMID
         cv::buildOpticalFlowPyramid(m_image, m_prevPyr, winSize, maxLevel, true);
 #endif
@@ -225,15 +249,14 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
       else
     {
         m_pre_corners = m_corners;
-
 #ifdef CV_PYRAMID
         cv::buildOpticalFlowPyramid(m_image, m_currPyr, winSize, maxLevel, true);
         calcOpticalFlowPyrLK(m_prevPyr, m_currPyr, m_pre_corners, m_corners, m_status, m_err, winSize, maxLevel);
-        
-        // Reverse Check
-        std::vector< cv::Point2f > _rpre_corners;
-        std::vector< uchar > _rstatus;
-        std::vector<float> _rerr;
+		
+		// Reverse Check
+		std::vector< cv::Point2f > _rpre_corners;
+		std::vector< uchar > _rstatus;
+		std::vector<float> _rerr;
         calcOpticalFlowPyrLK(m_currPyr, m_prevPyr, m_corners, _rpre_corners, _rstatus, _rerr, winSize, maxLevel);
         
         assert(_rpre_corners.size()==m_pre_corners.size());

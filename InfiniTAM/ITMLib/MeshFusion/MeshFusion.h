@@ -111,7 +111,7 @@ namespace ITMLib
             std::vector<float>  m_latest_paired_corners_err;
             cv::Mat             m_latest_paired_curr_image, m_latest_paired_prev_image, m_latest_paired_base_image;
 		
-            cv::Mat             m_image, m_pre_image, m_base_image;
+            cv::Mat             m_image, m_pre_image, m_base_image, d_image;
 #ifdef CV_PYRAMID
             std::vector<cv::Mat> m_prevPyr, m_currPyr;
 #endif
@@ -129,7 +129,7 @@ namespace ITMLib
 
 		public:
 
-			std::vector< cv::Point2f > m_corners, m_pre_corners, m_base_corners, m_backup;
+			std::vector< cv::Point2f > m_corners, m_pre_corners, m_base_corners, m_backup, d_corners;
 
 			std::vector<cv::Point3f> objectPoints;
 			std::vector<cv::Point3f> newPoints;
@@ -209,7 +209,7 @@ namespace ITMLib
             static void ShowDebugWindow(void);
             static void OutputDebugText(const char *str);
             static void OutputDebugPlot(const int nX, const int nY, const std::vector<float> & plotdata);
-
+			
 		};
 	}
 }
