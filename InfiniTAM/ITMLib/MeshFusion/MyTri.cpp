@@ -36,6 +36,29 @@ void MyTri::buildHalfEdge()
 	}
 	totaledge = nedge;
 
+	for (int i = 0; i < nedge; i++)
+	{
+		//meshEdge[i].needflip = -1;
+		for (int j = 0; j < nedge; j++)
+		{
+			if(i!=j)
+			meshEdge[i].checkPair(meshEdge + j);
+
+		}
+	}
+
+	cout << "print out boundary points" << endl;
+	for (int i = 0; i < nedge; i++)
+	{
+		if (meshEdge[i].pair == NULL)
+		{
+			cout << meshEdge[i].v1 << "," << meshEdge[i].v2 << endl;
+
+		}
+
+	}
+
+
 
 
 }
