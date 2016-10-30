@@ -59,12 +59,16 @@ namespace ITMLib
 			MyVertex meshVertex[2048];
 			ushort  meshTri[2048 * 3];
 			Point2  meshProj[2048];
+			int  boundary[2048];
+			int  contour[1024];
 			float meshDepth[2048];
 			halfEdge meshEdge[2048];
 			bool  stat[2048];
 			int totalVertex = 0;
 			int totalFace = 0;
 			int totaledge=0;
+			int nboundary;
+			int ncontour;
 
 			void copyFrom(MyTri * data);
 			int opposite(halfEdge e);

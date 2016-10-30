@@ -61,15 +61,94 @@ void MyTri::buildHalfEdge(void * mfdata)
 	cv::Mat input(h, w, CV_8UC4, img);
 
 	cout << "print out boundary points" << endl;
+
+	std::vector<cv::Point>  blist;
+	cv::Point p;
+	int ns = 0;
 	for (int i = 0; i < nedge; i++)
 	{
 		if (meshEdge[i].pair == NULL)
 		{
 			cout << meshEdge[i].v1 << "," << meshEdge[i].v2 << endl;
-			Point2 p1 = meshProj[meshEdge[i].v1];
-			Point2 p2 = meshProj[meshEdge[i].v2];
-			cv::line(input,cv::Point(p1.x(),p1.y()), cv::Point(p2.x(), p2.y()), cv::Scalar(250, 128, 250), 1, cv::LINE_AA);
+			p.x = meshEdge[i].v1;
+			p.y = meshEdge[i].v2;
+			blist.push_back(p);
+		
+			}
+
+	}
+
+	int nstart = -1;
+	int nsearch = -1;
+	nboundary = 0;
+	ncontour = 0;
+
+
+	while (blist.size()>0)
+	{
+		if (nstart == nsearch)
+		{
+			contour[ncontour] = nboundary;
+			p = blist.back();
+			blist.pop_back();
+			nstart = p.x;
+			boundary[nboundary] = nstart;
+			nboundary++;
+			nsearch = p.y;
+			boundary[nboundary] = nsearch;
+			nboundary++;
+			ncontour++;
 		}
+
+		int bfind = true;
+		while (nsearch != nstart && bfind && blist.size()>0)
+		{
+			bfind = false;
+			for (int j = 0; j < blist.size(); j++)
+			{
+				if (blist[j].x == nsearch)
+				{
+					nsearch = blist[j].y;
+					bfind = true;
+										
+				}
+				else if (blist[j].y == nsearch)
+				{
+					nsearch = blist[j].x;
+					bfind = true;
+
+				}
+				if (bfind)
+				{
+					p = blist.back();
+					blist[j] = p;
+					blist.pop_back();
+					boundary[nboundary] = nsearch;
+					nboundary++;
+					break;
+
+
+				}
+
+
+			}
+		}
+
+	}
+
+	contour[ncontour] = nboundary;
+	for (int i = 0; i < ncontour; i++)
+	{
+		cv::Scalar clr(rand() % 255, rand() % 255, rand() % 255);
+		for (int j = contour[i]; j < contour[i + 1]-1; j++)
+		{
+			Point2 p1 = meshProj[boundary[j]];
+			Point2 p2 = meshProj[boundary[j+1]];
+
+			cv::line(input, cv::Point(p1.x(), p1.y()), cv::Point(p2.x(), p2.y()), clr, 1, cv::LINE_AA);
+
+		}
+
 
 	}
 
