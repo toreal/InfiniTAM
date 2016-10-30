@@ -229,7 +229,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			    mfdata->sortpoint(view->rgb);
 
 				mfdata->constructMesh(mesh,&mfdata->currTri);
-				mfdata->currTri.buildHalfEdge();
+				mfdata->currTri.buildHalfEdge(mfdata);
 
 
 				if (!mfdata->bmesh)

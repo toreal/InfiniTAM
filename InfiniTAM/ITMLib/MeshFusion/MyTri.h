@@ -14,10 +14,14 @@ typedef CGAL::Simple_cartesian<float> K;
 typedef K::Point_2          Point2;
 
 
+
 namespace ITMLib
 {
 	namespace Objects
 	{
+
+		
+
 		class halfEdge
 		{
 		public :
@@ -66,7 +70,7 @@ namespace ITMLib
 			int opposite(halfEdge e);
 			void output2d(char * fn);
 			void project(Matrix4f * m, Vector4f intrinRGB);
-			void buildHalfEdge();
+			void buildHalfEdge(void * mfdata);
 
 			float findError(MyTri &, std::vector<cv::Point3f> * diff,
 				std::vector<cv::Point3f> * node = NULL, std::vector<cv::Point3f> * normal = NULL);

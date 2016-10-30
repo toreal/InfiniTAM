@@ -1,9 +1,14 @@
 
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "MyTri.h"
+#include "MeshFusion.h"
 
 using namespace ITMLib::Objects;
 
-void MyTri::buildHalfEdge()
+void MyTri::buildHalfEdge(void * mfdata)
 {
 
 	//construct half edge
@@ -47,17 +52,28 @@ void MyTri::buildHalfEdge()
 		}
 	}
 
+	ITMUChar4Image * draw = ((MeshFusion *)mfdata)->mainView->rgb;
+
+	
+	int w = draw->noDims.x;
+	int h = draw->noDims.y;
+	Vector4u* img = draw->GetData(MEMORYDEVICE_CPU);
+	cv::Mat input(h, w, CV_8UC4, img);
+
 	cout << "print out boundary points" << endl;
 	for (int i = 0; i < nedge; i++)
 	{
 		if (meshEdge[i].pair == NULL)
 		{
 			cout << meshEdge[i].v1 << "," << meshEdge[i].v2 << endl;
-
+			Point2 p1 = meshProj[meshEdge[i].v1];
+			Point2 p2 = meshProj[meshEdge[i].v2];
+			cv::line(input,cv::Point(p1.x(),p1.y()), cv::Point(p2.x(), p2.y()), cv::Scalar(250, 128, 250), 1, cv::LINE_AA);
 		}
 
 	}
 
+	cv::imwrite("check.png", input);
 
 
 
