@@ -163,6 +163,14 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 	}
 	
 	ncon = vInputPoints.size();
+
+	for (int i = 0; i < ncon -1; i++)
+	{
+		constrainbeg.push_back(vInputPoints[i]);
+		constrainend.push_back(vInputPoints[i+1]);
+	}
+
+
 	for (int i = 0; i<(int)m_corners.size(); i++)
 	{
 		addvextex(vInputPoints, Point2(m_corners[i].x, m_corners[i].y));
@@ -954,10 +962,11 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 	
 	insert_with_info(dt, vInputPoints.begin(), vInputPoints.end());
 
+	int lens = constrainbeg.size();
 
-	for (int i = 0; i < ncon - 1; i++)
+	for (int i = 0; i < lens; i++)
 	{
-		dt.insert_constraint(vInputPoints[i], vInputPoints[i + 1]);
+		dt.insert_constraint(constrainbeg[i], constrainend[i ]);
 		//vSegments.push_back(Segment2(vInputPoints[i], vInputPoints[i + 1]));
 
 	}
@@ -968,11 +977,9 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 	CDT::Face_handle face;
 	CDT::Face_handle neighbor;
 	int idx = 0;
-
-	for (
-		CDT::Vertex_iterator vit = dt.vertices_begin(),
+	CDT::Vertex_iterator vit = dt.vertices_begin(),
 		vend = dt.vertices_end();
-		vit != vend; ++vit)
+	for (;	vit != vend; ++vit)
 	{
 		//cv::Point3f  pout;
 		Point2 p0 = vit->point();
@@ -997,6 +1004,8 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 
 		idx++;
 	}
+
+	
 	tridata->totalVertex = idx;
 
 

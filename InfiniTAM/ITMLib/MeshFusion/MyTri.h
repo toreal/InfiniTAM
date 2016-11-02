@@ -75,6 +75,7 @@ namespace ITMLib
 			void output2d(char * fn);
 			void project(Matrix4f * m, Vector4f intrinRGB);
 			void buildHalfEdge(void * mfdata);
+			int locateAt(Point2 );
 
 			float findError(MyTri &, std::vector<cv::Point3f> * diff,
 				std::vector<cv::Point3f> * node = NULL, std::vector<cv::Point3f> * normal = NULL);

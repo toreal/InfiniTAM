@@ -120,6 +120,8 @@ namespace ITMLib
             std::vector<float>  m_err;
 			bool                m_bfirst = true;
 			std::vector<Point2> vInputPoints;
+			std::vector<Point2> constrainbeg;
+			std::vector<Point2> constrainend;
             static int          m_nDebugX,m_nDebugY;
             static int          m_nDebugVectorIdx;
 				
@@ -179,6 +181,7 @@ namespace ITMLib
 			void genContour(char * str);
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
+			void meshMerge(ITMMesh * mesh, ITMPose *, MyTri * tridata);
 			void buildMesh( MyTri *);
             ////////////////////////////
             //  Image feature tracking

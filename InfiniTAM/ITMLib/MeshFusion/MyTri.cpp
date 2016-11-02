@@ -6,7 +6,53 @@
 #include "MyTri.h"
 #include "MeshFusion.h"
 
+#include <vector>
+
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Barycentric_coordinates_2/Triangle_coordinates_2.h>
+
+// Some convenient typedefs.
+//typedef CGAL::Simple_cartesian<float> Kernel;
+
+typedef K::FT      Scalar;
+//typedef K::Point_2 Point2;
+
+typedef std::vector<Scalar> Scalar_vector;
+
+typedef CGAL::Barycentric_coordinates::Triangle_coordinates_2<K> Triangle_coordinates;
+
+
+
 using namespace ITMLib::Objects;
+
+int MyTri::locateAt( Point2 pos)
+{
+	Scalar_vector coordinates;
+	coordinates.reserve(3);
+
+	int nface = totalFace / 3;
+	for (int i = 0; i < nface; i++)
+	{
+
+		Point2  first_vertex = meshProj[meshTri[3 * i]];
+		Point2  second_vertex = meshProj[meshTri[3 * i + 1]];
+		Point2  third_vertex = meshProj[meshTri[3 * i + 2]];
+
+
+		// Instantiate the class Triangle_coordinates_2 for the triangle defined above.
+		Triangle_coordinates triangle_coordinates(first_vertex, second_vertex, third_vertex);
+
+		coordinates.clear();
+		//檢查目前的vertex 是否在scanned model 上
+		triangle_coordinates(pos, coordinates);
+		if (coordinates[0] > 0 && coordinates[1] > 0 && coordinates[2] > 0)
+		{
+			return i;
+		}
+
+	}
+	return -1;
+}
 
 void MyTri::buildHalfEdge(void * mfdata)
 {
