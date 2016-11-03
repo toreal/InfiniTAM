@@ -25,7 +25,7 @@ typedef CGAL::Barycentric_coordinates::Triangle_coordinates_2<K> Triangle_coordi
 
 using namespace ITMLib::Objects;
 
-int MyTri::locateAt( Point2 pos)
+float MyTri::locateAt( Point2 pos)
 {
 	Scalar_vector coordinates;
 	coordinates.reserve(3);
@@ -38,6 +38,12 @@ int MyTri::locateAt( Point2 pos)
 		Point2  second_vertex = meshProj[meshTri[3 * i + 1]];
 		Point2  third_vertex = meshProj[meshTri[3 * i + 2]];
 
+		float d1 = meshDepth[meshTri[3 * i]];
+		float d2 = meshDepth[meshTri[3 * i + 1]];
+		float d3 = meshDepth[meshTri[3 * i + 2]];
+
+
+
 
 		// Instantiate the class Triangle_coordinates_2 for the triangle defined above.
 		Triangle_coordinates triangle_coordinates(first_vertex, second_vertex, third_vertex);
@@ -47,7 +53,9 @@ int MyTri::locateAt( Point2 pos)
 		triangle_coordinates(pos, coordinates);
 		if (coordinates[0] > 0 && coordinates[1] > 0 && coordinates[2] > 0)
 		{
-			return i;
+			float ed = d1*coordinates[0] + d2*coordinates[1] + d3*coordinates[2];
+
+			return ed;
 		}
 
 	}

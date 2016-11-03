@@ -157,6 +157,9 @@ void MeshFusion::sortpoint(ITMUChar4Image * draw)
 
 
 	vInputPoints.clear();
+	constrainbeg.clear();
+	constrainend.clear();
+
 	for (int i = 0; i < selp; i++)
 	{
 		addvextex(vInputPoints, Point2(sellist[i].x, sellist[i].y));
@@ -1117,6 +1120,25 @@ void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
 			nface = nface + 3;
 		}
 	}
+	
+	fout << "stroke" << endl;
+	fout << "0	1	1	setrgbcolor" << endl;
+	 lens = constrainbeg.size();
+	for (int i = 0; i < lens; i++)
+	{
+
+		if (i == ncon)
+		{
+			fout << "stroke" << endl;
+			fout << "1	0	0	setrgbcolor" << endl;
+
+		}
+
+		fout << constrainbeg[i] << "  moveto" << endl;
+		fout << constrainend[i] << "  lineto" << endl;
+
+	}
+	
 	tridata->totalFace = nface;
 	fout.close();
 

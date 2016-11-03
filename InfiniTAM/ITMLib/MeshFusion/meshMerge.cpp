@@ -42,8 +42,9 @@ void MeshFusion::meshMerge(ITMMesh * mesh, ITMPose * pose, MyTri * scanned)
 	memset(currTri.stat, 0x00, sizeof(bool) * 2048);
 		for (int j = 0; j < currTri.totalVertex; j++)
 		{
-			int idx = scanned->locateAt(currTri.meshProj[j]);
-			if ( idx >=0)
+			float dz= currTri.meshDepth[j];
+			float  ed = scanned->locateAt(currTri.meshProj[j]);
+			if ( ed >=0  && fabs(dz-ed) <5)
 			currTri.stat[j] = true;
 			
 		};//end of for loop to check vertex
@@ -83,9 +84,11 @@ void MeshFusion::meshMerge(ITMMesh * mesh, ITMPose * pose, MyTri * scanned)
 	for (int i = nstart; i < nend; i++)
 	{
 		int bnode = scanned->boundary[i];// vertex index
-		int idx=	currTri.locateAt(scanned->meshProj[bnode]);
-		if (idx >= 0)
+		float dz = scanned->meshDepth[bnode];
+		float  ed=	currTri.locateAt(scanned->meshProj[bnode]);
+		if (ed >= 0 && fabs(ed-dz) < 5)
 		{
+
 			if (lasti != -1 && lasti == (i - 1))
 			{
 				constrainbeg.push_back(scanned->meshProj[scanned->boundary[lasti]]);
