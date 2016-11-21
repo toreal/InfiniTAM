@@ -171,19 +171,6 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 //	SaveImageToFile(mfdata->proDepth, "prodepth.ppm");
 
-	if (bsence)
-	{
-
-		//// tracking
-		trackingController->Track(trackingState, view);
-
-		//// fusion
-		if (fusionActive) denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);
-
-		//// raycast to renderState_live for tracking and free visualisation
-		trackingController->Prepare(trackingState, view, renderState_live);
-	}
-
 	float mindis;
 	
 	//M
@@ -261,11 +248,16 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 					fclose(fw);
 
 #endif
+					//pnp 估pose,目前並沒有更新到pose_d,所以有作沒作都一樣
 					mfdata->estimatePose(trackingState->pose_d);
 					//mfdata->refinePose(trackingState->pose_d);
 					mfdata->goodFeature(trackingState->pose_d);
-				//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
-				//	mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
+
+					//已不適合呼叫
+					//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
+					
+					//新的mesh merge,但當點的位置有錯,會有問題,所以先不作
+			    	//	mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
 			mfdata->Generate3DPoints(mfdata->m_base_corners,mfdata->objectPoints );
 
@@ -279,6 +271,25 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			std::cout << em.what();
 
 		}
+
+
+
+		if (bsence)
+		{
+
+			//// tracking
+			//trackingController->Track(trackingState, view);
+
+			//// fusion
+			if (fusionActive) 
+				denseMapper->ProcessFrame(view, trackingState, scene, renderState_live);
+
+			//// raycast to renderState_live for tracking and free visualisation
+			trackingController->Prepare(trackingState, view, renderState_live);
+		}
+
+
+
 	}
 
 	

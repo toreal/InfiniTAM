@@ -41,7 +41,7 @@ namespace ITMLib
             class DebugLog
             {
             public:
-                
+                  
                 static std::stringstream ssOut;
 
                 template <class T>
@@ -153,6 +153,7 @@ namespace ITMLib
 			int             selp;
 			int             ncon;
 
+			ITMPose        posd;
 			MeshFusion() {
 				segImage = NULL;
 				pointlist = new Vector2i[MAXNODE];
