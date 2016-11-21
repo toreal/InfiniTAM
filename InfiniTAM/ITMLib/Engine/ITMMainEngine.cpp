@@ -7,7 +7,7 @@
 
 using namespace ITMLib::Engine;
 
-bool bsence = false;
+bool bsence = true;
 
 #define OUTPUT 1
 
@@ -265,7 +265,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 					//mfdata->refinePose(trackingState->pose_d);
 					mfdata->goodFeature(trackingState->pose_d);
 				//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
-					mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
+				//	mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
 			mfdata->Generate3DPoints(mfdata->m_base_corners,mfdata->objectPoints );
 
