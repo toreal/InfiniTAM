@@ -289,16 +289,9 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 		}
 
 
+	}//end of if 
 
-	}
-
-	
-
-	
-
-
-	
-}
+}//end of function
 
 Vector2i ITMMainEngine::GetImageSize(void) const
 {

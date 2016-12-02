@@ -65,6 +65,7 @@ void ITMSceneReconstructionEngine_CPU<TVoxel, ITMVoxelBlockHash>::IntegrateIntoS
 
 	float mu = scene->sceneParams->mu; int maxW = scene->sceneParams->maxW;
 
+	//float *depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	float *depth = view->depth->GetData(MEMORYDEVICE_CPU);
 	Vector4u *rgb = view->rgb->GetData(MEMORYDEVICE_CPU);
 	TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();

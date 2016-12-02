@@ -31,6 +31,15 @@ namespace ITMLib
 				triangles = new ORUtils::MemoryBlock<Triangle>(noMaxTriangles, memoryType);
 			}
 
+
+			void check(float v, float & x, float &y)
+			{
+				if (v < x)
+					x = v;
+				if (v > y)
+					y = v;
+			}
+
 			void WriteOBJ(const char *fileName)
 			{
 				ORUtils::MemoryBlock<Triangle> *cpu_triangles; bool shoulDelete = false;
@@ -81,11 +90,15 @@ namespace ITMLib
 
 					fwrite(&noTotalTriangles, sizeof(int), 1, f);
 
+					float xmin=1000,ymin=1000,zmin = 1000;
+					float xmax=-1000,ymax=-1000,zmax = -1000;
+
 					float zero = 0.0f; short attribute = 0;
 					for (uint i = 0; i < noTotalTriangles; i++)
 					{
 						fwrite(&zero, sizeof(float), 1, f); fwrite(&zero, sizeof(float), 1, f); fwrite(&zero, sizeof(float), 1, f);
 
+						
 						fwrite(&triangleArray[i].p2.x, sizeof(float), 1, f); 
 						fwrite(&triangleArray[i].p2.y, sizeof(float), 1, f); 
 						fwrite(&triangleArray[i].p2.z, sizeof(float), 1, f);
@@ -97,6 +110,21 @@ namespace ITMLib
 						fwrite(&triangleArray[i].p0.x, sizeof(float), 1, f);
 						fwrite(&triangleArray[i].p0.y, sizeof(float), 1, f);
 						fwrite(&triangleArray[i].p0.z, sizeof(float), 1, f);
+
+
+						check(triangleArray[i].p2.x, xmin,xmax);
+						check(triangleArray[i].p2.y, ymin, ymax);
+						check(triangleArray[i].p2.z, zmin, zmax);
+						
+						check(triangleArray[i].p1.x, xmin, xmax);
+						check(triangleArray[i].p1.y, ymin, ymax);
+						check(triangleArray[i].p1.z, zmin, zmax);
+
+						check(triangleArray[i].p0.x, xmin, xmax);
+						check(triangleArray[i].p0.y, ymin, ymax);
+						check(triangleArray[i].p0.z, zmin, zmax);
+
+
 
 						fwrite(&attribute, sizeof(short), 1, f);
 

@@ -79,7 +79,8 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 	arma::fmat farma_centroid_Bt(centroid_B.ptr<float>(), centroid_B.rows, centroid_B.cols);
 	arma::mat arma_centroid_Bt = conv_to<mat>::from(farma_centroid_Bt);
 
-	arma::mat ret_t = -ret_R * arma_centroid_At + arma_centroid_Bt; // 因為一開始centroid_A和centroid_B有轉置了，所以這邊不需要再轉置
+    arma::mat ret_t = -ret_R * arma_centroid_At +arma_centroid_Bt; // 因為一開始centroid_A和centroid_B有轉置了，所以這邊不需要再轉置
+//	arma::mat ret_t =  arma_centroid_Bt - arma_centroid_At; // 因為一開始centroid_A和centroid_B有轉置了，所以這邊不需要再轉置
 
 
 	//將 arma::mat ret_t 轉換成 cv::Mat
@@ -97,13 +98,23 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 			R.m[i + j * 3] = v;
 		}
 
+	//for DSF 
+	float rescale = 1000.0f;
 
-	Vector3f T(TT.at(0), TT.at(1), TT.at(2) );
+	Vector3f T(TT.at(0)/rescale, TT.at(1) / rescale, TT.at(2) / rescale);
+
+
+	//Matrix3f invR;
+	//R.inv(invR);
+	//Vector3f RT =invR*T;
+
 	
 		ITMPose newpos;
 		newpos.SetR(R);
 		newpos.SetT(T);
 		newpos.Coerce();
+	//	newpos.SetM(newpos.GetInvM());
+	//	newpos.Coerce();
 		posd->MultiplyWith(&newpos);
 	
 
