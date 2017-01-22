@@ -105,7 +105,7 @@ void UIEngine::glutDisplayFunction()
 	uiEngine->mfdata->MeshFusion_DrawVector(winReg[2][0], winReg[2][1], winReg[2][2] - winReg[2][0], winReg[2][3] - winReg[2][1]);
     
     
-	bool buser = uiEngine->outImageType[0] != ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST;
+	/*bool buser = uiEngine->outImageType[0] != ITMMainEngine::GetImageType::InfiniTAM_IMAGE_SCENERAYCAST;
 	if (buser)
 	{
 		uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
@@ -115,7 +115,7 @@ void UIEngine::glutDisplayFunction()
 	{
 		uiEngine->mfdata->MeshFusion_Model(winReg[0][0], winReg[0][1], winReg[0][2] - winReg[0][0], winReg[0][3] - winReg[0][1],
 			true, uiEngine->mainEngine->GetTrackingState()->pose_d, &uiEngine->freeviewIntrinsics);
-	}
+	}*/
     
 	glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -403,7 +403,7 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 	case 'w':
 		printf("saving mesh to disk ...");
 		uiEngine->SaveSceneToMesh("mesh.stl");
-		//uiEngine->mfdata->writeMesh( "mesh.off");
+		uiEngine->mfdata->writeMesh( "mesh.off");
 		printf(" done\n");
 		break;
 	default:
@@ -485,7 +485,11 @@ void UIEngine::glutMouseMoveFunction(int x, int y)
 		Vector3f axis((float)-movement.y, (float)-movement.x, 0.0f);
 		float angle = scale_rotation * sqrt((float)(movement.x * movement.x + movement.y*movement.y));
 		Matrix3f rot = createRotation(axis, angle);
-		uiEngine->freeviewPose.SetRT(rot * uiEngine->freeviewPose.GetR(), rot * uiEngine->freeviewPose.GetT());
+//		uiEngine->freeviewPose.SetRT(rot * uiEngine->freeviewPose.GetR(), rot * uiEngine->freeviewPose.GetT());
+		uiEngine->freeviewPose.SetR(rot * uiEngine->freeviewPose.GetR());
+		uiEngine->freeviewPose.SetT(rot * Vector3f(0,0,0.25));
+
+		
 		uiEngine->freeviewPose.Coerce();
 		uiEngine->needsRefresh = true;
 		break;

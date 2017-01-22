@@ -12,7 +12,7 @@ using namespace arma;
 
 
 
-cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
+cv::Mat MeshFusion::rigid_transformPose(cv::Mat B, cv::Mat A, ITMPose * posd)
 {
 	/*cv::Mat A(3, 3, CV_32FC1);
 	cv::Mat B(3, 3, CV_32FC1);
@@ -99,7 +99,7 @@ cv::Mat MeshFusion::rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd)
 		}
 
 	//for DSF 
-	float rescale = 1000.0f;
+	float rescale =  1000.0f;
 
 	Vector3f T(TT.at(0)/rescale, TT.at(1) / rescale, TT.at(2) / rescale);
 

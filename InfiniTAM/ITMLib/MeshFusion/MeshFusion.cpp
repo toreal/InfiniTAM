@@ -521,6 +521,8 @@ void MeshFusion::NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise)
 
 void MeshFusion::buildProjDepth()
 {
+	float rscale =  1000.0f;
+
 	//ITMFloatImage * floatImage= new ITMFloatImage(mainView->depth->noDims, true, false);
 
 	if (proDepth == NULL  )
@@ -544,7 +546,7 @@ void MeshFusion::buildProjDepth()
 	for (int nx = 0; nx < xlens; nx++)
 		for (int ny = 0; ny < ylens; ny++)
 		{
-			float pz = dd[nx + ny*xlens] *1000;
+			float pz = dd[nx + ny*xlens] * rscale;
 
 			if (pz > 0)
 			{
@@ -641,7 +643,7 @@ void MeshFusion::buildProjDepth()
 						int ix = prgb.x * intrinD.x / prgb.z + intrinD.z;
 						int iy = prgb.y * intrinD.y / prgb.z + intrinD.w;
 
-						float npz = dd[ix + iy*xlens]*1000;
+						float npz = dd[ix + iy*xlens]* rscale;
 
 						float diff = npz - prgb.z;
 
@@ -689,6 +691,18 @@ void MeshFusion::buildProjDepth()
 	//delete vb;
 
 	
+		//memcpy(dd, dp, sizeof(float) * lens);
+
+		//float* src = dp;
+		//float * dst = dd;
+		//for (int i = 0; i < lens; i++)
+		//{
+		//	*dst = *src / 1000;
+		//	src++;
+		//	dst++;
+		//    
+		//	
+		//}
 
 }
 	 

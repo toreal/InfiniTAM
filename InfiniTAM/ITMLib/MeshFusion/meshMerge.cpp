@@ -16,7 +16,73 @@ typedef std::vector<Scalar> Scalar_vector;
 
 typedef CGAL::Barycentric_coordinates::Triangle_coordinates_2<K> Triangle_coordinates;
 
+void MeshFusion::intoMesh(Matrix4f invm, MyTri *scanned)
+{
 
+	int nnode[2048];
+
+	int ocase = -1;
+	int	nface = scanned->totalFace / 3;
+	for (int i = 0; i < nface; i++)
+	{
+		int n0 = scanned->meshTri[3 * i];
+		int n1 = scanned->meshTri[3 * i + 1];
+		int n2 = scanned->meshTri[3 * i + 2];
+		Point2  first_vertex = scanned->meshProj[n0];
+		Point2  second_vertex = scanned->meshProj[n1];
+		Point2  third_vertex = scanned->meshProj[n2];
+
+		bool s0 = scanned->stat[n0];
+		bool s1 = scanned->stat[n1];
+		bool s2 = scanned->stat[n2];
+
+		if (!s0 && !s1 && !s2)
+		{
+			Vector3f pos0(scanned->meshVertex[n0].x, scanned->meshVertex[n0].y, scanned->meshVertex[n0].z);
+			Vector3f pos1(scanned->meshVertex[n1].x, scanned->meshVertex[n1].y, scanned->meshVertex[n1].z);
+			Vector3f pos2(scanned->meshVertex[n2].x, scanned->meshVertex[n2].y, scanned->meshVertex[n2].z);
+
+			Vector3f ipos0 = invm *pos0;
+			Vector3f ipos1 = invm *pos1;
+			Vector3f ipos2 = invm *pos2;
+
+			// if (nnode[n0] <= 0)
+			{
+				mytriData.meshVertex[mytriData.totalVertex].x = ipos0.x;
+				mytriData.meshVertex[mytriData.totalVertex].y = ipos0.y;
+				mytriData.meshVertex[mytriData.totalVertex].z = ipos0.z;
+				nnode[n0] = mytriData.totalVertex;
+				mytriData.totalVertex++;
+			}
+
+			//if (nnode[n1] <= 0)
+			{
+				mytriData.meshVertex[mytriData.totalVertex].x = ipos1.x;
+				mytriData.meshVertex[mytriData.totalVertex].y = ipos1.y;
+				mytriData.meshVertex[mytriData.totalVertex].z = ipos1.z;
+				nnode[n1] = mytriData.totalVertex;
+				mytriData.totalVertex++;
+			}
+
+			//if (nnode[n2] <= 0)
+			{
+				mytriData.meshVertex[mytriData.totalVertex].x = ipos2.x;
+				mytriData.meshVertex[mytriData.totalVertex].y = ipos2.y;
+				mytriData.meshVertex[mytriData.totalVertex].z = ipos2.z;
+				nnode[n2] = mytriData.totalVertex;
+				mytriData.totalVertex++;
+			}
+
+			mytriData.meshTri[mytriData.totalFace++] = nnode[n0];
+			mytriData.meshTri[mytriData.totalFace++] = nnode[n1];
+			mytriData.meshTri[mytriData.totalFace++] = nnode[n2];
+
+		}
+
+
+	}
+
+}
 
 /// pose: current transform
 /// scanned : scanned model
@@ -110,72 +176,13 @@ void MeshFusion::meshMerge(ITMMesh * mesh, ITMPose * pose, MyTri * scanned)
 
 	}
 
+	//新scanned 的data,建新的mesh
 	constructMesh(NULL, &currTri);
-
-
-	int nnode[2048];
-
-	int ocase = -1;
-  int	nface = currTri.totalFace / 3;
-	for (int i = 0; i < nface; i++)
-	{
-		int n0 = currTri.meshTri[3 * i];
-		int n1 = currTri.meshTri[3 * i + 1];
-		int n2 = currTri.meshTri[3 * i + 2];
-		Point2  first_vertex = currTri.meshProj[n0];
-		Point2  second_vertex = currTri.meshProj[n1];
-		Point2  third_vertex = currTri.meshProj[n2];
-
-		bool s0 = currTri.stat[n0];
-		bool s1 = currTri.stat[n1];
-		bool s2 = currTri.stat[n2];
-
-		if (!s0 && !s1 && !s2)
-		{
-			Vector3f pos0(currTri.meshVertex[n0].x, currTri.meshVertex[n0].y, currTri.meshVertex[n0].z);
-			Vector3f pos1(currTri.meshVertex[n1].x, currTri.meshVertex[n1].y, currTri.meshVertex[n1].z);
-			Vector3f pos2(currTri.meshVertex[n2].x, currTri.meshVertex[n2].y, currTri.meshVertex[n2].z);
-
-			Vector3f ipos0 = invm *pos0;
-			Vector3f ipos1 = invm *pos1;
-			Vector3f ipos2 = invm *pos2;
-
-			// if (nnode[n0] <= 0)
-			{
-				mytriData.meshVertex[mytriData.totalVertex].x = ipos0.x;
-				mytriData.meshVertex[mytriData.totalVertex].y = ipos0.y;
-				mytriData.meshVertex[mytriData.totalVertex].z = ipos0.z;
-				nnode[n0] = mytriData.totalVertex;
-				mytriData.totalVertex++;
-			}
-
-			//if (nnode[n1] <= 0)
-			{
-				mytriData.meshVertex[mytriData.totalVertex].x = ipos1.x;
-				mytriData.meshVertex[mytriData.totalVertex].y = ipos1.y;
-				mytriData.meshVertex[mytriData.totalVertex].z = ipos1.z;
-				nnode[n1] = mytriData.totalVertex;
-				mytriData.totalVertex++;
-			}
-
-			//if (nnode[n2] <= 0)
-			{
-				mytriData.meshVertex[mytriData.totalVertex].x = ipos2.x;
-				mytriData.meshVertex[mytriData.totalVertex].y = ipos2.y;
-				mytriData.meshVertex[mytriData.totalVertex].z = ipos2.z;
-				nnode[n2] = mytriData.totalVertex;
-				mytriData.totalVertex++;
-			}
-
-			mytriData.meshTri[mytriData.totalFace++] = nnode[n0];
-			mytriData.meshTri[mytriData.totalFace++] = nnode[n1];
-			mytriData.meshTri[mytriData.totalFace++] = nnode[n2];
-
-		}
 	
+	//將新mesh 加到原有的mesh data 上
+	intoMesh(invm, &currTri);
 
-	}
-
+	
 
 	//build new triangle
 	// for each new corner check whether it is belong to a triangle or not 

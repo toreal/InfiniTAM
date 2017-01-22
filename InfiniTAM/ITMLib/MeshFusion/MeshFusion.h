@@ -183,6 +183,7 @@ namespace ITMLib
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
 			void meshMerge(ITMMesh * mesh, ITMPose *, MyTri * tridata);
+			void intoMesh(Matrix4f invm, MyTri *scanned);
 			void buildMesh( MyTri *);
             ////////////////////////////
             //  Image feature tracking

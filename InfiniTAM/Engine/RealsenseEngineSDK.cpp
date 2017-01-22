@@ -9,9 +9,11 @@
 #include "pxcprojection.h"
 #include "pxccalibration.h"
 //#include "util_cmdline.h"
+//#include "PXCBlobData.h"
 
 using namespace InfiniTAM::Engine;
 
+#define SDK2016R3 
 
 class RealsenseEngine::PrivateData {
 public:
@@ -20,9 +22,13 @@ public:
 
 	PXCSenseManager *pp;
 	PXCCaptureManager *cm;
-	
+
+#ifndef SDK2016R3
+
 	PXCBlobData* blobData;
 	PXCBlobConfiguration* blobConfiguration;
+#endif
+
 	pxcStatus sts;
 };
 
@@ -80,8 +86,9 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	}*/
 	//data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 480, 30);
 	//data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 480, 30);
-	data->pp->EnableBlob(0);
-	
+
+#ifndef SDK2016R3
+	data->pp->EnableBlob(0);	
 	PXCBlobModule *blobModule = data->pp->QueryBlob();
 	data-> blobData = blobModule->CreateOutput();
 	data->blobConfiguration = blobModule->CreateActiveConfiguration();
@@ -93,6 +100,8 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	data->blobConfiguration->EnableSegmentationImage(true);
 
 	data->blobConfiguration->ApplyChanges();
+#endif
+
 
 	data->pp->EnableStream(PXCCapture::StreamType::STREAM_TYPE_DEPTH, 640, 480, 30);
 
@@ -106,7 +115,10 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 		//return sts;
 	}
 
+#ifndef SDK2016R3
 	data->blobConfiguration->Update();
+#endif
+
 	/* Reset all properties */
 	PXCCapture::Device *device = data->pp->QueryCaptureManager()->QueryDevice();
 	device->ResetProperties(PXCCapture::STREAM_TYPE_ANY);
@@ -246,7 +258,7 @@ void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDe
 				}
 				sample->depth->ReleaseAccess(&ddata);
 
-
+#ifndef SDK2016R3
 				PXCCapture::Sample * bs = data->pp->QueryBlobSample();
 
 				if (bs)
@@ -327,7 +339,7 @@ void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDe
 
 
 				}
-
+#endif
 
 		/*	if (sample->depth && !renderd.RenderFrame(sample->depth)) break;
 			if (sample->color && !renderc.RenderFrame(sample->color)) break;
