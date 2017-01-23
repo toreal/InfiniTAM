@@ -20,7 +20,7 @@
 #include "../Utils/FileUtils.h"
 #include "../ITMLib/MeshFusion/Tracker.h"
 
-
+int runcalib();
 
 using namespace InfiniTAM::Engine;
 UIEngine* UIEngine::instance;
@@ -293,6 +293,9 @@ void UIEngine::glutKeyUpFunction(unsigned char key, int x, int y)
 
 	switch (key)
 	{
+	case 'p':
+		runcalib();
+		break;
 	case 'a':
 		uiEngine->mfdata->shift += 5;
 		uiEngine->needsRefresh = true;

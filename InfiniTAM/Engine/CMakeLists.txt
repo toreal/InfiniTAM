@@ -55,6 +55,8 @@ CLIEngine.cpp
 CLIEngine.h
 RealsenseEngineSDK.cpp
 RealSenseEngine.h
+Calibrate.cpp
+Calibrate.h
 )
 
 target_link_libraries(Engine ${GLUT_LIBRARIES})
