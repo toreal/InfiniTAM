@@ -10,6 +10,35 @@
 //#include <boost/format.hpp>
 
 
+void readPara()
+{
+
+	const string outputFileName = "images\\out_camera_data.xml";
+
+	Mat cameraMatrix, distCoeffs;
+	vector<Mat> rvecs, tvecs;
+	Size imageSize;
+
+	Mat qview;
+	
+
+	qview = imread("images\\depth01.bmp");
+
+
+	if (!readCameraParams(outputFileName, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs))
+	{
+
+
+	}
+
+	cout << tvecs[0] << endl;
+
+	imshow("", qview);
+	cvWaitKey();
+
+
+}
+
 
 
 static void help()
