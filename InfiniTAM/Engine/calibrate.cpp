@@ -22,7 +22,7 @@ void readPara()
 	Mat qview;
 	
 
-	qview = imread("images\\depth01.bmp");
+	qview = imread("images\\test0.jpg");
 
 
 	if (!readCameraParams(outputFileName, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs))
@@ -33,8 +33,30 @@ void readPara()
 
 	cout << tvecs[0] << endl;
 
+	vector<Point3f>  newpoints;
+	
+	newpoints.push_back(Point3f(0, 0, 0));
+
+	Mat newMatrix;
+	newMatrix = getOptimalNewCameraMatrix(cameraMatrix, distCoeffs, imageSize, 1, imageSize, 0);
+	
+
+
+	Mat distorted_points2d;
+	//projectPoints(Mat(newpoints), cv::Vec3f(0, 0, 0), cv::Vec3f(0, 0, 0), cameraMatrix, distCoeffs, distorted_points2d);
+	projectPoints(Mat(newpoints), rvecs[0], tvecs[0], newMatrix,
+		distCoeffs, distorted_points2d);
+
+	
+	Scalar cc3 = cv::Scalar(0, 0, 255, 255); //BGRA
+	int cBlockSize = 5;
+	Point2f pt = distorted_points2d.at<Point2f>(0);
+
+	rectangle(qview, cv::Rect(pt.x - cBlockSize, pt.y - cBlockSize, cBlockSize * 2 + 1, cBlockSize * 2 + 1), cc3);
+
 	imshow("", qview);
 	cvWaitKey();
+	imwrite("debug.png", qview);
 
 
 }
