@@ -248,15 +248,15 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 					fclose(fw);
 
 #endif
-					//pnp ¦ôpose,¥Ø«e¨Ã¨S¦³§ó·s¨ìpose_d,©Ò¥H¦³§@¨S§@³£¤@¼Ë
-					mfdata->estimatePose(trackingState->pose_d);
+					//pnp ä¼°pose,ç›®å‰ä¸¦æ²’æœ‰æ›´æ–°åˆ°pose_d,æ‰€ä»¥æœ‰ä½œæ²’ä½œéƒ½ä¸€æ¨£
+					//mfdata->estimatePose(trackingState->pose_d);
 					//mfdata->refinePose(trackingState->pose_d);
-					mfdata->goodFeature(trackingState->pose_d);
-
-					//¤w¤£¾A¦X©I¥s
+					//mfdata->goodFeature(trackingState->pose_d);
+					mfdata->ReCoordinateSystem(trackingState->pose_d);
+					//å·²ä¸é©åˆå‘¼å«
 					//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 					
-					//·sªºmesh merge,¦ý·íÂIªº¦ì¸m¦³¿ù,·|¦³°ÝÃD,©Ò¥H¥ý¤£§@
+					//æ–°çš„mesh merge,ä½†ç•¶é»žçš„ä½ç½®æœ‰éŒ¯,æœƒæœ‰å•é¡Œ,æ‰€ä»¥å…ˆä¸ä½œ
 			    	//	mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
 				}
 			mfdata->Generate3DPoints(mfdata->m_base_corners,mfdata->objectPoints );
