@@ -36,7 +36,7 @@ bool readTransform(string  s, vector<cv::Mat>& rvecs, vector<cv::Mat>& tvecs, ve
 	return true;
 }
 
-void MeshFusion::Restore(ITMPose * posd) {
+void MeshFusion::ReCoordinateSystem(ITMPose * posd) {
 	const string outputFileName2 = "images\\camera_data2.xml";
 	cv::Mat cameraMatrix, distCoeffs;
 	vector<cv::Mat> rvecs, tvecs, theta; // rotation , transform , theta(yaxis 22.5)
