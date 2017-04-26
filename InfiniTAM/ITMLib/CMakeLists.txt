@@ -139,6 +139,7 @@ MeshFusion/edgeRefine.cpp
 MeshFusion/goodFeature.cpp
 MeshFusion/rigid_transformPose.cpp
 MeshFusion/MyTri.cpp
+MeshFusion/ReCoordinateSystem.cpp
 
 )
 
