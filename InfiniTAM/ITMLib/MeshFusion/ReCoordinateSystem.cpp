@@ -123,7 +123,7 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 			double  tt = vtrans.at<double>(2);
 		//	vtrans.at<double>(2) = vtrans.at<double>(1);
 		//	vtrans.at<double>(1) = tt;
-
+		//	vtrans.at<double>(1) = vtrans.at<double>(1) + 20;
 
 				
 			vtrans = vtrans / 1000;
@@ -160,10 +160,16 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	Mat r21(3,3,CV_64F);
 	AxisAngle4d a1;
-	a1.angle = (-count2*22.5f)*M_PI / 180;
+	a1.angle = (count2*22.5f)*M_PI / 180;
 	a1.x = 0;
 	a1.y = 1;
 	a1.z = 0;
+
+	a1.x = -0.27247242261693583;
+	a1.y = -0.63760166917135597;
+	a1.z =-0.72057122505909055;
+
+
 
 	matrixFromAxisAngle(a1, r21);
 	cout << r21 << endl;
@@ -172,7 +178,7 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	cout << t21 << endl;
 
-	Mat R2 = r21*rot0;
+	Mat R2 = r21 *rot0;
 	//Mat t2 = r21*vtrans.t() + t21;
 
 	Matrix3f R;	//存共16個Camera的R與R逆
