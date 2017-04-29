@@ -1,5 +1,14 @@
 // Copyright 2014-2015 Isis Innovation Limited and the authors of InfiniTAM
 
+#define DOMF
+
+#ifdef DOMF 
+bool bdomf = true;
+#else
+bool bdomf = false;
+#endif
+
+
 #include "ImageSourceEngine.h"
 
 #include "../Utils/FileUtils.h"
@@ -7,6 +16,7 @@
 #include <stdio.h>
 
 using namespace InfiniTAM::Engine;
+
 
 ImageSourceEngine::ImageSourceEngine(const char *calibFilename)
 {
@@ -136,8 +146,9 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 			}
 			else
 			{
-
+				if ( bdomf)
 				mfdata->genContour(str);
+
 			
 			}
 

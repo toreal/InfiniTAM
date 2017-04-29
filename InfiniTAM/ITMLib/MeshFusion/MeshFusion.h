@@ -174,7 +174,7 @@ namespace ITMLib
 			void constructMesh(ITMMesh *, MyTri * tridata);
 			void buildProjDepth();
 			void NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise);
-
+			void rotateAngle(ITMPose * posd);
 			void ReCoordinateSystem(ITMPose * posd);
 			cv::Mat rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd);
 			void goodFeature(ITMPose * posd);

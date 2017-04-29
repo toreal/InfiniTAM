@@ -54,6 +54,8 @@ void ITMMeshingEngine_CPU<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, c
 		}
 	}
 
+
+
 	mesh->noTotalTriangles = noTriangles;
 }
 

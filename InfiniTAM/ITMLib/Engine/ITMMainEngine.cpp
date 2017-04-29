@@ -8,6 +8,7 @@
 using namespace ITMLib::Engine;
 
 bool bsence = true;
+extern bool bdomf;
 
 #define OUTPUT 1
 
@@ -159,15 +160,18 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 	if (!mainProcessingActive) return;
 
-	mfdata->mainView = view;
+	if (bdomf)
+	{
+		mfdata->mainView = view;
 
 
+		mfdata->buildProjDepth();
+
+		mfdata->NormalAndCurvature(&view, settings->modelSensorNoise);
+	}
 	//SaveImageToFile(view->depthNormal, "normal.ppm");
 	//SaveImageToFile(view->curvature, "curvature.ppm");
 
-	mfdata->buildProjDepth();
-
-	mfdata->NormalAndCurvature(&view, settings->modelSensorNoise);
 
 //	SaveImageToFile(mfdata->proDepth, "prodepth.ppm");
 
@@ -175,7 +179,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	
 	//M
 	assert(view->rgb != NULL);
-	if (view->rgb)
+	if (false && view->rgb)
 		mfdata->MeshFusion_Tracking(mindis, currentFrameNo);
 
 	sdkStopTimer(&timer_instant);
@@ -185,24 +189,26 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	sdkStartTimer(&timer_instant);
 	//std::cout << mindis << std::endl;
 
-	if ( mfdata->mytriData.totalFace==0 || mindis > 400 )
+	if (true || mfdata->mytriData.totalFace == 0 || mindis > 400)
 	{
+		if (false)
+		{
 		try {
-		//	mesh->noTotalTriangles = 0;
-			//build silhouette features
-			//mfdata->sortpoint(view->rgb);
-			//update current pose
-		//	mfdata->estimatePose(this->trackingState->pose_d);
+			//	mesh->noTotalTriangles = 0;
+				//build silhouette features
+				//mfdata->sortpoint(view->rgb);
+				//update current pose
+			//	mfdata->estimatePose(this->trackingState->pose_d);
 
 			sdkStopTimer(&timer_instant);
-			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			processedTime_inst = sdkGetTimerValue(&timer_instant);
 			std::cout << "pose Time:" << processedTime_inst << std::endl;
 			sdkResetTimer(&timer_instant);
 			sdkStartTimer(&timer_instant);
-			
-			
+
+
 			sdkStopTimer(&timer_instant);
-			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			processedTime_inst = sdkGetTimerValue(&timer_instant);
 			std::cout << " update mesh Time:" << processedTime_inst << std::endl;
 			sdkResetTimer(&timer_instant);
 			sdkStartTimer(&timer_instant);
@@ -213,56 +219,59 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 					mfdata->MeshFusion_Tracking(mindis, currentFrameNo);
 
 			}
-			    mfdata->sortpoint(view->rgb);
+			mfdata->sortpoint(view->rgb);
 
-				mfdata->constructMesh(mesh,&mfdata->currTri);
-				mfdata->currTri.buildHalfEdge(mfdata);
+			mfdata->constructMesh(mesh, &mfdata->currTri);
+			mfdata->currTri.buildHalfEdge(mfdata);
 
 
-				if (!mfdata->bmesh)
-				{
-					mfdata->mytriData.copyFrom(&mfdata->currTri);
-					mfdata->bmesh = true;
-				}
-				else
-				{
-					mfdata->Generate3DPoints(mfdata->m_backup, mfdata->newPoints);
+			if (!mfdata->bmesh)
+			{
+				mfdata->mytriData.copyFrom(&mfdata->currTri);
+				mfdata->bmesh = true;
+			}
+			else
+			{
+				mfdata->Generate3DPoints(mfdata->m_backup, mfdata->newPoints);
 #ifdef OUTPUT
-					FILE * fw = fopen("result1.txt", "w");
-					for (int i = 0; i < mfdata->objectPoints.size(); i++)
-					{
-						cv::Point3f p = mfdata->objectPoints[i];
-						fprintf(fw, "%f, %f, %f\n", p.x, p.y, p.z);
+				FILE * fw = fopen("result1.txt", "w");
+				for (int i = 0; i < mfdata->objectPoints.size(); i++)
+				{
+					cv::Point3f p = mfdata->objectPoints[i];
+					fprintf(fw, "%f, %f, %f\n", p.x, p.y, p.z);
 
-					}
-					fclose(fw);
+				}
+				fclose(fw);
 
 
-					 fw = fopen("result2.txt", "w");
-					for (int i = 0; i < mfdata->newPoints.size(); i++)
-					{
-						cv::Point3f p = mfdata->newPoints[i];
-						fprintf(fw, "%f, %f, %f\n", p.x, p.y, p.z);
+				fw = fopen("result2.txt", "w");
+				for (int i = 0; i < mfdata->newPoints.size(); i++)
+				{
+					cv::Point3f p = mfdata->newPoints[i];
+					fprintf(fw, "%f, %f, %f\n", p.x, p.y, p.z);
 
-					}
-					fclose(fw);
+				}
+				fclose(fw);
 
 #endif
-					//pnp 估pose,目前並沒有更新到pose_d,所以有作沒作都一樣
-					//mfdata->estimatePose(trackingState->pose_d);
-					//mfdata->refinePose(trackingState->pose_d);
-					//mfdata->goodFeature(trackingState->pose_d);
-					mfdata->ReCoordinateSystem(trackingState->pose_d);
-					//已不適合呼叫
-					//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
-					
-					//新的mesh merge,但當點的位置有錯,會有問題,所以先不作
-			    	//	mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
-				}
-			mfdata->Generate3DPoints(mfdata->m_base_corners,mfdata->objectPoints );
+				//pnp 估pose,目前並沒有更新到pose_d,所以有作沒作都一樣
+				//mfdata->estimatePose(trackingState->pose_d);
+				//mfdata->refinePose(trackingState->pose_d);
+				//mfdata->goodFeature(trackingState->pose_d);
+				//mfdata->ReCoordinateSystem(trackingState->pose_d);
+				mfdata->rotateAngle(trackingState->pose_d);
+
+
+				//已不適合呼叫
+				//	mfdata->meshUpdate(mesh, this->trackingState->pose_d, &mfdata->mytriData);
+
+				//新的mesh merge,但當點的位置有錯,會有問題,所以先不作
+				//	mfdata->meshMerge(mesh, this->trackingState->pose_d, &mfdata->mytriData);
+			}
+			mfdata->Generate3DPoints(mfdata->m_base_corners, mfdata->objectPoints);
 
 			sdkStopTimer(&timer_instant);
-			 processedTime_inst = sdkGetTimerValue(&timer_instant);
+			processedTime_inst = sdkGetTimerValue(&timer_instant);
 			std::cout << "generate 3d point Time:" << processedTime_inst << std::endl;
 			sdkResetTimer(&timer_instant);
 		}
@@ -272,13 +281,24 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 		}
 
+	}else		
+	{
+	
+			mfdata->rotateAngle(trackingState->pose_d);
+	
+
+	}
 
 
 		if (bsence)
 		{
 
 			//// tracking
-			//trackingController->Track(trackingState, view);
+		//	trackingController->Track(trackingState, view);
+
+
+			cout << "R" <<trackingState->pose_d->GetR() << endl;
+			cout << "T" << trackingState->pose_d->GetT() << endl;
 
 			//// fusion
 			if (fusionActive) 

@@ -93,13 +93,73 @@ namespace ITMLib
 					float xmin=1000,ymin=1000,zmin = 1000;
 					float xmax=-1000,ymax=-1000,zmax = -1000;
 
+
+					for (uint i = 0; i < noTotalTriangles; i++)
+					{
+						check(triangleArray[i].p2.x, xmin, xmax);
+						check(triangleArray[i].p2.y, ymin, ymax);
+						check(triangleArray[i].p2.z, zmin, zmax);
+
+						check(triangleArray[i].p1.x, xmin, xmax);
+						check(triangleArray[i].p1.y, ymin, ymax);
+						check(triangleArray[i].p1.z, zmin, zmax);
+
+						check(triangleArray[i].p0.x, xmin, xmax);
+						check(triangleArray[i].p0.y, ymin, ymax);
+						check(triangleArray[i].p0.z, zmin, zmax);
+
+
+					}
+
+					float xc = (xmin + xmax) / 2;
+					float yc = (ymin + ymax) / 2;
+					float zc = (zmin + zmax) / 2;
+
+					float xs = xmax - xmin;
+					float ys = ymax - ymin;
+					float zs = zmax - zmin;
+
+					float scale = 1.0f;
+
+					if (xs >= ys && xs >= zs)
+						scale = 1 / xs;
+					if (ys >= xs && ys >= zs)
+						scale = 1 / ys;
+
+					if (zs >= ys && zs >= xs)
+						scale = 1 / zs;
+
+
+
 					float zero = 0.0f; short attribute = 0;
+					float wv;
 					for (uint i = 0; i < noTotalTriangles; i++)
 					{
 						fwrite(&zero, sizeof(float), 1, f); fwrite(&zero, sizeof(float), 1, f); fwrite(&zero, sizeof(float), 1, f);
 
-						
-						fwrite(&triangleArray[i].p2.x, sizeof(float), 1, f); 
+						wv = (triangleArray[i].p2.x - xc)*scale;
+						fwrite(&wv, sizeof(float), 1, f); 
+						wv = (triangleArray[i].p2.y - yc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+						wv = (triangleArray[i].p2.z - zc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+
+						wv = (triangleArray[i].p1.x - xc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+						wv = (triangleArray[i].p1.y - yc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+						wv = (triangleArray[i].p1.z - zc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+
+						wv = (triangleArray[i].p0.x - xc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+						wv = (triangleArray[i].p0.y - yc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+						wv = (triangleArray[i].p0.z - zc)*scale;
+						fwrite(&wv, sizeof(float), 1, f);
+
+
+/*
 						fwrite(&triangleArray[i].p2.y, sizeof(float), 1, f); 
 						fwrite(&triangleArray[i].p2.z, sizeof(float), 1, f);
 
@@ -110,20 +170,9 @@ namespace ITMLib
 						fwrite(&triangleArray[i].p0.x, sizeof(float), 1, f);
 						fwrite(&triangleArray[i].p0.y, sizeof(float), 1, f);
 						fwrite(&triangleArray[i].p0.z, sizeof(float), 1, f);
+*/
 
-
-						check(triangleArray[i].p2.x, xmin,xmax);
-						check(triangleArray[i].p2.y, ymin, ymax);
-						check(triangleArray[i].p2.z, zmin, zmax);
-						
-						check(triangleArray[i].p1.x, xmin, xmax);
-						check(triangleArray[i].p1.y, ymin, ymax);
-						check(triangleArray[i].p1.z, zmin, zmax);
-
-						check(triangleArray[i].p0.x, xmin, xmax);
-						check(triangleArray[i].p0.y, ymin, ymax);
-						check(triangleArray[i].p0.z, zmin, zmax);
-
+					
 
 
 						fwrite(&attribute, sizeof(short), 1, f);

@@ -240,7 +240,7 @@ ITMPose ITMPose::exp(const Vector6f& tangent)
 
 void ITMPose::MultiplyWith(const ITMPose *pose)
 {
-	M = M * pose->M;
+	M =  pose->M*M;
 	this->SetParamsFromModelView();
 }
 
