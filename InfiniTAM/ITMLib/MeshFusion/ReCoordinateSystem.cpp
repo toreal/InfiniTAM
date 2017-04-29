@@ -119,6 +119,13 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 		{
 			vrot = bigmat2(Range(0,1), Range(0, 3));
 			vtrans = bigmat2(Range(0,1), Range(3, 6));
+
+			double  tt = vtrans.at<double>(2);
+		//	vtrans.at<double>(2) = vtrans.at<double>(1);
+		//	vtrans.at<double>(1) = tt;
+
+
+				
 			vtrans = vtrans / 1000;
 			
 		}
@@ -153,10 +160,10 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	Mat r21(3,3,CV_64F);
 	AxisAngle4d a1;
-	a1.angle = (count2*22.5f)*M_PI / 180;
+	a1.angle = (-count2*22.5f)*M_PI / 180;
 	a1.x = 0;
-	a1.y = 0;
-	a1.z = 1;
+	a1.y = 1;
+	a1.z = 0;
 
 	matrixFromAxisAngle(a1, r21);
 	cout << r21 << endl;
