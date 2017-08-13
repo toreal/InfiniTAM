@@ -105,7 +105,7 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	if (!binitread)
 	{
-		const string outputFileName2 = ".\\Files\\images\\images\\out_camera_data.xml";
+		const string outputFileName2 = ".\\Files\\Nlittle_circle\\out_camera_data.xml";
 
 		FileStorage fs(outputFileName2, FileStorage::READ);
 
@@ -160,14 +160,19 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	Mat r21(3,3,CV_64F);
 	AxisAngle4d a1;
-	a1.angle = (count2*22.5f)*M_PI / 180;
+	a1.angle = (count2*22.5)*M_PI / 180;
 	a1.x = 0;
 	a1.y = 1;
 	a1.z = 0;
 
-	a1.x = -0.27247242261693583;
-	a1.y = -0.63760166917135597;
-	a1.z =-0.72057122505909055;
+	//ax	0.011837383906061295	double
+	//	ay - 0.70211881189227121	double
+	//	az - 0.71196141070232577	double
+
+
+	a1.x = 0.011837383906061295;
+	a1.y = -0.70211881189227121;
+	a1.z = -0.71196141070232577;
 
 
 

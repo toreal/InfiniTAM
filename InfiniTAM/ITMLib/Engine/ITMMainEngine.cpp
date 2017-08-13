@@ -135,6 +135,7 @@ void ITMMainEngine::SaveSceneToMesh(const char *objFileName)
 	{
 		meshingEngine->MeshScene(mesh, scene);
 		mesh->WriteSTL(objFileName);
+		mesh->WriteOBJ("m.obj");
 	}
 	else
 	{
