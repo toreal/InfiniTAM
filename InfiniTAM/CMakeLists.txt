@@ -16,8 +16,8 @@ find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
 
 IF(MSVC_IDE)
-  set(ARMA_INCLUDE_DIR  C:/James/armadillo/include )
-  set(ARMA_LIB_DIR C:/James/armadillo/lib )
+  set(ARMA_INCLUDE_DIR  C:/code/armadillo-7.960.1/armadillo-7.960.1/include )
+  set(ARMA_LIB_DIR C:/code/armadillo-7.960.1/build/Debug c:/code/lapack/x64/lib C:/code/openglLIB/lib )
   set(ARMA_LIBS libblas.lib liblapack.lib )
   
   
@@ -74,7 +74,7 @@ IF(MSVC_IDE)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS )
   add_definitions(-DUSING_CMAKE=1)
 
-  LINK_DIRECTORIES(C:/james/openglLIB/lib ${ARMA_LIB_DIR}  $ENV{RSSDK_DIR}/lib/x64 )
+  LINK_DIRECTORIES(C:/james/openglLIB/lib ${ARMA_LIB_DIR}  $ENV{RSSDK_DIR}/lib/x64 C:/code/openglLIB/glew-1.13.0/lib/Release/x64 )
 ELSE(MSVC_IDE)
   set(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
   set(CMAKE_CXX_FLAGS "-fPIC -O3 -march=native ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")

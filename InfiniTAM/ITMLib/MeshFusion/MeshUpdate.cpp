@@ -28,7 +28,7 @@
 
 #include <boost/foreach.hpp>
 
-#include <CGAL/Parameterization_polyhedron_adaptor_3.h>
+//#include <CGAL/Parameterization_polyhedron_adaptor_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/IO/Polyhedron_VRML_2_ostream.h>
@@ -63,7 +63,7 @@ using std::fstream; using std::ios;
 // ----------------------------------------------------------------------------
 
 
-typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterization_polyhedron_adaptor;
+//typedef CGAL::Parameterization_polyhedron_adaptor_3<Polyhedron>    Parameterization_polyhedron_adaptor;
 
 
 //
@@ -131,40 +131,40 @@ bool MeshFusion::find3DPos(cv::Point2f p , cv::Point3f &ret)
 {
 	//bool ret = false;
 
-	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
-	Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
-	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
+//	Parameterization_polyhedron_adaptor       mesh_adaptor(mymesh);
+//	Vertex_iterator  it = mesh_adaptor.mesh_vertices_begin();
+//	Vertex_iterator  ie = mesh_adaptor.mesh_vertices_end();
 	//int idx = 0;
 	Vector4f intrinRGB =mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 	float mdis = 10000;
 
 
-	while (it != ie)
-	//for(int i = 0 ; i < meshVertex.size();i++)	
-	{
-		//cv::Point3f posf = meshVertex[i];
-		CGAL::Point_3<K> pos = mesh_adaptor.get_vertex_position(it);
-		//Vector3f p = Vector3f(pos.x(), pos.y(), pos.z());
-		int ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
-		int iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
+	//while (it != ie)
+	////for(int i = 0 ; i < meshVertex.size();i++)	
+	//{
+	//	//cv::Point3f posf = meshVertex[i];
+	//	CGAL::Point_3<K> pos = mesh_adaptor.get_vertex_position(it);
+	//	//Vector3f p = Vector3f(pos.x(), pos.y(), pos.z());
+	//	int ix = pos.x() * intrinRGB.x / pos.z() + intrinRGB.z;
+	//	int iy = pos.y() * intrinRGB.y / pos.z() + intrinRGB.w;
 
-		//int ix = posf.x * intrinRGB.x / posf.z + intrinRGB.z;
-		//int iy = posf.y * intrinRGB.y / posf.z + intrinRGB.w;
+	//	//int ix = posf.x * intrinRGB.x / posf.z + intrinRGB.z;
+	//	//int iy = posf.y * intrinRGB.y / posf.z + intrinRGB.w;
 
-		float dis = (ix - p.x)*(ix - p.x) + (iy - p.y)*(iy - p.y);
-		if (dis <= 1)
-		{
-			ret=cv::Point3f(pos.x(), pos.y(), pos.z());
-			return true;
-		}
-		else if (dis < mdis)
-		{
-			mdis = dis;
-			ret= cv::Point3f(pos.x(), pos.y(), pos.z());
-		}
-		it++;
+	//	float dis = (ix - p.x)*(ix - p.x) + (iy - p.y)*(iy - p.y);
+	//	if (dis <= 1)
+	//	{
+	//		ret=cv::Point3f(pos.x(), pos.y(), pos.z());
+	//		return true;
+	//	}
+	//	else if (dis < mdis)
+	//	{
+	//		mdis = dis;
+	//		ret= cv::Point3f(pos.x(), pos.y(), pos.z());
+	//	}
+	//	it++;
 
-	}
+	//}
 
 
 	return false;
