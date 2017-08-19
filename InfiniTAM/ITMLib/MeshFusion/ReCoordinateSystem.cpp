@@ -180,7 +180,7 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 	Mat r21(3,3,CV_64F);
 	AxisAngle4d a1;
 	//a1.angle = (count2*22.5)*M_PI / 180;
-	a1.angle = (count2*4.5)*M_PI / 180;
+	a1.angle = (count2*4.99921)*M_PI / 180;
 	a1.x = 0;
 	a1.y = 1;
 	a1.z = 0;
