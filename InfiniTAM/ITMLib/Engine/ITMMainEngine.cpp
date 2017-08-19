@@ -174,7 +174,6 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	//SaveImageToFile(view->curvature, "curvature.ppm");
 
 
-//	SaveImageToFile(mfdata->proDepth, "prodepth.ppm");
 
 	float mindis;
 	
@@ -294,8 +293,24 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 		if (bsence)
 		{
 
-			//// tracking
-		//	trackingController->Track(trackingState, view);
+
+		//	SaveImageToFile(mfdata->proDepth, "prodepth.ppm");
+		//	//// tracking
+		////	trackingController->Track(trackingState, view);
+
+		//	float* dd = view->depth->GetData(MEMORYDEVICE_CPU);
+		//	int xlens = view->depth->noDims.x;
+		//	int ylens = view->depth->noDims.y;
+
+		//	float * rgbd = mfdata->proDepth->GetData(MEMORYDEVICE_CPU);
+		//	for (int nx = 0; nx < xlens; nx++)
+		//		for (int ny = 0; ny < ylens; ny++)
+		//		{
+		//			float pz = rgbd[nx + ny*xlens] ;
+		//			dd[nx + ny*xlens] = pz;
+		//		}
+		//		
+
 
 
 			cout << "R" <<trackingState->pose_d->GetR() << endl;

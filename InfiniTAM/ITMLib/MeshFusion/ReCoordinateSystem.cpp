@@ -103,6 +103,24 @@ Mat rot0;
 Mat vtrans;
 void MeshFusion::rotateAngle(ITMPose * posd) {
 
+	//Matrix4f d2rgb = mainView->calib->trafo_rgb_to_depth.calib_inv;
+
+	Matrix4f rgb2d = mainView->calib->trafo_rgb_to_depth.calib;
+	double t1 =  rgb2d.m30 / 1000;
+	double t2 =  rgb2d.m31 / 1000;
+	double t3 =  rgb2d.m32 / 1000;
+	Mat r0(3, 3, CV_64F);
+	r0.at<double>(0,0) = rgb2d.m00;
+	r0.at<double>(0,1) = rgb2d.m10;
+	r0.at<double>(0,2) = rgb2d.m20;
+	r0.at<double>(1,0) = rgb2d.m01;
+	r0.at<double>(1,1) = rgb2d.m11;
+	r0.at<double>(1,2) = rgb2d.m21; 
+	r0.at<double>(2,0) = rgb2d.m02;
+	r0.at<double>(2,1) = rgb2d.m12;
+	r0.at<double>(2, 2) = rgb2d.m22;
+
+
 	if (!binitread)
 	{
 		const string outputFileName2 = ".\\Files\\Nlittle_circle\\out_camera_data.xml";
@@ -136,15 +154,16 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 	
 		cv::Rodrigues(vrot, rot0);
 
+		Mat rot00 = r0*rot0;
 		Matrix3f R;	//存共16個Camera的R與R逆
 		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 3; j++)
 			{
-				float v = rot0.at<double>(i, j);
+				float v = rot00.at<double>(i, j);
 				R.m[i + j * 3] = v;
 			}
 
-		Vector3f T(vtrans.at<double>(0), vtrans.at<double>(1), vtrans.at<double>(2));
+		Vector3f T(vtrans.at<double>(0)+t1, vtrans.at<double>(1)+t2, vtrans.at<double>(2)+t3);
 
 		ITMPose newpos;
 		posd->SetR(R);
@@ -160,7 +179,8 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	Mat r21(3,3,CV_64F);
 	AxisAngle4d a1;
-	a1.angle = (count2*22.5)*M_PI / 180;
+	//a1.angle = (count2*22.5)*M_PI / 180;
+	a1.angle = (count2*4.5)*M_PI / 180;
 	a1.x = 0;
 	a1.y = 1;
 	a1.z = 0;
@@ -183,7 +203,7 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 
 	cout << t21 << endl;
 
-	Mat R2 = r21 *rot0;
+	Mat R2 = r0*r21 *rot0;
 	//Mat t2 = r21*vtrans.t() + t21;
 
 	Matrix3f R;	//存共16個Camera的R與R逆
@@ -195,7 +215,7 @@ void MeshFusion::rotateAngle(ITMPose * posd) {
 		}
 
 //	Vector3f T(t21.at<double>(0), t21.at<double>(1), t21.at<double>(2));
-	Vector3f T(vtrans.at<double>(0), vtrans.at<double>(1), vtrans.at<double>(2));
+	Vector3f T(vtrans.at<double>(0)+t1, vtrans.at<double>(1)+t2, vtrans.at<double>(2)+t3);
 
 
 	ITMPose newpos;

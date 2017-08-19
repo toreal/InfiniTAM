@@ -20,7 +20,7 @@ using namespace InfiniTAM::Engine;
 
 ImageSourceEngine::ImageSourceEngine(const char *calibFilename)
 {
-	readRGBDCalib(calibFilename, calib);
+  bool ret=	readRGBDCalib(calibFilename, calib);
 }
 
 ImageFileReader::ImageFileReader(const char *calibFilename, const char *rgbImageMask, const char *depthImageMask)
