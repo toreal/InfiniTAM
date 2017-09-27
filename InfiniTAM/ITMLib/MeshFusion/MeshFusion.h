@@ -127,7 +127,7 @@ namespace ITMLib
 
 			float estivalue(const float * data, Vector2i, Vector2i);
 			void edgeRefine(MyTri * tridata);
-
+			
 
 		public:
 
@@ -144,28 +144,29 @@ namespace ITMLib
 			//segmented image
 			ITMUChar4Image *segImage;
 			ITMFloatImage * proDepth = NULL;
+			int faceIdx[640 * 480];
 
 			//silhouette features
-			Vector2i *      pointlist;
+			std::vector<cv::Point>       pointlist;
 			int             npoint;
 
-			Vector2i *      sellist;
+			std::vector<cv::Point>       sellist;
 			int             selp;
 			int             ncon;
 
 			ITMPose        posd;
 			MeshFusion() {
 				segImage = NULL;
-				pointlist = new Vector2i[MAXNODE];
-				sellist = new Vector2i[MAXNODE];
+				//pointlist = new cv::Point[MAXNODE];
+				//sellist = new Vector2i[MAXNODE];
 				MeshFusion_InitTracking();
 			};
 			~MeshFusion() {
 				if (segImage != NULL)
 					delete segImage;
 
-				delete pointlist;
-				delete sellist;
+				//delete pointlist;
+				//delete sellist;
 			};
 
 			bool find3DPos(cv::Point2f p, cv::Point3f&);
@@ -174,6 +175,8 @@ namespace ITMLib
 			void constructMesh(ITMMesh *, MyTri * tridata);
 			void buildProjDepth();
 			void NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise);
+			void label(ITMView ** view);
+			void patchSurface( int ind , cv::Mat& );
 			void rotateAngle(ITMPose * posd);
 			void ReCoordinateSystem(ITMPose * posd);
 			cv::Mat rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd);
@@ -181,6 +184,7 @@ namespace ITMLib
 			void estimatePose(ITMPose * posd);
 			void refinePose(ITMPose * posd);
 			void genContour(char * str);
+			void genpoint(std::vector<cv::Point>  contours);
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
 			void meshMerge(ITMMesh * mesh, ITMPose *, MyTri * tridata);

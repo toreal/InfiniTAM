@@ -294,8 +294,11 @@ void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDe
 										 contour->QueryPoints(np, plist);
 										 for (int i = 0; i < np; i++)
 										 {
-											 mfdata->pointlist[i].x = plist[i].x;
-											 mfdata->pointlist[i].y = plist[i].y;
+											 cv::Point p(plist[i].x, plist[i].y);
+											 mfdata->pointlist.push_back(p);
+
+											 //mfdata->pointlist[i].x = plist[i].x;
+											 //mfdata->pointlist[i].y = plist[i].y;
 
 										 }
 

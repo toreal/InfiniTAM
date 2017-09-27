@@ -138,8 +138,10 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 					for (int i = 0; i < np; i++)
 					{
 						fscanf(fp, "%d %d", &x, &y);
-						mfdata->pointlist[i].x = x;
-						mfdata->pointlist[i].y = y;
+						cv::Point p(x, y);
+						mfdata->pointlist.push_back(p);
+						//mfdata->pointlist[i].x = x;
+						//mfdata->pointlist[i].y = y;
 					}
 				}
 				fclose(fp);

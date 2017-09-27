@@ -106,8 +106,9 @@ void MeshFusion::genContour(char * fn)
 	{
 		
 	    Point p=	contour[i];
-		pointlist[i].x = p.x;
-		pointlist[i].y = p.y;
+		pointlist.push_back(p);
+		//pointlist[i].x = p.x;
+		//pointlist[i].y = p.y;
 
 		fprintf(fp, "%d %d\n", pointlist[i].x, pointlist[i].y);
 	}
@@ -117,44 +118,11 @@ void MeshFusion::genContour(char * fn)
 void MeshFusion::sortpoint(ITMUChar4Image * draw)
 {
 	
-	int count = npoint;
-	
-	std::vector <int> generatedPoints ;
-	std::vector <int> result;
-	
-	for (int i = 0; i < npoint; i++)
-	{
-		generatedPoints.push_back(pointlist[i].x);
-		generatedPoints.push_back(pointlist[i].y);
-
-	}
-		
-	// simplify
-	std::vector <int>::const_iterator begin = generatedPoints.begin();
-	std::vector <int>::const_iterator end = generatedPoints.end();
-		
-	psimpl::simplify_douglas_peucker_n<2>(begin, end, count,std::back_inserter(result) );
-	
-	DEBUG_OUTPUT_STREAM <<result.size() << std::endl;
-
+	genpoint(pointlist);
 	if (draw == NULL)
 		return;
 
 	Vector4u* data = draw->GetData(MEMORYDEVICE_CPU);
-	int i = 0; 
-	for (vector<int>::iterator it = result.begin(); it != result.end(); ++it) {
-		int x = *it;
-		++it;
-		int y = *it;
-		//DEBUG_OUTPUT_STREAM << x <<"," << y << endl;
-		
-		this->sellist[i].x = x;
-		this->sellist[i].y = y;
-		i++;
-	}
-
-	this->selp = i;
-
 
 	vInputPoints.clear();
 	constrainbeg.clear();
@@ -511,6 +479,8 @@ void MeshFusion::NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise)
 
 	if (modelSensorNoise)
 	{
+		//ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, view->depth, view->calib->intrinsics_d.projectionParamsSimple.all);
+
 		ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, proDepth, view->calib->intrinsics_rgb.projectionParamsSimple.all);
 		//EstCurvature(view->depthNormal, view->curvature);
 		EstCurvatureByDepth(proDepth, view->curvature);

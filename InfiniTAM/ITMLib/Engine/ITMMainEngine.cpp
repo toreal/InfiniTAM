@@ -169,6 +169,8 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 		mfdata->buildProjDepth();
 
 		mfdata->NormalAndCurvature(&view, settings->modelSensorNoise);
+
+		mfdata->label(&view);
 	}
 	//SaveImageToFile(view->depthNormal, "normal.ppm");
 	//SaveImageToFile(view->curvature, "curvature.ppm");
