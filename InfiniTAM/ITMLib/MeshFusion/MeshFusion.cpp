@@ -117,40 +117,45 @@ void MeshFusion::genContour(char * fn)
 
 void MeshFusion::sortpoint(ITMUChar4Image * draw)
 {
-	
-	genpoint(pointlist);
+	std::vector<cv::Point>       sellist;
+	int             selp;
+
+	genpoint(pointlist , sellist);
+
+	selp = sellist.size();
+
 	if (draw == NULL)
 		return;
 
 	Vector4u* data = draw->GetData(MEMORYDEVICE_CPU);
 
-	vInputPoints.clear();
-	constrainbeg.clear();
-	constrainend.clear();
+	vInMFPoints.clear();
+	conMFbeg.clear();
+	conMFend.clear();
 
 	for (int i = 0; i < selp; i++)
 	{
-		addvextex(vInputPoints, Point2(sellist[i].x, sellist[i].y));
+		addvextex(vInMFPoints, Point2(sellist[i].x, sellist[i].y));
 	}
 	
-	ncon = vInputPoints.size();
+	ncon = vInMFPoints.size();
 
 	for (int i = 0; i < ncon -1; i++)
 	{
-		constrainbeg.push_back(vInputPoints[i]);
-		constrainend.push_back(vInputPoints[i+1]);
+		conMFbeg.push_back(vInMFPoints[i]);
+		conMFend.push_back(vInMFPoints[i+1]);
 	}
 
 
 	for (int i = 0; i<(int)m_corners.size(); i++)
 	{
-		addvextex(vInputPoints, Point2(m_corners[i].x, m_corners[i].y));
+		addvextex(vInMFPoints, Point2(m_corners[i].x, m_corners[i].y));
 
 	}
 	
 	for (int i = 0; i<(int)d_corners.size(); i++)
 	{
-		addvextex(vInputPoints, Point2(d_corners[i].x, d_corners[i].y));
+		addvextex(vInMFPoints, Point2(d_corners[i].x, d_corners[i].y));
 
 	}
 
@@ -416,7 +421,8 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 	}
 
 	// unprojected
-	xp1_y.x = xp1_y.z * ((x + 1.0f) - intrinparam.z) / intrinparam.x; xp1_y.y = xp1_y.z * (y - intrinparam.w) / intrinparam.y;
+	xp1_y.x = xp1_y.z * ((x + 1.0f) - intrinparam.z) / intrinparam.x; 
+	xp1_y.y = xp1_y.z * (y - intrinparam.w) / intrinparam.y;
 	xm1_y.x = xm1_y.z * ((x - 1.0f) - intrinparam.z) / intrinparam.x; xm1_y.y = xm1_y.z * (y - intrinparam.w) / intrinparam.y;
 	x_yp1.x = x_yp1.z * (x - intrinparam.z) / intrinparam.x; x_yp1.y = x_yp1.z * ((y + 1.0f) - intrinparam.w) / intrinparam.y;
 	x_ym1.x = x_ym1.z * (x - intrinparam.z) / intrinparam.x; x_ym1.y = x_ym1.z * ((y - 1.0f) - intrinparam.w) / intrinparam.y;
@@ -446,7 +452,10 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 	double  norm = 1.0 / sqrt(outNormal.x * outNormal.x + outNormal.y * outNormal.y + outNormal.z * outNormal.z);
 	outNormal *= norm;
 
-	normal_out[idx].x = outNormal.x; normal_out[idx].y = outNormal.y; normal_out[idx].z = outNormal.z; normal_out[idx].w = 1.0f;
+	normal_out[idx].x = outNormal.x;
+	normal_out[idx].y = outNormal.y; 
+	normal_out[idx].z = outNormal.z; 
+	normal_out[idx].w = 1.0f;
 
 	// now compute weight
 	float theta = acos(outNormal.z);
@@ -921,7 +930,8 @@ void insert_with_info(CDT& cdt, InputIterator first, InputIterator last)
 	}
 }
 
-void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata)
+void MeshFusion::constructMesh(ITMMesh * mesha, MyTri * tridata , std::vector<Point2> vInputPoints, 
+	std::vector<Point2> constrainbeg, std::vector<Point2> constrainend)
 {
 
 	ITMFloatImage * depth_in = proDepth;

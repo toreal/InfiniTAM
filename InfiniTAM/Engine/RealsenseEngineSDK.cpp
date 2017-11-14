@@ -1,16 +1,21 @@
 
 #include "RealsenseEngineSDK.h"
-//#define COMPILE_WITH_RealSenseSDK 1
+#define COMPILE_WITH_RealSenseSDK 1
+#define SDK20 1
 
 #ifdef COMPILE_WITH_RealSenseSDK
 
+#ifdef SDK20
+#include <librealsense2/rs.hpp>
+
+
+#else
 
 #include "pxcsensemanager.h"
 #include "pxcprojection.h"
 #include "pxccalibration.h"
-//#include "util_cmdline.h"
-//#include "PXCBlobData.h"
 
+#endif
 using namespace InfiniTAM::Engine;
 
 #define SDK2016R3 
@@ -19,17 +24,22 @@ class RealsenseEngine::PrivateData {
 public:
 	PrivateData(void) {}
 
-
+#ifndef SDK20
 	PXCSenseManager *pp;
 	PXCCaptureManager *cm;
+	pxcStatus sts;
+#else
+	rs2::pipeline pipe;
+	rs2::frameset data;
 
+#endif
 #ifndef SDK2016R3
 
 	PXCBlobData* blobData;
 	PXCBlobConfiguration* blobConfiguration;
 #endif
 
-	pxcStatus sts;
+
 };
 
 
@@ -39,53 +49,14 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 {
 
 	data = new PrivateData();
+
+	
+#ifndef SDK20	
 	data->pp = PXCSenseManager::CreateInstance();
-	/* Collects command line arguments */
-//	UtilCmdLine cmdl(data->pp->QuerySession());
-//	pxcCHAR * tmp[] = {L"", L"-csize", L"640x480x30", L"-dsize", L"320x240x60" };
-//	cmdl.Parse(L"-listio-nframes-sdname-csize-dsize-isize-lsize-rsize-file-record-noRender-mirror", 5, tmp);
-//	if (!cmdl.Parse(L"-listio-nframes-sdname-csize-dsize-isize-lsize-rsize-file-record-noRender-mirror", argc, argv)) return 3;
 
 	/* Sets file recording or playback */
-	 data->cm= data->pp->QueryCaptureManager();
-	//data->cm->SetFileName(cmdl.m_recordedFile, cmdl.m_bRecord);
-	//if (cmdl.m_sdname) 
-		//data->cm->FilterByDeviceInfo(cmdl.m_sdname, 0, 0);
+	data->cm = data->pp->QueryCaptureManager();
 
-
-
-	///* Apply command line arguments */
-	/*if (cmdl.m_csize.size()>0) {
-		data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, cmdl.m_csize.front().first.width, cmdl.m_csize.front().first.height, (pxcF32)cmdl.m_csize.front().second);
-	}
-	if (cmdl.m_dsize.size()>0) {
-		data->pp->EnableStream(PXCCapture::STREAM_TYPE_DEPTH, cmdl.m_dsize.front().first.width, cmdl.m_dsize.front().first.height, (pxcF32)cmdl.m_dsize.front().second);
-	}*/
-	//if (cmdl.m_isize.size() > 0) {
-	//	pp->EnableStream(PXCCapture::STREAM_TYPE_IR, cmdl.m_isize.front().first.width, cmdl.m_isize.front().first.height, (pxcF32)cmdl.m_isize.front().second);
-	//}
-	//if (cmdl.m_rsize.size() > 0) {
-	//	pp->EnableStream(PXCCapture::STREAM_TYPE_RIGHT, cmdl.m_rsize.front().first.width, cmdl.m_rsize.front().first.height, (pxcF32)cmdl.m_rsize.front().second);
-	//}
-	//if (cmdl.m_lsize.size() > 0) {
-	//	pp->EnableStream(PXCCapture::STREAM_TYPE_LEFT, cmdl.m_lsize.front().first.width, cmdl.m_lsize.front().first.height, (pxcF32)cmdl.m_lsize.front().second);
-	//}
-
-	//PXCVideoModule::DataDesc desc = {};
-
-	/*if (cmdl.m_csize.size() == 0 && cmdl.m_dsize.size() == 0 && cmdl.m_isize.size() == 0 && cmdl.m_rsize.size() == 0 && cmdl.m_lsize.size() == 0) {
-		
-		if (data->cm->QueryCapture()) {
-			data->cm->QueryCapture()->QueryDeviceInfo(0, &desc.deviceInfo);
-		}
-		else {
-			desc.deviceInfo.streams = PXCCapture::STREAM_TYPE_COLOR | PXCCapture::STREAM_TYPE_DEPTH;
-		
-		}
-		data->pp->EnableStreams(&desc);
-	}*/
-	//data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 480, 30);
-	//data->pp->EnableStream(PXCCapture::STREAM_TYPE_COLOR, 640, 480, 30);
 
 #ifndef SDK2016R3
 	data->pp->EnableBlob(0);	
@@ -173,8 +144,16 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	//else {
 	//	device->SetMirrorMode(PXCCapture::Device::MirrorMode::MIRROR_MODE_DISABLED);
 	//}
+#else
+
+	rs2::config cfg;
+	cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8, 30);
+	cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 30);
+	data->pipe.start(cfg);
 
 
+
+#endif
 
 
 }
@@ -183,8 +162,7 @@ RealsenseEngine::~RealsenseEngine()
 }
 void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, MeshFusion * mfdata)
 {
-
-	
+#ifndef SDK20
 
 	data->sts = data->pp->AcquireFrame(false);
 
@@ -354,7 +332,31 @@ void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDe
 	/* Releases lock so pipeline can process next frame */
 	data->pp->ReleaseFrame();
 
+#else
 
+
+data->data = data->pipe.wait_for_frames();
+rs2::frame depth = data->data.get_depth_frame(); // Find and colorize the depth data
+rs2::frame color = data->data.get_color_frame();            // Find the color data
+
+short *dep = rawDepthImage->GetData(MEMORYDEVICE_CPU);
+
+short * dd = (short *)depth.get_data();
+memcpy(dep, dd, rawDepthImage->dataSize * sizeof(short));
+
+Vector4u *rgb = rgbImage->GetData(MEMORYDEVICE_CPU);
+
+char* baseAddr = (char*)color.get_data();
+for (int i = 0; i < rgbImage->noDims.x * rgbImage->noDims.y; i++) {
+	Vector4u newPix; char *oldPix = &(((char*)(baseAddr))[i * 3]);
+	newPix.x = oldPix[0]; newPix.y = oldPix[1]; newPix.z = oldPix[2]; newPix.w = 255;
+	rgb[i] = newPix;
+}
+
+
+
+
+#endif
 
 
 	return;
@@ -366,6 +368,10 @@ bool RealsenseEngine::hasMoreImages(void)
 Vector2i RealsenseEngine::getDepthImageSize(void)
 {
 	try {
+	
+	
+
+#ifndef SDK20
 		if (data->sts<PXC_STATUS_NO_ERROR)
 			return Vector2i(0, 0);
 
@@ -374,19 +380,37 @@ Vector2i RealsenseEngine::getDepthImageSize(void)
 			return Vector2i(s.width, s.height);
 		else
 			return Vector2i(0, 0);
+#else
+		if (data->data == NULL)
+		{
+			data->data = data->pipe.wait_for_frames();
 
+		}
+
+		rs2::depth_frame depth = data->data.first(rs2_stream::RS2_STREAM_DEPTH);
+		float h = depth.get_height();
+		float w = depth.get_width();
+		return Vector2i(w, h);
+
+
+#endif
 	}
 	catch (std::exception &em)
 	{
-		return Vector2i(0, 0);
 	}
 
-	
+	return Vector2i(0, 0);
+
 	
 }
 Vector2i RealsenseEngine::getRGBImageSize(void)
 {
 	try {
+
+	
+
+
+#ifndef SDK20
 		if (data->sts<PXC_STATUS_NO_ERROR)
 			return Vector2i(0, 0);
 
@@ -395,11 +419,27 @@ Vector2i RealsenseEngine::getRGBImageSize(void)
 		return Vector2i(s.width, s.height);
 	else
 		return Vector2i(0, 0);
+#else
+		if (data->data == NULL)
+		{
+			data->data = data->pipe.wait_for_frames();
+
+		}
+
+		rs2::video_frame depth = data->data.get_color_frame();
+		float h = depth.get_height();
+		float w = depth.get_width();
+		return Vector2i(w, h);
+
+
+#endif
 	}
 	catch (std::exception &em)
 	{
-	return Vector2i(0, 0);
 	}
+
+	return Vector2i(0, 0);
+
 }
 #else
 

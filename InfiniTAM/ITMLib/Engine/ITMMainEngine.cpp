@@ -7,10 +7,10 @@
 
 using namespace ITMLib::Engine;
 
-bool bsence = true;
+bool bsence = false;
 extern bool bdomf;
 
-#define OUTPUT 1
+#define OUTPUT 0
 
 ITMMainEngine::ITMMainEngine(const ITMLibSettings *settings, const ITMRGBDCalib *calib, Vector2i imgSize_rgb, Vector2i imgSize_d)
 {
@@ -170,7 +170,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 		mfdata->NormalAndCurvature(&view, settings->modelSensorNoise);
 
-		mfdata->label(&view);
+	//	mfdata->label(&view);
 	}
 	//SaveImageToFile(view->depthNormal, "normal.ppm");
 	//SaveImageToFile(view->curvature, "curvature.ppm");
@@ -181,7 +181,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	
 	//M
 	assert(view->rgb != NULL);
-	if (false && view->rgb)
+	if ( view->rgb)
 		mfdata->MeshFusion_Tracking(mindis, currentFrameNo);
 
 	sdkStopTimer(&timer_instant);
@@ -191,9 +191,9 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 	sdkStartTimer(&timer_instant);
 	//std::cout << mindis << std::endl;
 
-	if (true || mfdata->mytriData.totalFace == 0 || mindis > 400)
+	if ( mfdata->mytriData.totalFace == 0 || mindis > 400)
 	{
-		if (false)
+		//if (false)
 		{
 		try {
 			//	mesh->noTotalTriangles = 0;
@@ -223,13 +223,24 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			}
 			mfdata->sortpoint(view->rgb);
 
-			mfdata->constructMesh(mesh, &mfdata->currTri);
-			mfdata->currTri.buildHalfEdge(mfdata);
 
+
+			int h = view->depthNormal->noDims.height;
+			int w = view->depthNormal->noDims.width;
+
+			cv::Mat buf = cv::Mat(h, w, CV_8SC3);
+
+
+
+		//	mfdata->constructMesh(mesh, &mfdata->currTri);
+		//	mfdata->currTri.buildHalfEdge(mfdata);
+			mfdata->label(&view , buf, currentFrameNo);
+		//	mfdata->makeTri(mesh, &mfdata->currTri);
+			mfdata->ds.makeTri(mfdata->depth3d, buf, view->calib->intrinsics_rgb.projectionParamsSimple.all);
 
 			if (!mfdata->bmesh)
 			{
-				mfdata->mytriData.copyFrom(&mfdata->currTri);
+		//		mfdata->mytriData.copyFrom(&mfdata->currTri);
 				mfdata->bmesh = true;
 			}
 			else
@@ -275,6 +286,7 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 			sdkStopTimer(&timer_instant);
 			processedTime_inst = sdkGetTimerValue(&timer_instant);
 			std::cout << "generate 3d point Time:" << processedTime_inst << std::endl;
+			std::cout << mfdata->m_base_corners.size() <<"," << mfdata->m_backup.size()<< endl;
 			sdkResetTimer(&timer_instant);
 		}
 		catch (std::exception em)
@@ -283,13 +295,13 @@ void ITMMainEngine::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDep
 
 		}
 
-	}else		
+	}/*else		
 	{
 	
 			mfdata->rotateAngle(trackingState->pose_d);
 	
 
-	}
+	}*/
 
 
 		if (bsence)

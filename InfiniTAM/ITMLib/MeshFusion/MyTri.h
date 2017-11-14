@@ -53,11 +53,13 @@ namespace ITMLib
 
 		};
 
+		const int MAXNODE = 100000;
+
 		class MyTri
 		{
 		public:
-			MyVertex meshVertex[2048];
-			ushort  meshTri[2048 * 3];
+			MyVertex meshVertex[MAXNODE];
+			ushort  meshTri[MAXNODE * 3];
 			Point2  meshProj[2048];
 			int  boundary[2048];
 			int  contour[1024];

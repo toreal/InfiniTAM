@@ -281,6 +281,11 @@ void MyTri::output2d(char * fn)
 
 void MyTri::project(Matrix4f * m, Vector4f intrinRGB)
 {
+
+	if (totalVertex >= 2048)
+		cout << "Error! out of bound! " << endl;
+
+
 	for (int i = 0; i < totalVertex; i++)
 	{
 

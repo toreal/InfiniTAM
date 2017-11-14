@@ -161,8 +161,8 @@ int MeshFusion::MeshFusion_Tracking( float & maxdis , int currentFrameNo)//
     cv::Mat input(h,w,CV_8UC4,img);
 	cv::Mat seginput(h, w, CV_8UC4, segimg);
 
-    cv::namedWindow( "input", CV_WINDOW_NORMAL );
-    cv::imshow( "input", mdep );
+    cv::namedWindow( "input_tracking", CV_WINDOW_NORMAL );
+    cv::imshow( "input_tracking", mdep );
     
 	cv::waitKey(1);
 	delete []bbuf;

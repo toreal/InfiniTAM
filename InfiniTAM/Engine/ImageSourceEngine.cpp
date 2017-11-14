@@ -134,6 +134,7 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 				fscanf(fp, "%d", &np);
 				if (np < mfdata->MAXNODE)
 				{
+					mfdata->pointlist.clear();
 					mfdata->npoint = np;
 					for (int i = 0; i < np; i++)
 					{

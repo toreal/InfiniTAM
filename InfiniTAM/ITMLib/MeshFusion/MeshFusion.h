@@ -13,6 +13,7 @@
 
 #include "../../ORUtils/MemoryBlock.h"
 #include "MyTri.h"
+#include "domainsurface.h"
 
 typedef CGAL::Polyhedron_3<K >      Polyhedron;
 
@@ -119,9 +120,9 @@ namespace ITMLib
 			std::vector<uchar>  m_status;
 			std::vector<float>  m_err;
 			bool                m_bfirst = true;
-			std::vector<Point2> vInputPoints;
-			std::vector<Point2> constrainbeg;
-			std::vector<Point2> constrainend;
+			std::vector<Point2> vInMFPoints;
+			std::vector<Point2> conMFbeg;
+			std::vector<Point2> conMFend;
 			static int          m_nDebugX, m_nDebugY;
 			static int          m_nDebugVectorIdx;
 
@@ -150,9 +151,15 @@ namespace ITMLib
 			std::vector<cv::Point>       pointlist;
 			int             npoint;
 
-			std::vector<cv::Point>       sellist;
-			int             selp;
 			int             ncon;
+
+
+			DomainSurface   ds;
+
+			cv::Point3f depth3d[640 * 480];
+
+
+
 
 			ITMPose        posd;
 			MeshFusion() {
@@ -172,11 +179,12 @@ namespace ITMLib
 			bool find3DPos(cv::Point2f p, cv::Point3f&);
 			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);
-			void constructMesh(ITMMesh *, MyTri * tridata);
+			void constructMesh(ITMMesh *, MyTri * tridata, std::vector<Point2> vInputPoints,
+				std::vector<Point2> constrainbeg, std::vector<Point2> constrainend);
 			void buildProjDepth();
 			void NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise);
-			void label(ITMView ** view);
-			void patchSurface( int ind , cv::Mat& );
+			void label(ITMView ** view,  cv::Mat & buf, int currentFrameNo);
+			void patchSurface( int ind , cv::Mat& , int);
 			void rotateAngle(ITMPose * posd);
 			void ReCoordinateSystem(ITMPose * posd);
 			cv::Mat rigid_transformPose(cv::Mat A, cv::Mat B, ITMPose * posd);
@@ -184,7 +192,12 @@ namespace ITMLib
 			void estimatePose(ITMPose * posd);
 			void refinePose(ITMPose * posd);
 			void genContour(char * str);
-			void genpoint(std::vector<cv::Point>  contours);
+			void genpoint(std::vector<cv::Point>  contours , std::vector<cv::Point> & sell);
+			void build3DPoint();
+			float plane_from_points(std::vector<cv::Point3f> & points,int );
+
+
+			void makeTri(ITMMesh *, MyTri * tridata );
 
 			void meshUpdate(ITMMesh * mesh, ITMPose *, MyTri * tridata);
 			void meshMerge(ITMMesh * mesh, ITMPose *, MyTri * tridata);
@@ -200,7 +213,7 @@ namespace ITMLib
 
 			void MeshFusion_Model(float fstartx, float fstarty, float fwidth, float fheight, bool getImageType, ITMPose *pose, ITMIntrinsics *intrinsics);
 			void writeMesh(char *);
-			void Generate3DPoints(std::vector<cv::Point2f> &imp, std::vector<cv::Point3f> &d3p);
+			void Generate3DPoints(std::vector<cv::Point2f> &imp, std::vector<cv::Point3f> &d3p, int nmode=0, cv::Mat * buf =NULL);
 
 			void DebugVectorIdxAll(void) { m_nDebugVectorIdx = -1; }
 			void DebugVectorIdxInc(void) { if (m_latest_paired_corners_base.size()>0) m_nDebugVectorIdx = (m_nDebugVectorIdx + 1) % m_latest_paired_corners_base.size(); }

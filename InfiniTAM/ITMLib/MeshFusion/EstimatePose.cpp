@@ -16,14 +16,27 @@ typedef accumulator_set<double, features<tag::density> > acc;
 typedef iterator_range<std::vector<std::pair<double, double> >::iterator > histogram_type;
 
 
-void MeshFusion::Generate3DPoints(std::vector<cv::Point2f> & imp, std::vector<cv::Point3f> &d3p)
+void MeshFusion::Generate3DPoints(std::vector<cv::Point2f> & imp, std::vector<cv::Point3f> &d3p ,int depmode , cv::Mat* debugbuf )
 {
+	
+
 	d3p.clear();
 	//std::vector<cv::Point3f> ret;
 	Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
 	float* dd = proDepth->GetData(MEMORYDEVICE_CPU);
 	int xlens = proDepth->noDims.x;
 	int ylens = proDepth->noDims.y;
+
+	if (depmode == 1) //取original depth data,default 0 取 proDepth(投影至rgb coordinate)
+	{
+		intrinparam = mainView->calib->intrinsics_d.projectionParamsSimple.all;
+		 dd = mainView->depth->GetData(MEMORYDEVICE_CPU);
+		 xlens = mainView->depth->noDims.x;
+		 ylens = mainView->depth->noDims.y;
+
+
+
+	}
 
 	for (int i = 0; i < (int)imp.size(); i++)
 	{
@@ -34,14 +47,32 @@ void MeshFusion::Generate3DPoints(std::vector<cv::Point2f> & imp, std::vector<cv
 		if (!ret)
 		{
 			float z = estivalue(dd, Vector2i(p.x,p.y), Vector2i(-1,-1));
+			
+				
 			float x = z * (p.x - intrinparam.z) / intrinparam.x;
 			float y = z * (p.y - intrinparam.w) / intrinparam.y;
 
 			retp = cv::Point3f(x, y, z);
 
+		//	if ( depmode !=1)
+		//	d3p.push_back(retp);// cv::Point3f(x, y, z));
+			 if (abs(z -300)> 0.1)
+			{
+				retp = retp;
+				d3p.push_back(retp);// cv::Point3f(x, y, z));
+
+			//	debugbuf->at<cv::Vec3b>(p.y, p.x) = cv::Vec3b(0, 128, 128);
+			}
+			else
+			{
+				d3p.push_back(retp);// cv::Point3f(x, y, z));
+
+
+			//	debugbuf->at<cv::Vec3b>(p.y, p.x) = cv::Vec3b(0, 128, 0);
+			}
+
 		}
-		d3p.push_back(retp);// cv::Point3f(x, y, z));
-	}
+}
 	//return ret;
 }
 
