@@ -8,6 +8,17 @@
 #ifdef SDK20
 #include <librealsense2/rs.hpp>
 
+//void render_slider(rect location, float& clipping_dist);
+
+void remove_background(rs2::video_frame& other, const rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist);
+
+float get_depth_scale(rs2::device dev);
+
+rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams);
+
+bool profile_changed(const std::vector<rs2::stream_profile>& current, const std::vector<rs2::stream_profile>& prev);
+
+
 
 #else
 
@@ -31,6 +42,11 @@ public:
 #else
 	rs2::pipeline pipe;
 	rs2::frameset data;
+	rs2::pipeline_profile profile;
+	rs2_stream    align_to;
+	float depth_scale;
+//	rs2::align *   align;
+
 
 #endif
 #ifndef SDK2016R3
@@ -149,7 +165,28 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	rs2::config cfg;
 	cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8, 30);
 	cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 30);
-	data->pipe.start(cfg);
+	data->profile =  data->pipe.start(cfg);
+
+	data->depth_scale = get_depth_scale(data->profile.get_device());
+
+	//Pipeline could choose a device that does not have a color stream
+	//If there is no color stream, choose to align depth to another stream
+
+	data->align_to = find_stream_to_align(data->profile.get_streams());
+
+	// Create a rs2::align object.
+	// rs2::align allows us to perform alignment of depth frames to others frames
+	//The "align_to" is the stream type to which we plan to align depth frames.
+
+//	data->align= &rs2::align(data->align_to);
+
+
+
+	// Define a variable for controlling the distance to clip
+
+	
+
+
 
 
 
@@ -334,10 +371,43 @@ void RealsenseEngine::getImagesMF(ITMUChar4Image *rgbImage, ITMShortImage *rawDe
 
 #else
 
+float depth_clipping_distance = 0.3f;
 
 data->data = data->pipe.wait_for_frames();
-rs2::frame depth = data->data.get_depth_frame(); // Find and colorize the depth data
-rs2::frame color = data->data.get_color_frame();            // Find the color data
+
+
+
+if (profile_changed(data->pipe.get_active_profile().get_streams(), data->profile.get_streams()))
+
+{
+
+	//If the profile was changed, update the align object, and also get the new device's depth scale
+
+	data->profile = data->pipe.get_active_profile();
+
+	data->align_to = find_stream_to_align(data->profile.get_streams());
+
+//	data->align = &rs2::align(data->align_to);
+
+	data->depth_scale = get_depth_scale(data->profile.get_device());
+
+}
+
+rs2::align align = rs2::align(data->align_to);
+
+
+//Get processed aligned frame
+
+auto proccessed = align.proccess(data->data);
+
+
+
+rs2::depth_frame depth = proccessed.get_depth_frame(); // Find and colorize the depth data
+rs2::video_frame color = proccessed.get_color_frame();            // Find the color data
+
+
+remove_background(color, depth, data->depth_scale, depth_clipping_distance);
+
 
 short *dep = rawDepthImage->GetData(MEMORYDEVICE_CPU);
 
@@ -353,7 +423,9 @@ for (int i = 0; i < rgbImage->noDims.x * rgbImage->noDims.y; i++) {
 	rgb[i] = newPix;
 }
 
+Vector4u *rgbseg = mfdata->segImage->GetData(MEMORYDEVICE_CPU);
 
+memcpy(rgbseg, rgb, rgbImage->noDims.x * rgbImage->noDims.y*4 );
 
 
 #endif
@@ -441,6 +513,202 @@ Vector2i RealsenseEngine::getRGBImageSize(void)
 	return Vector2i(0, 0);
 
 }
+
+
+float get_depth_scale(rs2::device dev)
+
+{
+
+	// Go over the device's sensors
+
+	for (rs2::sensor& sensor : dev.query_sensors())
+
+	{
+
+		// Check if the sensor if a depth sensor
+
+		if (rs2::depth_sensor dpt = sensor.as<rs2::depth_sensor>())
+
+		{
+
+			return dpt.get_depth_scale();
+
+		}
+
+	}
+
+	throw std::runtime_error("Device does not have a depth sensor");
+
+}
+
+
+
+
+
+void remove_background(rs2::video_frame& other_frame, const rs2::depth_frame& depth_frame, float depth_scale, float clipping_dist)
+
+{
+
+	const uint16_t* p_depth_frame = reinterpret_cast<const uint16_t*>(depth_frame.get_data());
+
+	uint8_t* p_other_frame = reinterpret_cast<uint8_t*>(const_cast<void*>(other_frame.get_data()));
+
+
+
+	int width = other_frame.get_width();
+
+	int height = other_frame.get_height();
+
+	int other_bpp = other_frame.get_bytes_per_pixel();
+
+
+
+#pragma omp parallel for schedule(dynamic) //Using OpenMP to try to parallelise the loop
+
+	for (int y = 0; y < height; y++)
+
+	{
+
+		auto depth_pixel_index = y * width;
+
+		for (int x = 0; x < width; x++, ++depth_pixel_index)
+
+		{
+
+			// Get the depth value of the current pixel
+
+			auto pixels_distance = depth_scale * p_depth_frame[depth_pixel_index];
+
+
+
+			// Check if the depth value is invalid (<=0) or greater than the threashold
+
+			if (pixels_distance <= 0.f || pixels_distance > clipping_dist)
+
+			{
+
+				// Calculate the offset in other frame's buffer to current pixel
+
+				auto offset = depth_pixel_index * other_bpp;
+
+
+
+				// Set pixel to "background" color (0x999999)
+
+				std::memset(&p_other_frame[offset], 0x99, other_bpp);
+
+			}
+
+		}
+
+	}
+
+}
+
+
+
+rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams)
+
+{
+
+	//Given a vector of streams, we try to find a depth stream and another stream to align depth with.
+
+	//We prioritize color streams to make the view look better.
+
+	//If color is not available, we take another stream that (other than depth)
+
+	rs2_stream align_to = RS2_STREAM_ANY;
+
+	bool depth_stream_found = false;
+
+	bool color_stream_found = false;
+
+	for (rs2::stream_profile sp : streams)
+
+	{
+
+		rs2_stream profile_stream = sp.stream_type();
+
+		if (profile_stream != RS2_STREAM_DEPTH)
+
+		{
+
+			if (!color_stream_found)         //Prefer color
+
+				align_to = profile_stream;
+
+
+
+			if (profile_stream == RS2_STREAM_COLOR)
+
+			{
+
+				color_stream_found = true;
+
+			}
+
+		}
+
+		else
+
+		{
+
+			depth_stream_found = true;
+
+		}
+
+	}
+
+
+
+	if (!depth_stream_found)
+
+		throw std::runtime_error("No Depth stream available");
+
+
+
+	if (align_to == RS2_STREAM_ANY)
+
+		throw std::runtime_error("No stream found to align with Depth");
+
+
+
+	return align_to;
+
+}
+
+
+
+bool profile_changed(const std::vector<rs2::stream_profile>& current, const std::vector<rs2::stream_profile>& prev)
+
+{
+
+	for (auto&& sp : prev)
+
+	{
+
+		//If previous profile is in current (maybe just added another)
+
+		auto itr = std::find_if(std::begin(current), std::end(current), [&sp](const rs2::stream_profile& current_sp) { return sp.unique_id() == current_sp.unique_id(); });
+
+		if (itr == std::end(current)) //If it previous stream wasn't found in current
+
+		{
+
+			return true;
+
+		}
+
+	}
+
+	return false;
+
+}
+
+
+
+
+
 #else
 
 using namespace InfiniTAM::Engine;

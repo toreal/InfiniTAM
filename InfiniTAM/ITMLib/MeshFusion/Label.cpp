@@ -8,26 +8,98 @@
 
 //建立facebuf. 一個新的region 有一face buffer.
 //每個facebuf 有其region, boundary, 
-struct facebuf
-{
-
-
-};
 
 
 using namespace cv;
 
 Vec3f nbuf[100];
-Vec3f nowbuf[100];
+//Vec3f nowbuf[100];
 Vec3b cbuf[100];
 int ndx = 0;
 int countIdx[100];
 
 bool bfirst = true;
 
+void MeshFusion::buildnormal()
+{
+
+	int h = (mainView)->depthNormal->noDims.height;
+	int w = (mainView)->depthNormal->noDims.width;
+
+	int ks = 1;
+	int lens = (ks + 1)*(ks + 1);
+
+	
+
+	for (int j = 0; j < h; j++)
+		for (int i = 0; i < w; i++)		
+		{
+			int idx = ( j)*w + (i );
+			if (abs(depth3d[idx].z - 300) < 0.1)
+				continue;
+
+			std::vector<Point3f> list;
+			for (int kj = -ks; kj <= ks; kj++)
+				for (int ki = -ks; ki <= ks; ki++)
+				{
+					if (i + ki < 0 || i + ki >= w)
+						continue;
+
+					if (j + kj < 0 || j + kj >= h)
+						continue;
+
+
+					 idx = (kj + j)*w + (i + ki);
+					 if (abs(depth3d[idx].z - 300) > 0.1) {
+						 list.push_back(depth3d[idx]);
+					 }
+
+				}
+					float err = plane_from_points(list, -1);
+					ds.ndface--;
+
+					normal3d[idx] = ds.normaldbuf[ds.ndface];
+
+
+		}
+
+			
+
+}
+
+Point3f barycentric(Point3f p1, Point3f p2, Point3f p3, Point3f t)
+{
+Point3f v2_1, v2_3, v2_t;
+
+Point3f bary;
+v2_1 =p1- p2;
+v2_3 = p3 - p2;
+v2_t = t - p2;
+	
+float d00 = v2_1.dot( v2_1);
+float d01 = v2_1.dot( v2_3);
+float d11 = v2_3.dot( v2_3);
+float denom = d00 * d11 - d01 * d01;
+
+float d20 = v2_t.dot( v2_1);
+float d21 = v2_t.dot( v2_3);
+bary.x = (d11 * d20 - d01 * d21) / denom;
+bary.y = (d00 * d21 - d01 * d20) / denom;
+bary.z = 1.0f - bary.x - bary.y;
+
+return bary;
+}
+
+
+
+
 void MeshFusion::label(ITMView **view_ptr, Mat & buf3, int currentFrameNo)
 {
 
+
+	build3DPoint();
+	downSample((*view_ptr)->depthNormal);
+	//buildnormal();
 	
 	if (bfirst)
 	{
@@ -71,75 +143,307 @@ int w = (*view_ptr)->depthNormal->noDims.width;
 
 Mat buf = Mat(h, w, CV_8SC3);
 
-Mat buf2 = Mat(h, w, CV_8SC3);
+Mat buf2 = Mat(h, w, CV_8UC3);
 
 //Mat buf3 = Mat(h, w, CV_8SC3);
 
 
-int ks = 7;
+int ks = 3;
+int lks = 1;
 int lens = (ks + 1)*(ks + 1);
 
-Vec3f c;
+Point3f c,pc;
 
 for ( int j = 0 ; j < h; j++)
-for (int i = 0; i < w; i++)
-{
-	float sx = 0.0f;
-	float sy = 0.0f;
-	float sz = 0.0f;
-	for (int kj = -ks; kj <= ks; kj++)
-	for (int ki = -ks; ki <= ks ;ki++)
-	{
-		if (i + ki < 0 || i + ki >= w)
-			continue;
-
-		if (j + kj < 0 || j + kj >= h)
-			continue;
-
-
-		int idx = (kj+j)*w + (i+ki);
-		Vector4f nomald = normalData_out[idx];
-		sx += nomald.x;
-		sy += nomald.y;
-		sz += nomald.z;
-
-	}
-
-	sx = sx / lens;
-	sy = sy / lens;
-	sz = sz / lens;
-	
-	float norm = sqrt(sx*sx + sy*sy + sz*sz);
-
-	if (norm <= 0)
-		continue;
-
-	c.val[0] = sx/norm;// (sx + 1) * 127;
-	c.val[1] = sy/norm;// (sy + 1) * 127;
-	c.val[2] = sz/norm;// (sz + 1) * 127;
-
-	float val = 999;
-	int kdx = 0;
-	for (int k = 0; k < ndx; k++)
+	for (int i = 0; i < w; i++)
 	{
 
-		float v =abs(acos( c.dot(nbuf[k])));
-		if (v < val)
+		float val1 = 999;
+		int kdx1 = 0;
+		float val2 = 999;
+		int kdx2 = 0;
+		float val3 = 999;
+		int kdx3 = 0;
+
+
+		Point3f centroid = depth3d[j*w+i];
+		vector<Point3f> points;
+
+		//if (i == 0)
+		//	continue;
+
+		//c = normal3d[j*w + i]; 
+		//pc = normal3d[j*w + i-1];
+
+		//Vector4f oldc=normalData_out[j*w + i];
+		//c = Point3f(oldc.x, oldc.y, oldc.z);
+
+
+		float sx = 0.0f;
+
+		float sy = 0.0f;
+
+		float sz = 0.0f;
+
+		for (int kj = -ks; kj <= ks; kj++)
+
+			for (int ki = -ks; ki <= ks; ki++)
+
+			{
+
+				if (i + ki < 0 || i + ki >= w)
+
+					continue;
+
+
+
+				if (j + kj < 0 || j + kj >= h)
+
+					continue;
+
+
+
+
+
+				int idx = (kj + j)*w + (i + ki);
+
+				points.push_back(depth3d[idx]);
+
+				Vector4f nomald = normalData_out[idx];
+
+				sx += nomald.x;
+
+				sy += nomald.y;
+
+				sz += nomald.z;
+
+
+
+			}
+
+
+
+		sx = sx / lens;
+
+		sy = sy / lens;
+
+		sz = sz / lens;
+
+
+
+		float norm = sqrt(sx*sx + sy*sy + sz*sz);
+
+
+
+		if (norm <= 0)
+
+			continue;
+
+
+
+		c.x = sx / norm;// (sx + 1) * 127;
+
+		c.y = sy / norm;// (sy + 1) * 127;
+
+
+
+		c.z = sz / norm;// (sz + 1) * 127;
+
+
+
+		for (int k = 0; k < ndx; k++)
 		{
-			val = v;
-			kdx = k;
+			Point3f dir = nbuf[k];
+
+			float d = centroid.x*dir.x + centroid.y*dir.y + centroid.z*dir.z;
+
+			float sumerr = 0;
+
+			int n = 0;
+
+			for each (Point3f p in points)
+			{
+				float err = p.x*dir.x + p.y*dir.y + p.z*dir.z - d;
+				sumerr += err*err;
+				n++;
+			}
+
+			sumerr = sumerr / n;
+			
+
+
+
+			float v = sumerr;// abs(acos(c.dot(nbuf[k])));
+			if (v < val1 && v < val2 && v < val3)
+			{
+				if (val1 < val2 && val1 < val3)
+				{
+					val2 = val1;
+					kdx2 = kdx1;
+
+				}
+				else if (val1 < val3)
+				{
+					val3 = val1;
+					kdx3 = kdx1;
+
+				}
+
+				val1 = v;
+				kdx1 = k;
+
+			}
+			else if (v < val2 && v < val3)
+			{
+				if (val2 < val3)
+				{
+					val3 = val2;
+					kdx3 = kdx2;
+				}
+
+				val2 = v;
+				kdx2 = k;
+			}
+			else if (v < val3)
+			{
+				val3 = v;
+				kdx3 = k;
+			}
 
 		}
+		//float val = 254 * 9 * val1 / 3.14159;
+		int kdx = kdx1*10 %255;
+		buf3.at<Vec3b>(j, i) = Vec3b(kdx1, kdx2,kdx3);
+
+		buf.at<Vec3b>(j, i) = cbuf[kdx];
+		buf2.at<Vec3b>(j, i) = Vec3b(kdx, kdx, kdx);
+	//	buf2.at<Vec3b>(j, i) = Vec3b(cr, cg, cb);  //Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
+												   //buf2.at<Vec3b>(j, i) = Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
+
+		faceIdx[j*w + i] = kdx;
+		countIdx[kdx]++;
+
 
 	}
-	val = 254 * 9 * val / 3.14159;
 
-	buf.at<Vec3b>( j,i) = cbuf[kdx] ;
-	//buf2.at<Vec3b>(j, i) = Vec3b(val, val,val);
-	faceIdx[j*w + i] = kdx;
-	countIdx[kdx]++;
-	nowbuf[kdx] = c;
+
+	for (int j = 0; j < h; j++)
+		for (int i = 0; i < w; i++)
+
+	{
+
+			int localCount[100];
+
+			memset(localCount, 0x00, 100*sizeof (int));
+
+			for (int kj = -lks; kj <= lks; kj++)
+
+				for (int ki = -lks; ki <= lks; ki++)
+
+				{
+
+					if (i + ki < 0 || i + ki >= w)
+
+						continue;
+
+
+
+					if (j + kj < 0 || j + kj >= h)
+
+						continue;
+
+
+
+
+
+					int idx = (kj + j)*w + (i + ki);
+
+					Vec3b hh = buf3.at<Vec3b>((kj + j), (i + ki));
+
+					localCount[hh.val[0]]++;
+					localCount[hh.val[1]]++;
+					localCount[hh.val[2]]++;
+
+
+				}
+
+			int nmax = -1;
+			int nmaxv = -1;
+			for (int tt = 0; tt < 100; tt++)
+			{
+				if (localCount[tt] > nmaxv)
+				{
+					nmaxv = localCount[tt];
+					nmax = tt;
+				}
+
+			}
+
+
+			if (j > 5 && nmaxv > 0)
+			{
+				nmaxv = nmaxv;
+
+			}
+
+	//Point3f ret = barycentric(nbuf[kdx1], nbuf[kdx2], nbuf[kdx3], c);
+
+	//int finx = kdx1;
+
+	//if (kdx2 < kdx1 && kdx2 < kdx3)
+	//	finx = kdx2;
+
+	//if (kdx3 < kdx1 && kdx3 < kdx2)
+	//	finx = kdx3;
+
+
+	//if (j > 10 && finx > 0)
+	//	finx = finx;
+
+
+//	float  ifloat = finx;// ret.x *(kdx1) + ret.y* kdx2 + ret.z*kdx3;
+
+	int ii = nmax*10 ;
+
+	uchar cr, cg, cb;
+	cr = cg = cb = 0;
+	if (ii < 255)
+	{
+		cr = ii;
+	}
+	else if (ii < 512)
+	{
+		cr = 255;
+		cg = ii - 256;
+	}
+	else
+	{
+		cr = 255;
+		cg = 255;
+		cb = (ii - 512) % 255;
+
+
+	}
+
+	//430,230
+
+	
+	//float v = abs(acos(c.dot(pc)));
+
+	//uchar ccc = (int)v % 255;
+	//v = sqrt(c.dot(c));
+
+	//if (abs(v - 1) > 0.01 && v > 0.001)
+	//	c = c / v;
+
+	//buf2.at<Vec3b>(j, i) = Vec3b(cr, cg, cb);  //Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
+	//buf2.at<Vec3b>(j, i) = Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
+
 }
+
+imshow("ttt", buf2);
+cvWaitKey(-1);
+
 
 class  myint
 {
@@ -169,7 +473,6 @@ for (int i = 0; i < 100; i++)
 mlist.sort();
 mlist.reverse();
 
-build3DPoint();
 ds.ndface = 0;
 
 boost::container::slist<myint>::iterator  it= mlist.begin();

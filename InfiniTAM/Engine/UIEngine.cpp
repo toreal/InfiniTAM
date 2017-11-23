@@ -716,25 +716,27 @@ void UIEngine::ProcessFrame()
 
 
 	}
-    
-	sdkResetTimer(&timer_instant);
-	sdkStartTimer(&timer_instant); 
-	sdkStartTimer(&timer_average);
+	else
+	{
 
-	mainEngine->mfdata = mfdata;
+		sdkResetTimer(&timer_instant);
+		sdkStartTimer(&timer_instant);
+		sdkStartTimer(&timer_average);
 
-	//actual processing on the mailEngine
-	if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage,currentFrameNo, inputIMUMeasurement);
-	else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage ,currentFrameNo);
-    
-    //M
-    if (bDebugVectorActive)
-    {
-        this->mfdata->DebugVectorIdxAll();
-        this->mfdata->MeshFusion_DebugTracking();
-    }
-    //M End
+		mainEngine->mfdata = mfdata;
 
+		//actual processing on the mailEngine
+		if (imuSource != NULL) mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, currentFrameNo, inputIMUMeasurement);
+		else mainEngine->ProcessFrame(inputRGBImage, inputRawDepthImage, currentFrameNo);
+
+		//M
+		if (bDebugVectorActive)
+		{
+			this->mfdata->DebugVectorIdxAll();
+			this->mfdata->MeshFusion_DebugTracking();
+		}
+		//M End
+	}
 #ifndef COMPILE_WITHOUT_CUDA
 	ITMSafeCall(cudaThreadSynchronize());
 #endif

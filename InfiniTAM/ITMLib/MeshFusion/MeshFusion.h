@@ -145,6 +145,9 @@ namespace ITMLib
 			//segmented image
 			ITMUChar4Image *segImage;
 			ITMFloatImage * proDepth = NULL;
+
+			ITMFloat4Image * downNormal = NULL;
+
 			int faceIdx[640 * 480];
 
 			//silhouette features
@@ -157,6 +160,7 @@ namespace ITMLib
 			DomainSurface   ds;
 
 			cv::Point3f depth3d[640 * 480];
+			cv::Point3f normal3d[640 * 480];
 
 
 
@@ -175,7 +179,7 @@ namespace ITMLib
 				//delete pointlist;
 				//delete sellist;
 			};
-
+			void downSample(ITMFloat4Image *);
 			bool find3DPos(cv::Point2f p, cv::Point3f&);
 			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);
@@ -194,6 +198,7 @@ namespace ITMLib
 			void genContour(char * str);
 			void genpoint(std::vector<cv::Point>  contours , std::vector<cv::Point> & sell);
 			void build3DPoint();
+			void buildnormal();
 			float plane_from_points(std::vector<cv::Point3f> & points,int );
 
 

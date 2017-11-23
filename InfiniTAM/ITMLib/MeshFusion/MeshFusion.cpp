@@ -490,9 +490,9 @@ void MeshFusion::NormalAndCurvature(ITMView **view_ptr, bool modelSensorNoise)
 	{
 		//ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, view->depth, view->calib->intrinsics_d.projectionParamsSimple.all);
 
-		ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, proDepth, view->calib->intrinsics_rgb.projectionParamsSimple.all);
+		ComputeNormalAndWeights(view->depthNormal, view->depthUncertainty, view->depth, view->calib->intrinsics_rgb.projectionParamsSimple.all);
 		//EstCurvature(view->depthNormal, view->curvature);
-		EstCurvatureByDepth(proDepth, view->curvature);
+		EstCurvatureByDepth(view->depth, view->curvature);
 	}
 
 }
@@ -514,14 +514,27 @@ void MeshFusion::buildProjDepth()
 	Matrix4f rgb2d = mainView->calib->trafo_rgb_to_depth.calib;
 
 	float* dp = proDepth->GetData(MEMORYDEVICE_CPU);
+
+	
+	
+
 	Vector4u* segimg = segImage->GetData(MEMORYDEVICE_CPU);
 
 	int lens = proDepth->noDims.x * proDepth->noDims.y;
-	memset(dp, 0x00, sizeof(float) *lens);
 
 	float* dd = mainView->depth->GetData(MEMORYDEVICE_CPU);
 	int xlens = mainView->depth->noDims.x;
 	int ylens = mainView->depth->noDims.y;
+
+	memcpy(dp, dd, sizeof(float)* lens);
+
+	return;
+
+	memset(dp, 0x00, sizeof(float) *lens);
+
+
+
+
 	for (int nx = 0; nx < xlens; nx++)
 		for (int ny = 0; ny < ylens; ny++)
 		{

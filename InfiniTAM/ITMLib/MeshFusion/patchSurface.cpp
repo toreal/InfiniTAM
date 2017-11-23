@@ -152,21 +152,22 @@ float  MeshFusion::plane_from_points(std::vector<cv::Point3f> & points ,int pcol
 
 		float sumerr = 0;
 
-		for each (Point3f p in points)
-		{
-			float err = p.x*dir.x + p.y*dir.y + p.z*dir.z + d;
-			sumerr += err*err;
-		}
+		//for each (Point3f p in points)
+		//{
+		//	float err = p.x*dir.x + p.y*dir.y + p.z*dir.z + d;
+		//	sumerr += err*err;
+		//}
 
-		sumerr = sumerr / n;
-		
+		//sumerr = sumerr / n;
+		//
 
 		ds.centerbuf[ds.ndface] = centroid;
 		ds.normaldbuf[ds.ndface] = dir;
 		ds.dbuf[ds.ndface] = -d;
 	//	ds.belongTo[ds.ndface] = pcolor;
 		ds.ndface++;
-
+		
+		return sumerr;
 
 	
 		int ndo = ds.ndface - 1;
@@ -328,11 +329,11 @@ void MeshFusion::patchSurface( int ind, Mat& gray2 ,int pcolor)
 		mytriData.totalFace = 0;
 
 
-		/*cv::imshow("gray", gray1);
+		cv::imshow("gray", gray1);
 		cv::imshow("mask", mask);
 
 		cvWaitKey(-1);
-*/
+
 
 		for (int i = 0; i<contours.size(); i++) {
 			Scalar color = Scalar(100+ds.ndface);// , rng.uniform(0, 255), 255);

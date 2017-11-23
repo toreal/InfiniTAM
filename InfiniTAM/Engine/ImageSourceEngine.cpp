@@ -149,8 +149,17 @@ void ImageFileReader::getImagesMF(ITMUChar4Image *rgb, ITMShortImage *rawDepth ,
 			}
 			else
 			{
-				if ( bdomf)
-				mfdata->genContour(str);
+				if (bdomf)
+				{
+					Vector4u *rgbraw = rgb->GetData(MEMORYDEVICE_CPU);
+
+				
+					Vector4u *rgbseg = mfdata->segImage->GetData(MEMORYDEVICE_CPU);
+
+					memcpy(rgbseg, rgbraw, rgb->noDims.x * rgb->noDims.y * 4);
+
+					mfdata->genContour(str);
+				}
 
 			
 			}
