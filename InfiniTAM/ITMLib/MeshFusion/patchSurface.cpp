@@ -15,7 +15,9 @@ Point3f raw3d[640 * 480];
 
 void MeshFusion::build3DPoint()
 {
-	Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+//for real project as RGB
+//	Vector4f  intrinparam = mainView->calib->intrinsics_rgb.projectionParamsSimple.all;
+	Vector4f  intrinparam = mainView->calib->intrinsics_d.projectionParamsSimple.all;
 	float* dd = proDepth->GetData(MEMORYDEVICE_CPU);
 	int w = proDepth->noDims.x;
 	int h = proDepth->noDims.y;
@@ -167,7 +169,7 @@ float  MeshFusion::plane_from_points(std::vector<cv::Point3f> & points ,int pcol
 	//	ds.belongTo[ds.ndface] = pcolor;
 		ds.ndface++;
 		
-		return sumerr;
+//		return sumerr;
 
 	
 		int ndo = ds.ndface - 1;
@@ -338,7 +340,7 @@ void MeshFusion::patchSurface( int ind, Mat& gray2 ,int pcolor)
 		for (int i = 0; i<contours.size(); i++) {
 			Scalar color = Scalar(100+ds.ndface);// , rng.uniform(0, 255), 255);
 
-			if (contours[i].size() > 10) {
+			if (contours[i].size() > 50) {
 
 				cout << contours[i].size() << endl;
 				std::vector<cv::Point>       sellist;
@@ -393,10 +395,21 @@ void MeshFusion::patchSurface( int ind, Mat& gray2 ,int pcolor)
 						{
 							//list2.push_back(Point2f(xi, xj));
 							int ind = xj*w + xi;
-							if (abs(depth3d[ind].z - 300) > 0.1) {
-								list3.push_back(depth3d[ind]);
+							Vec3b cc = gray2.at<Vec3b>(xj, xi);
 
-								gray2.at<cv::Vec3b>(xj, xi) = cv::Vec3b(0, 128, ds.ndface);
+							if (abs(depth3d[ind].z - 300) > 0.1  ) {
+
+								if (cc.val[0] != 128)
+								{
+									list3.push_back(depth3d[ind]);
+
+									gray2.at<cv::Vec3b>(xj, xi) = cv::Vec3b(0, 128, ds.ndface);
+								}
+								else
+								{
+
+								//	gray2.at<cv::Vec3b>(xj, xi) = cv::Vec3b(128, 128, ds.ndface);
+								}
 							}
 						}
 
@@ -404,20 +417,24 @@ void MeshFusion::patchSurface( int ind, Mat& gray2 ,int pcolor)
 
 				//Generate3DPoints(list2, list3, 0,&gray2);
 
+				cv::imshow("gray2", gray2);
+				cv::imshow("gray", gray1);
 
-				float err=plane_from_points(list3 ,pcolor );
-				
+				cvWaitKey(-1);
 
+
+				if (list3.size() > 10)
+				{
+					float err = plane_from_points(list3, pcolor);
+
+					belongs(gray2);
+				}
 		//		continue;
 
 			
 				//pointlist[i].x = p.x;
 
 				//pointlist[i].y = p.y;
-
-			//	cv::imshow("gray", gray1);
-			
-			//	cvWaitKey(-1);
 			}
 		//	fprintf(fp, "%d %d\n", pointlist[i].x, pointlist[i].y);
 		}
@@ -427,9 +444,9 @@ void MeshFusion::patchSurface( int ind, Mat& gray2 ,int pcolor)
 		//三個edge 可找到一個vertex,但多個edge 如何形成一個vertex
 
 		
-	//	cv::imshow("gray", gray2);
+		cv::imshow("gray", gray2);
 
-	//	cvWaitKey(-1);
+		cvWaitKey(-1);
 
 	}
 	catch (exception em)

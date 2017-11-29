@@ -410,8 +410,10 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 	Vector3d xp1_y, xm1_y, x_yp1, x_ym1;
 	Vector3d diff_x(0.0f, 0.0f, 0.0f), diff_y(0.0f, 0.0f, 0.0f);
 
-	xp1_y.z = depth_in[(x + 1) + (y) * imgDims.x], x_yp1.z = depth_in[(x) + (y + 1) * imgDims.x];
-	xm1_y.z = depth_in[(x - 1) + (y) * imgDims.x], x_ym1.z = depth_in[(x) + (y - 1) * imgDims.x];
+	xp1_y.z = depth_in[(x + 1) + (y)* imgDims.x];
+	x_yp1.z = depth_in[(x)+(y + 1) * imgDims.x];
+	xm1_y.z = depth_in[(x - 1) + (y)* imgDims.x];
+	x_ym1.z = depth_in[(x)+(y - 1) * imgDims.x];
 
 	if (xp1_y.z <= 0 || x_yp1.z <= 0 || xm1_y.z <= 0 || x_ym1.z <= 0)
 	{
@@ -420,43 +422,79 @@ _CPU_AND_GPU_CODE_ inline void computeNormalAndWeight(const CONSTPTR(float) *dep
 		return;
 	}
 
-	// unprojected
+	
+
+
+	//// unprojectedif ( 
 	xp1_y.x = xp1_y.z * ((x + 1.0f) - intrinparam.z) / intrinparam.x; 
 	xp1_y.y = xp1_y.z * (y - intrinparam.w) / intrinparam.y;
-	xm1_y.x = xm1_y.z * ((x - 1.0f) - intrinparam.z) / intrinparam.x; xm1_y.y = xm1_y.z * (y - intrinparam.w) / intrinparam.y;
-	x_yp1.x = x_yp1.z * (x - intrinparam.z) / intrinparam.x; x_yp1.y = x_yp1.z * ((y + 1.0f) - intrinparam.w) / intrinparam.y;
-	x_ym1.x = x_ym1.z * (x - intrinparam.z) / intrinparam.x; x_ym1.y = x_ym1.z * ((y - 1.0f) - intrinparam.w) / intrinparam.y;
-
-	// gradients x and y
-	diff_x = xp1_y - xm1_y, diff_y = x_yp1 - x_ym1;
-
-	double normx = 1.0 / sqrt(diff_x.x * diff_x.x + diff_x.y * diff_x.y + diff_x.z * diff_x.z);
-	diff_x *= normx;
-
-	double normy = 1.0 / sqrt(diff_y.x * diff_y.x + diff_y.y * diff_y.y + diff_y.z * diff_y.z);
-	diff_y *= normy;
+	xm1_y.x = xm1_y.z * ((x - 1.0f) - intrinparam.z) / intrinparam.x; 
+	xm1_y.y = xm1_y.z * (y - intrinparam.w) / intrinparam.y;
+	
+	x_yp1.x = x_yp1.z * (x - intrinparam.z) / intrinparam.x;
+	x_yp1.y = x_yp1.z * ((y + 1.0f) - intrinparam.w) / intrinparam.y;
+	x_ym1.x = x_ym1.z * (x - intrinparam.z) / intrinparam.x; 
+	x_ym1.y = x_ym1.z * ((y - 1.0f) - intrinparam.w) / intrinparam.y;
 
 
-	// cross product
-	outNormal.x = (diff_x.y * diff_y.z - diff_x.z*diff_y.y);
-	outNormal.y = (diff_x.z * diff_y.x - diff_x.x*diff_y.z);
-	outNormal.z = (diff_x.x * diff_y.y - diff_x.y*diff_y.x);
-
-	if (outNormal.x == 0.0f && outNormal.y == 0 && outNormal.z == 0)
+	if (true) //simple version
 	{
-		normal_out[idx].w = -1.0f;
-		sigmaZ_out[idx] = -1;
-		return;
+
+
+		float dzdx = (xp1_y.z - xm1_y.z) / (xp1_y.x - xm1_y.x);
+		float dzdy = (x_yp1.z - x_ym1.z) / (x_yp1.y - x_ym1.y);
+
+		Vec3f d(-dzdx, -dzdy, 1.0f);
+		Vec3f n = normalize(d);
+		if (n.val[0] == 0.0f && n.val[1] == 0 && n.val[2] == 0)
+		{
+			normal_out[idx].w = -1.0f;
+			sigmaZ_out[idx] = -1;
+			return;
+		}
+		normal_out[idx].x = n.val[0];// outNormal.x;
+		normal_out[idx].y = n.val[1];// outNormal.y;
+		normal_out[idx].z = n.val[2];// outNormal.z;
+		normal_out[idx].w = 1.0f;
+
+
 	}
+	else
+	{
+		// gradients x and y
+		diff_x = xp1_y - xm1_y;
+		diff_y = x_yp1 - x_ym1;
 
-	double  norm = 1.0 / sqrt(outNormal.x * outNormal.x + outNormal.y * outNormal.y + outNormal.z * outNormal.z);
-	outNormal *= norm;
+		double normx = 1.0 / sqrt(diff_x.x * diff_x.x + diff_x.y * diff_x.y + diff_x.z * diff_x.z);
+		diff_x *= normx;
 
-	normal_out[idx].x = outNormal.x;
-	normal_out[idx].y = outNormal.y; 
-	normal_out[idx].z = outNormal.z; 
-	normal_out[idx].w = 1.0f;
+		double normy = 1.0 / sqrt(diff_y.x * diff_y.x + diff_y.y * diff_y.y + diff_y.z * diff_y.z);
+		diff_y *= normy;
 
+
+		// cross product
+		outNormal.x = (diff_x.y * diff_y.z - diff_x.z*diff_y.y);
+		outNormal.y = (diff_x.z * diff_y.x - diff_x.x*diff_y.z);
+		outNormal.z = (diff_x.x * diff_y.y - diff_x.y*diff_y.x);
+		if (outNormal.z < 0)
+			outNormal = -outNormal;
+
+		if (outNormal.x == 0.0f && outNormal.y== 0 && outNormal.y== 0)
+		{
+			normal_out[idx].w = -1.0f;
+			sigmaZ_out[idx] = -1;
+			return;
+		}
+		
+			double  norm = 1.0 / sqrt(outNormal.x * outNormal.x + outNormal.y * outNormal.y + outNormal.z * outNormal.z);
+			outNormal *= norm;
+		
+		normal_out[idx].x =  outNormal.x;
+		normal_out[idx].y =  outNormal.y;
+		normal_out[idx].z =  outNormal.z;
+		normal_out[idx].w = 1.0f;
+
+	}
 	// now compute weight
 	float theta = acos(outNormal.z);
 	float theta_diff = theta / (PI*0.5f - theta);
@@ -526,7 +564,7 @@ void MeshFusion::buildProjDepth()
 	int xlens = mainView->depth->noDims.x;
 	int ylens = mainView->depth->noDims.y;
 
-	memcpy(dp, dd, sizeof(float)* lens);
+	memcpy(dp, dd, sizeof(float)* lens); //because of align
 
 	return;
 

@@ -12,11 +12,11 @@
 
 using namespace cv;
 
-Vec3f nbuf[100];
+Vec3f nbuf[500];
 //Vec3f nowbuf[100];
-Vec3b cbuf[100];
+Vec3b cbuf[500];
 int ndx = 0;
-int countIdx[100];
+int countIdx[500];
 
 bool bfirst = true;
 
@@ -90,6 +90,32 @@ bary.z = 1.0f - bary.x - bary.y;
 return bary;
 }
 
+vector<int> verlist;
+
+void addnormal(float nx, float ny, float nz)
+{
+	if (ndx >= 500)
+		return;
+
+
+	nbuf[ndx].val[0] = nx;
+	nbuf[ndx].val[1] = ny;
+	nbuf[ndx].val[2] = nz;
+
+	cbuf[ndx].val[0] = rand() % 128;
+	cbuf[ndx].val[1] = ny >= 0 ? 100 : 0;
+	cbuf[ndx].val[2] = ndx;
+
+
+	ndx++;
+
+
+	std::cout << ndx << std::endl;
+
+
+
+
+}
 
 
 
@@ -98,7 +124,9 @@ void MeshFusion::label(ITMView **view_ptr, Mat & buf3, int currentFrameNo)
 
 
 	build3DPoint();
-	downSample((*view_ptr)->depthNormal);
+	ITMFloat4Image * subNormal = NULL;
+	downSample((*view_ptr)->depthNormal, downNormal);
+	//downSample(subNormal, downNormal);
 	//buildnormal();
 	
 	if (bfirst)
@@ -112,7 +140,7 @@ void MeshFusion::label(ITMView **view_ptr, Mat & buf3, int currentFrameNo)
 		int bstat = 1;
 		
 
-		while (bstat >= 0)
+		if (bstat >= 0)
 		{
 			bstat = fscanf(fp, "%f,%f,%f\n", &nx, &ny, &nz);
 			nbuf[ndx].val[0] = nx;
@@ -135,13 +163,16 @@ void MeshFusion::label(ITMView **view_ptr, Mat & buf3, int currentFrameNo)
 
 
 	memset(countIdx, 0x00, 100*sizeof(int));
-	Vector4f *normalData_out = (*view_ptr)->depthNormal
+	Vector4f *normalData_out = downNormal
 		->GetData(MEMORYDEVICE_CPU);
 
-int h=	(*view_ptr)->depthNormal->noDims.height;
-int w = (*view_ptr)->depthNormal->noDims.width;
+int h=	downNormal->noDims.height;
+int w = downNormal->noDims.width;
 
-Mat buf = Mat(h, w, CV_8SC3);
+int downsize = 4;
+int ow = w*downsize;
+
+Mat buf = Mat(h, w, CV_8UC3);
 
 Mat buf2 = Mat(h, w, CV_8UC3);
 
@@ -166,8 +197,8 @@ for ( int j = 0 ; j < h; j++)
 		int kdx3 = 0;
 
 
-		Point3f centroid = depth3d[j*w+i];
-		vector<Point3f> points;
+//		Point3f centroid = depth3d[j*w+i];
+//		vector<Point3f> points;
 
 		//if (i == 0)
 		//	continue;
@@ -178,84 +209,26 @@ for ( int j = 0 ; j < h; j++)
 		//Vector4f oldc=normalData_out[j*w + i];
 		//c = Point3f(oldc.x, oldc.y, oldc.z);
 
+		Vector4f cc = normalData_out[j*w + i];
 
-		float sx = 0.0f;
-
-		float sy = 0.0f;
-
-		float sz = 0.0f;
-
-		for (int kj = -ks; kj <= ks; kj++)
-
-			for (int ki = -ks; ki <= ks; ki++)
-
-			{
-
-				if (i + ki < 0 || i + ki >= w)
-
-					continue;
-
-
-
-				if (j + kj < 0 || j + kj >= h)
-
-					continue;
-
-
-
-
-
-				int idx = (kj + j)*w + (i + ki);
-
-				points.push_back(depth3d[idx]);
-
-				Vector4f nomald = normalData_out[idx];
-
-				sx += nomald.x;
-
-				sy += nomald.y;
-
-				sz += nomald.z;
-
-
-
-			}
-
-
-
-		sx = sx / lens;
-
-		sy = sy / lens;
-
-		sz = sz / lens;
-
-
-
-		float norm = sqrt(sx*sx + sy*sy + sz*sz);
-
-
-
-		if (norm <= 0)
-
+		if (cc.w < 0)
 			continue;
 
+		c.x = cc.x;
+		c.y = cc.y;
+		c.z = cc.z;
 
-
-		c.x = sx / norm;// (sx + 1) * 127;
-
-		c.y = sy / norm;// (sy + 1) * 127;
-
-
-
-		c.z = sz / norm;// (sz + 1) * 127;
-
+	
+//calculating projection error is time consuming. To reduce the computation time, we also have other options. 
+		//1 compare normal difference first.
+		//only compare down sample 
 
 
 		for (int k = 0; k < ndx; k++)
 		{
 			Point3f dir = nbuf[k];
 
-			float d = centroid.x*dir.x + centroid.y*dir.y + centroid.z*dir.z;
+		/*	float d = centroid.x*dir.x + centroid.y*dir.y + centroid.z*dir.z;
 
 			float sumerr = 0;
 
@@ -270,10 +243,10 @@ for ( int j = 0 ; j < h; j++)
 
 			sumerr = sumerr / n;
 			
+*/
 
 
-
-			float v = sumerr;// abs(acos(c.dot(nbuf[k])));
+			float v =  abs(acos(c.dot(nbuf[k])));
 			if (v < val1 && v < val2 && v < val3)
 			{
 				if (val1 < val2 && val1 < val3)
@@ -311,135 +284,204 @@ for ( int j = 0 ; j < h; j++)
 			}
 
 		}
-		//float val = 254 * 9 * val1 / 3.14159;
-		int kdx = kdx1*10 %255;
-		buf3.at<Vec3b>(j, i) = Vec3b(kdx1, kdx2,kdx3);
 
-		buf.at<Vec3b>(j, i) = cbuf[kdx];
-		buf2.at<Vec3b>(j, i) = Vec3b(kdx, kdx, kdx);
+			uchar cr, cg, cb;
+			cr = cg = cb = 0;
+			int ii= kdx1*20+10;
+
+			val1 = val1 * 180 / M_PI;
+			
+			if (std::find(verlist.begin(), verlist.end(), kdx1) == verlist.end()) {
+			
+				verlist.push_back(kdx1);
+
+				
+
+
+			}
+
+			if (val1 > 15)
+			{
+
+				addnormal(cc.x, cc.y, cc.z);
+			}
+
+		
+	//		cout << val1 << "," << kdx1 << endl;
+
+			if (ii < 255)
+			{
+				cr = ii;
+			}
+			else if (ii < 512)
+			{
+				cr = 255;
+				cg = ii - 256;
+			}
+			else
+			{
+				cr = 255;
+				cg = 255;
+				cb = (ii - 512) % 255;
+		
+		
+			}
+		
+
+
+
+		//float val = 254 * 9 * val1 / 3.14159;
+			int kdx = kdx1;// *10 % 255;
+
+		//int downsize = 4;
+		for (int sj = 0; sj < downsize; sj++)
+			for (int si = 0; si < downsize; si++)
+			{
+				buf3.at<Vec3b>(j*downsize+sj, i*downsize+si) = Vec3b(kdx, kdx, kdx);
+
+				faceIdx[(j*downsize+sj)*ow + i*downsize+si] = kdx;
+			}
+
+		buf.at<Vec3b>(j, i) = Vec3b(255*c.x,255*c.y,255*c.z);
+		buf2.at<Vec3b>(j, i) = Vec3b(cr,cg,cb);
 	//	buf2.at<Vec3b>(j, i) = Vec3b(cr, cg, cb);  //Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
 												   //buf2.at<Vec3b>(j, i) = Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
 
-		faceIdx[j*w + i] = kdx;
 		countIdx[kdx]++;
 
 
 	}
 
 
-	for (int j = 0; j < h; j++)
-		for (int i = 0; i < w; i++)
+	FILE * fnp=fopen("normalp.txt", "w+");
 
+	//for (int i = 0; i < ndx; i++)
+	for each( int i in verlist)
 	{
-
-			int localCount[100];
-
-			memset(localCount, 0x00, 100*sizeof (int));
-
-			for (int kj = -lks; kj <= lks; kj++)
-
-				for (int ki = -lks; ki <= lks; ki++)
-
-				{
-
-					if (i + ki < 0 || i + ki >= w)
-
-						continue;
-
-
-
-					if (j + kj < 0 || j + kj >= h)
-
-						continue;
-
-
-
-
-
-					int idx = (kj + j)*w + (i + ki);
-
-					Vec3b hh = buf3.at<Vec3b>((kj + j), (i + ki));
-
-					localCount[hh.val[0]]++;
-					localCount[hh.val[1]]++;
-					localCount[hh.val[2]]++;
-
-
-				}
-
-			int nmax = -1;
-			int nmaxv = -1;
-			for (int tt = 0; tt < 100; tt++)
-			{
-				if (localCount[tt] > nmaxv)
-				{
-					nmaxv = localCount[tt];
-					nmax = tt;
-				}
-
-			}
-
-
-			if (j > 5 && nmaxv > 0)
-			{
-				nmaxv = nmaxv;
-
-			}
-
-	//Point3f ret = barycentric(nbuf[kdx1], nbuf[kdx2], nbuf[kdx3], c);
-
-	//int finx = kdx1;
-
-	//if (kdx2 < kdx1 && kdx2 < kdx3)
-	//	finx = kdx2;
-
-	//if (kdx3 < kdx1 && kdx3 < kdx2)
-	//	finx = kdx3;
-
-
-	//if (j > 10 && finx > 0)
-	//	finx = finx;
-
-
-//	float  ifloat = finx;// ret.x *(kdx1) + ret.y* kdx2 + ret.z*kdx3;
-
-	int ii = nmax*10 ;
-
-	uchar cr, cg, cb;
-	cr = cg = cb = 0;
-	if (ii < 255)
-	{
-		cr = ii;
-	}
-	else if (ii < 512)
-	{
-		cr = 255;
-		cg = ii - 256;
-	}
-	else
-	{
-		cr = 255;
-		cg = 255;
-		cb = (ii - 512) % 255;
-
+		fprintf(fnp, "%f %f %f\n", nbuf[i].val[0] * 10, nbuf[i].val[1] * 10, nbuf[i].val[2]*10);
 
 	}
 
-	//430,230
+	fclose(fnp);
 
-	
-	//float v = abs(acos(c.dot(pc)));
 
-	//uchar ccc = (int)v % 255;
-	//v = sqrt(c.dot(c));
+//	for (int j = 0; j < h; j++)
+//		for (int i = 0; i < w; i++)
+//
+//	{
+//
+//			int localCount[100];
+//
+//			memset(localCount, 0x00, 100*sizeof (int));
+//
+//			for (int kj = -lks; kj <= lks; kj++)
+//
+//				for (int ki = -lks; ki <= lks; ki++)
+//
+//				{
+//
+//					if (i + ki < 0 || i + ki >= w)
+//
+//						continue;
+//
+//
+//
+//					if (j + kj < 0 || j + kj >= h)
+//
+//						continue;
+//
+//
+//
+//
+//
+//					int idx = (kj + j)*w + (i + ki);
+//
+//					Vec3b hh = buf3.at<Vec3b>((kj + j), (i + ki));
+//
+//					localCount[hh.val[0]]++;
+//					localCount[hh.val[1]]++;
+//					localCount[hh.val[2]]++;
+//
+//
+//				}
+//
+//			int nmax = -1;
+//			int nmaxv = -1;
+//			for (int tt = 0; tt < 100; tt++)
+//			{
+//				if (localCount[tt] > nmaxv)
+//				{
+//					nmaxv = localCount[tt];
+//					nmax = tt;
+//				}
+//
+//			}
+//
+//
+//			if (j > 5 && nmaxv > 0)
+//			{
+//				nmaxv = nmaxv;
+//
+//			}
+//
+//	//Point3f ret = barycentric(nbuf[kdx1], nbuf[kdx2], nbuf[kdx3], c);
+//
+//	//int finx = kdx1;
+//
+//	//if (kdx2 < kdx1 && kdx2 < kdx3)
+//	//	finx = kdx2;
+//
+//	//if (kdx3 < kdx1 && kdx3 < kdx2)
+//	//	finx = kdx3;
+//
+//
+//	//if (j > 10 && finx > 0)
+//	//	finx = finx;
+//
+//
+////	float  ifloat = finx;// ret.x *(kdx1) + ret.y* kdx2 + ret.z*kdx3;
+//
+//	int ii = nmax*10 ;
+//
+//	uchar cr, cg, cb;
+//	cr = cg = cb = 0;
+//	if (ii < 255)
+//	{
+//		cr = ii;
+//	}
+//	else if (ii < 512)
+//	{
+//		cr = 255;
+//		cg = ii - 256;
+//	}
+//	else
+//	{
+//		cr = 255;
+//		cg = 255;
+//		cb = (ii - 512) % 255;
+//
+//
+//	}
+//
+//	//430,230
+//
+//	
+//	//float v = abs(acos(c.dot(pc)));
+//
+//	//uchar ccc = (int)v % 255;
+//	//v = sqrt(c.dot(c));
+//
+//	//if (abs(v - 1) > 0.01 && v > 0.001)
+//	//	c = c / v;
+//
+//	//buf2.at<Vec3b>(j, i) = Vec3b(cr, cg, cb);  //Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
+//	//buf2.at<Vec3b>(j, i) = Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
+//
+//}
 
-	//if (abs(v - 1) > 0.01 && v > 0.001)
-	//	c = c / v;
+imshow("ttt2", buf);
 
-	//buf2.at<Vec3b>(j, i) = Vec3b(cr, cg, cb);  //Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
-	//buf2.at<Vec3b>(j, i) = Vec3b((c.x+1)*127 ,(c.y+1)*127,(c.z+1)*127);
-
-}
+imshow("ttt3", buf3);
 
 imshow("ttt", buf2);
 cvWaitKey(-1);
@@ -462,12 +504,15 @@ myint ma,mb;
 
 boost::container::slist<myint> mlist;
 
-for (int i = 0; i < 100; i++)
+for (int i = 0; i < 500; i++)
 {
-	ma.a = countIdx[i];
-	ma.b = i;
 	if (countIdx[i] > 0)
+	{
+		ma.a = countIdx[i];
+		ma.b = i;
+
 		mlist.push_front(ma);
+	}
 }
 
 mlist.sort();
@@ -482,6 +527,7 @@ for (int i = 0; i < mlist.size(); i++)
 //	std::cout << a.a <<"," << a.b <<  ":" << nbuf[a.b] <<  "==>" << nowbuf[a.b] << std::endl;
 	if (a.a > 500)
 	patchSurface(a.b,buf3,i);
+
 	
 	it++;
 }
@@ -503,7 +549,7 @@ for ( int j = 0 ; j < h;j++)
 				int mink = -1;
 				for (int k = 0; k < ds.ndface; k++)
 				{
-					float err1=abs(ds.normaldbuf[k].x * p.x + ds.normaldbuf[k].y *p.y + ds.normaldbuf[k].z *p.z - ds.dbuf[k]);
+					float err1=abs(ds.normaldbuf[k].x * p.x + ds.normaldbuf[k].y *p.y + ds.normaldbuf[k].z *p.z + ds.dbuf[k]);
 					Point3f diff = p - ds.centerbuf[k];
 					float err2 = sqrt(diff.dot(diff));
 					float err = err1 + err2/30;
@@ -558,3 +604,35 @@ cv::imshow("tmp", buf3);
 }
 
 
+
+
+void MeshFusion::belongs(Mat & buf)
+{
+
+	int w = buf.size().width;
+	int h = buf.size().height;
+	int nd = ds.ndface - 1;
+	Point3f dir=	ds.normaldbuf[nd];
+	float    d = ds.dbuf[nd];
+
+
+	for ( int j = 0 ; j < h; j++)
+		for (int i = 0; i < w; i++)
+		{
+
+			int ind = j*w + i;
+			Point3f pos = depth3d[ind];
+
+			float err = abs(pos.dot(dir) + d);
+
+			if ( err < 10)
+			buf.at<cv::Vec3b>(j, i) = cv::Vec3b(128, 0,nd);
+
+	}
+
+
+	imshow("belongs", buf);
+	cvWaitKey(-1);
+
+
+}

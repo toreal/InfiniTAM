@@ -180,7 +180,7 @@ void DomainSurface::makeTri(  Point3f *depth3d , Mat& nbuf,
 
 	float vmin = 10000;
 	float vmax = -1;
-
+	//find the neighborhood relationship
 	for ( int i = 0 ; i < w; i++)
 		for (int j = 0; j < h; j++)
 		{

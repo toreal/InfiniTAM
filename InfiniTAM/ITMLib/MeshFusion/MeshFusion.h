@@ -179,7 +179,9 @@ namespace ITMLib
 				//delete pointlist;
 				//delete sellist;
 			};
-			void downSample(ITMFloat4Image *);
+			void downSample(ITMFloat4Image *, ITMFloat4Image * &);
+			void belongs(cv::Mat & buf);
+
 			bool find3DPos(cv::Point2f p, cv::Point3f&);
 			//processing silhouette point
 			void sortpoint(ITMUChar4Image * draw);

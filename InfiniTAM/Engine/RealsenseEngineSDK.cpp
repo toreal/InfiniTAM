@@ -166,11 +166,52 @@ RealsenseEngine::RealsenseEngine(const char *calibFilename)//, Vector2i requeste
 	cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8, 30);
 	cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 30);
 	data->profile =  data->pipe.start(cfg);
+	
+	//rs2::video_stream_profile color_stream= data->profile.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>();
+	//rs2::video_stream_profile depth_stream = data->profile.get_stream(RS2_STREAM_DEPTH).as<rs2::video_stream_profile>();
 
-	data->depth_scale = get_depth_scale(data->profile.get_device());
+
+	//rs2_extrinsics extri=   depth_stream.get_extrinsics_to(color_stream);
+
+	//rs2_intrinsics intri = depth_stream.get_intrinsics();
+
+	//  depth
+	//	ppx	321.966583	float
+	//	ppy	246.107162	float
+	//	fx	475.193237	float
+	//	fy	475.193146	float
+	//
+	//  color
+	//	ppx	304.000061	float
+	//	ppy	223.181778	float
+	//	fx	615.904358	float
+	//	fy	615.904419	float
+
+	//-		rotation	0x000000846513f198 {0.999991775, -0.00406141346, -0.000183502605, 0.00406062370, 0.999983311, -0.00411631726, ...}	float[9]
+	 //   [0]	0.999991775	float
+		//[1] - 0.00406141346	float
+		//[2] - 0.000183502605	float
+		//[3]	0.00406062370	float
+		//[4]	0.999983311	float
+		//[5] - 0.00411631726	float
+		//[6]	0.000200217590	float
+		//[7]	0.00411553821	float
+		//[8]	0.999991536	float
+		//- translation	0x000000846513f1bc {0.0247000027, 8.39376517e-05, 0.00402066438}	float[3]
+		//[0]	0.0247000027	float
+		//[1]	8.39376517e-05	float
+		//[2]	0.00402066438	float
+
+
+
+
+
+	//data->depth_scale = get_depth_scale(data->profile.get_device());
 
 	//Pipeline could choose a device that does not have a color stream
 	//If there is no color stream, choose to align depth to another stream
+
+
 
 	data->align_to = find_stream_to_align(data->profile.get_streams());
 
@@ -394,6 +435,7 @@ if (profile_changed(data->pipe.get_active_profile().get_streams(), data->profile
 }
 
 rs2::align align = rs2::align(data->align_to);
+//data->depth_scale = get_depth_scale(data->profile.get_device());
 
 
 //Get processed aligned frame
